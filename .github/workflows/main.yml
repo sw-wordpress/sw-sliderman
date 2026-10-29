@@ -1,0 +1,90 @@
+name: Build release zip
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+*'
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+permissions:
+  contents: write
+
+env:
+  PLUGIN_SLUG: sw-sliderman
+
+jobs:
+  build:
+    name: Build release zip
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine repository name and version
+        id: metadata
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          RAW="${GITHUB_REF_NAME}"
+          VERSION="${RAW#v}"
+          VERSION="${VERSION%-*}"
+
+          echo "repo=$REPO_NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "zip=${REPO_NAME}-${VERSION}.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, json
+          tools: composer:v2
+          coverage: none
+
+      - name: Validate Composer configuration
+        run: composer validate --strict
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Bundle WordPress plugin
+        env:
+          REPO_NAME: ${{ steps.metadata.outputs.repo }}
+          VERSION: ${{ steps.metadata.outputs.version }}
+        run: |
+          # The local and CI builds share the same asset build, packaging and smoke test.
+          bash bin/build-zip.sh "$RUNNER_TEMP/dist"
+          PLUGIN_VERSION="$(grep -m1 'Version:' sw-sliderman.php | awk '{print $NF}')"
+          cp "$RUNNER_TEMP/dist/$PLUGIN_SLUG-$PLUGIN_VERSION.zip" "$GITHUB_WORKSPACE/${REPO_NAME}-${VERSION}.zip"
+
+      - name: Verify ZIP contents
+        env:
+          ZIP_FILE: ${{ steps.metadata.outputs.zip }}
+        run: |
+          unzip -t "$ZIP_FILE"
+          unzip -Z1 "$ZIP_FILE" > "$RUNNER_TEMP/zip-contents.txt"
+          grep -Fx "$PLUGIN_SLUG/sw-sliderman.php" "$RUNNER_TEMP/zip-contents.txt"
+          grep -Fx "$PLUGIN_SLUG/vendor/autoload.php" "$RUNNER_TEMP/zip-contents.txt"
+          grep -Fx "$PLUGIN_SLUG/build/editor/editor.js" "$RUNNER_TEMP/zip-contents.txt"
+          grep -Fx "$PLUGIN_SLUG/build/runtime/runtime.js" "$RUNNER_TEMP/zip-contents.txt"
+          grep -Fx "$PLUGIN_SLUG/fonts/catalog.json" "$RUNNER_TEMP/zip-contents.txt"
+          grep -Fx "$PLUGIN_SLUG/languages/sw-sliderman-de_DE.mo" "$RUNNER_TEMP/zip-contents.txt"
+          if grep -Eq "^$PLUGIN_SLUG/(assets|tests|tools|bin|node_modules|\.git|\.github)/|^$PLUGIN_SLUG/vendor/(phpunit|phpstan|squizlabs|wp-coding-standards)/" "$RUNNER_TEMP/zip-contents.txt"; then
+            echo "Unexpected development files in ZIP" >&2
+            exit 1
+          fi
+
+          # Test the final archive, not only its staging input.
+          unzip -q "$ZIP_FILE" -d "$RUNNER_TEMP/unpacked"
+          php tests/package-smoke.php "$RUNNER_TEMP/unpacked/$PLUGIN_SLUG"
+
+      - name: Create release and attach ZIP
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.metadata.outputs.version }}
+          files: ${{ steps.metadata.outputs.zip }}

@@ -1,0 +1,7 @@
+{
+  "description": "Effective slide durations of documents/valid/basic.json: the configured duration is extended to the end of all mandatory animations.",
+  "slides": [
+    { "id": "slide-one", "effectiveDurationMs": 6000, "extended": false },
+    { "id": "slide-two", "effectiveDurationMs": 7200, "extended": true }
+  ]
+}

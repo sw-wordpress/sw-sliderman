@@ -1,0 +1,238 @@
+/*
+ * SW Sliderman frontend base styles. Everything is scoped below `.sws-slider`; nothing targets
+ * global elements (CODE-STYLE 14.1). Positions, sizes and typography of layers come from the
+ * published slider stylesheet (container queries on the `sws` container).
+ */
+.sws-slider {
+  container: sws / inline-size;
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  margin-inline: auto;
+  overflow: hidden;
+  isolation: isolate;
+}
+.sws-slider *,
+.sws-slider *::before,
+.sws-slider *::after {
+  box-sizing: border-box;
+}
+.sws-slider .sws-viewport {
+  display: grid;
+  touch-action: pan-y;
+}
+.sws-slider .sws-slide {
+  grid-area: 1 / 1;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+}
+.sws-slider .sws-slide[hidden] {
+  display: none;
+}
+.sws-slider .sws-slide.sws-is-leaving {
+  display: block;
+  z-index: 0;
+}
+.sws-slider .sws-slide.sws-is-active {
+  z-index: 1;
+}
+.sws-slider .sws-slide__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+}
+.sws-slider .sws-fit-cover {
+  object-fit: cover;
+}
+.sws-slider .sws-fit-contain {
+  object-fit: contain;
+}
+.sws-slider .sws-stage {
+  position: relative;
+  width: 100%;
+}
+.sws-slider .sws-layer {
+  position: absolute;
+  margin: 0;
+}
+.sws-slider .sws-layer__anim,
+.sws-slider .sws-layer__body {
+  width: 100%;
+  height: 100%;
+}
+.sws-slider .sws-layer__body {
+  overflow: hidden;
+  overflow-wrap: break-word;
+  transform-origin: 50% 50%;
+}
+.sws-slider .sws-text {
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  text-transform: none;
+  white-space: normal;
+}
+.sws-slider .sws-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  border-radius: inherit;
+}
+.sws-slider .sws-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-decoration: none;
+  border-radius: inherit;
+}
+.sws-slider .sws-button:hover {
+  filter: brightness(1.08);
+}
+.sws-slider .sws-button:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}
+
+/* Controls: only useful with JavaScript; the static fallback shows the first slide. */
+.sws-slider .sws-controls {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 12px;
+  z-index: 2;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.sws-slider.sws-js .sws-controls {
+  display: flex;
+}
+.sws-slider .sws-controls > *,
+.sws-slider .sws-dots > * {
+  pointer-events: auto;
+}
+.sws-slider .sws-prev,
+.sws-slider .sws-next,
+.sws-slider .sws-toggle {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(15, 23, 42, 0.55);
+  cursor: pointer;
+}
+.sws-slider .sws-prev:disabled,
+.sws-slider .sws-next:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.sws-slider .sws-toggle[hidden] {
+  display: none;
+}
+.sws-slider .sws-dots {
+  display: flex;
+  gap: 2px;
+}
+.sws-slider .sws-dot {
+  position: relative;
+  width: 28px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.sws-slider .sws-dot::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35);
+}
+.sws-slider .sws-dot[aria-current='true']::before {
+  background: #fff;
+  transform: scale(1.25);
+}
+.sws-slider .sws-prev:focus-visible,
+.sws-slider .sws-next:focus-visible,
+.sws-slider .sws-toggle:focus-visible,
+.sws-slider .sws-dot:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px rgba(15, 23, 42, 0.8);
+}
+.sws-slider .sws-icon {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border: solid currentColor;
+  border-width: 0 0 3px 3px;
+}
+.sws-slider .sws-icon--prev {
+  transform: translateX(2px) rotate(45deg);
+}
+.sws-slider .sws-icon--next {
+  transform: translateX(-2px) rotate(-135deg);
+}
+.sws-slider .sws-icon--pause {
+  width: 12px;
+  border-width: 0 4px;
+}
+.sws-slider .sws-icon--play {
+  width: 0;
+  height: 0;
+  border-width: 7px 0 7px 12px;
+  border-color: transparent transparent transparent currentColor;
+  transform: translateX(2px);
+}
+.sws-slider .sws-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* Diagnostic for editors when a slider cannot be shown (never visible to visitors). */
+.sws-diagnostic {
+  padding: 12px 16px;
+  border-left: 4px solid #d97706;
+  background: #fffbeb;
+  color: #78350f;
+  font: 14px/1.4 system-ui, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sws-slider .sws-dot::before {
+    transition: none;
+  }
+}

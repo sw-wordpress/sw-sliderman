@@ -1,0 +1,918 @@
+{
+    "catalogVersion": "2026-10-29",
+    "source": "https://github.com/google/fonts (METADATA.pb, main branch)",
+    "families": [
+        {
+            "id": "abrilfatface",
+            "family": "Abril Fatface",
+            "category": "display",
+            "license": "OFL",
+            "licensePath": "ofl/abrilfatface/OFL.txt",
+            "static": true,
+            "subsets": [
+                "latin",
+                "latin-ext"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "archivoblack",
+            "family": "Archivo Black",
+            "category": "sans-serif",
+            "license": "OFL",
+            "licensePath": "ofl/archivoblack/OFL.txt",
+            "static": true,
+            "subsets": [
+                "latin",
+                "latin-ext"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "barlow",
+            "family": "Barlow",
+            "category": "sans-serif",
+            "license": "OFL",
+            "licensePath": "ofl/barlow/OFL.txt",
+            "static": true,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "vietnamese"
+            ],
+            "variants": [
+                {
+                    "weight": 100,
+                    "style": "italic"
+                },
+                {
+                    "weight": 100,
+                    "style": "normal"
+                },
+                {
+                    "weight": 200,
+                    "style": "italic"
+                },
+                {
+                    "weight": 200,
+                    "style": "normal"
+                },
+                {
+                    "weight": 300,
+                    "style": "italic"
+                },
+                {
+                    "weight": 300,
+                    "style": "normal"
+                },
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                },
+                {
+                    "weight": 500,
+                    "style": "italic"
+                },
+                {
+                    "weight": 500,
+                    "style": "normal"
+                },
+                {
+                    "weight": 600,
+                    "style": "italic"
+                },
+                {
+                    "weight": 600,
+                    "style": "normal"
+                },
+                {
+                    "weight": 700,
+                    "style": "italic"
+                },
+                {
+                    "weight": 700,
+                    "style": "normal"
+                },
+                {
+                    "weight": 800,
+                    "style": "italic"
+                },
+                {
+                    "weight": 800,
+                    "style": "normal"
+                },
+                {
+                    "weight": 900,
+                    "style": "italic"
+                },
+                {
+                    "weight": 900,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "bebasneue",
+            "family": "Bebas Neue",
+            "category": "display",
+            "license": "OFL",
+            "licensePath": "ofl/bebasneue/OFL.txt",
+            "static": true,
+            "subsets": [
+                "latin",
+                "latin-ext"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "crimsontext",
+            "family": "Crimson Text",
+            "category": "serif",
+            "license": "OFL",
+            "licensePath": "ofl/crimsontext/OFL.txt",
+            "static": true,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "vietnamese"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                },
+                {
+                    "weight": 600,
+                    "style": "italic"
+                },
+                {
+                    "weight": 600,
+                    "style": "normal"
+                },
+                {
+                    "weight": 700,
+                    "style": "italic"
+                },
+                {
+                    "weight": 700,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "dmserifdisplay",
+            "family": "DM Serif Display",
+            "category": "serif",
+            "license": "OFL",
+            "licensePath": "ofl/dmserifdisplay/OFL.txt",
+            "static": true,
+            "subsets": [
+                "latin",
+                "latin-ext"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "firasans",
+            "family": "Fira Sans",
+            "category": "sans-serif",
+            "license": "OFL",
+            "licensePath": "ofl/firasans/OFL.txt",
+            "static": true,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "cyrillic",
+                "cyrillic-ext",
+                "greek",
+                "greek-ext",
+                "vietnamese"
+            ],
+            "variants": [
+                {
+                    "weight": 100,
+                    "style": "italic"
+                },
+                {
+                    "weight": 100,
+                    "style": "normal"
+                },
+                {
+                    "weight": 200,
+                    "style": "italic"
+                },
+                {
+                    "weight": 200,
+                    "style": "normal"
+                },
+                {
+                    "weight": 300,
+                    "style": "italic"
+                },
+                {
+                    "weight": 300,
+                    "style": "normal"
+                },
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                },
+                {
+                    "weight": 500,
+                    "style": "italic"
+                },
+                {
+                    "weight": 500,
+                    "style": "normal"
+                },
+                {
+                    "weight": 600,
+                    "style": "italic"
+                },
+                {
+                    "weight": 600,
+                    "style": "normal"
+                },
+                {
+                    "weight": 700,
+                    "style": "italic"
+                },
+                {
+                    "weight": 700,
+                    "style": "normal"
+                },
+                {
+                    "weight": 800,
+                    "style": "italic"
+                },
+                {
+                    "weight": 800,
+                    "style": "normal"
+                },
+                {
+                    "weight": 900,
+                    "style": "italic"
+                },
+                {
+                    "weight": 900,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "inter",
+            "family": "Inter",
+            "category": "sans-serif",
+            "license": "OFL",
+            "licensePath": "ofl/inter/OFL.txt",
+            "static": false,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "cyrillic",
+                "cyrillic-ext",
+                "greek",
+                "greek-ext",
+                "vietnamese"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "lato",
+            "family": "Lato",
+            "category": "sans-serif",
+            "license": "OFL",
+            "licensePath": "ofl/lato/OFL.txt",
+            "static": true,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "cyrillic",
+                "cyrillic-ext",
+                "greek",
+                "greek-ext",
+                "vietnamese"
+            ],
+            "variants": [
+                {
+                    "weight": 100,
+                    "style": "italic"
+                },
+                {
+                    "weight": 100,
+                    "style": "normal"
+                },
+                {
+                    "weight": 200,
+                    "style": "italic"
+                },
+                {
+                    "weight": 200,
+                    "style": "normal"
+                },
+                {
+                    "weight": 300,
+                    "style": "italic"
+                },
+                {
+                    "weight": 300,
+                    "style": "normal"
+                },
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                },
+                {
+                    "weight": 500,
+                    "style": "italic"
+                },
+                {
+                    "weight": 500,
+                    "style": "normal"
+                },
+                {
+                    "weight": 600,
+                    "style": "italic"
+                },
+                {
+                    "weight": 600,
+                    "style": "normal"
+                },
+                {
+                    "weight": 700,
+                    "style": "italic"
+                },
+                {
+                    "weight": 700,
+                    "style": "normal"
+                },
+                {
+                    "weight": 800,
+                    "style": "italic"
+                },
+                {
+                    "weight": 800,
+                    "style": "normal"
+                },
+                {
+                    "weight": 900,
+                    "style": "italic"
+                },
+                {
+                    "weight": 900,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "lobster",
+            "family": "Lobster",
+            "category": "display",
+            "license": "OFL",
+            "licensePath": "ofl/lobster/OFL.txt",
+            "static": true,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "cyrillic",
+                "cyrillic-ext",
+                "vietnamese"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "merriweather",
+            "family": "Merriweather",
+            "category": "serif",
+            "license": "OFL",
+            "licensePath": "ofl/merriweather/OFL.txt",
+            "static": false,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "cyrillic",
+                "cyrillic-ext",
+                "vietnamese"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "montserrat",
+            "family": "Montserrat",
+            "category": "sans-serif",
+            "license": "OFL",
+            "licensePath": "ofl/montserrat/OFL.txt",
+            "static": false,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "cyrillic",
+                "cyrillic-ext",
+                "vietnamese"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "opensans",
+            "family": "Open Sans",
+            "category": "sans-serif",
+            "license": "OFL",
+            "licensePath": "ofl/opensans/OFL.txt",
+            "static": false,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "cyrillic",
+                "cyrillic-ext",
+                "greek",
+                "greek-ext",
+                "vietnamese"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "oswald",
+            "family": "Oswald",
+            "category": "sans-serif",
+            "license": "OFL",
+            "licensePath": "ofl/oswald/OFL.txt",
+            "static": false,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "cyrillic",
+                "cyrillic-ext",
+                "vietnamese"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "ptsans",
+            "family": "PT Sans",
+            "category": "sans-serif",
+            "license": "OFL",
+            "licensePath": "ofl/ptsans/OFL.txt",
+            "static": true,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "cyrillic",
+                "cyrillic-ext"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                },
+                {
+                    "weight": 700,
+                    "style": "italic"
+                },
+                {
+                    "weight": 700,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "ptserif",
+            "family": "PT Serif",
+            "category": "serif",
+            "license": "OFL",
+            "licensePath": "ofl/ptserif/OFL.txt",
+            "static": true,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "cyrillic",
+                "cyrillic-ext"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                },
+                {
+                    "weight": 700,
+                    "style": "italic"
+                },
+                {
+                    "weight": 700,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "pacifico",
+            "family": "Pacifico",
+            "category": "handwriting",
+            "license": "OFL",
+            "licensePath": "ofl/pacifico/OFL.txt",
+            "static": true,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "cyrillic",
+                "cyrillic-ext",
+                "vietnamese"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "playfairdisplay",
+            "family": "Playfair Display",
+            "category": "serif",
+            "license": "OFL",
+            "licensePath": "ofl/playfairdisplay/OFL.txt",
+            "static": false,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "cyrillic",
+                "vietnamese"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "poppins",
+            "family": "Poppins",
+            "category": "sans-serif",
+            "license": "OFL",
+            "licensePath": "ofl/poppins/OFL.txt",
+            "static": true,
+            "subsets": [
+                "latin",
+                "latin-ext"
+            ],
+            "variants": [
+                {
+                    "weight": 100,
+                    "style": "italic"
+                },
+                {
+                    "weight": 100,
+                    "style": "normal"
+                },
+                {
+                    "weight": 200,
+                    "style": "italic"
+                },
+                {
+                    "weight": 200,
+                    "style": "normal"
+                },
+                {
+                    "weight": 300,
+                    "style": "italic"
+                },
+                {
+                    "weight": 300,
+                    "style": "normal"
+                },
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                },
+                {
+                    "weight": 500,
+                    "style": "italic"
+                },
+                {
+                    "weight": 500,
+                    "style": "normal"
+                },
+                {
+                    "weight": 600,
+                    "style": "italic"
+                },
+                {
+                    "weight": 600,
+                    "style": "normal"
+                },
+                {
+                    "weight": 700,
+                    "style": "italic"
+                },
+                {
+                    "weight": 700,
+                    "style": "normal"
+                },
+                {
+                    "weight": 800,
+                    "style": "italic"
+                },
+                {
+                    "weight": 800,
+                    "style": "normal"
+                },
+                {
+                    "weight": 900,
+                    "style": "italic"
+                },
+                {
+                    "weight": 900,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "raleway",
+            "family": "Raleway",
+            "category": "sans-serif",
+            "license": "OFL",
+            "licensePath": "ofl/raleway/OFL.txt",
+            "static": false,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "cyrillic",
+                "cyrillic-ext",
+                "vietnamese"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "roboto",
+            "family": "Roboto",
+            "category": "sans-serif",
+            "license": "OFL",
+            "licensePath": "ofl/roboto/OFL.txt",
+            "static": false,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "cyrillic",
+                "cyrillic-ext",
+                "greek",
+                "greek-ext",
+                "vietnamese"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "sourcesans3",
+            "family": "Source Sans 3",
+            "category": "sans-serif",
+            "license": "OFL",
+            "licensePath": "ofl/sourcesans3/OFL.txt",
+            "static": false,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "cyrillic",
+                "cyrillic-ext",
+                "greek",
+                "greek-ext",
+                "vietnamese"
+            ],
+            "variants": [
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "titilliumweb",
+            "family": "Titillium Web",
+            "category": "sans-serif",
+            "license": "OFL",
+            "licensePath": "ofl/titilliumweb/OFL.txt",
+            "static": true,
+            "subsets": [
+                "latin",
+                "latin-ext"
+            ],
+            "variants": [
+                {
+                    "weight": 200,
+                    "style": "italic"
+                },
+                {
+                    "weight": 200,
+                    "style": "normal"
+                },
+                {
+                    "weight": 300,
+                    "style": "italic"
+                },
+                {
+                    "weight": 300,
+                    "style": "normal"
+                },
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                },
+                {
+                    "weight": 600,
+                    "style": "italic"
+                },
+                {
+                    "weight": 600,
+                    "style": "normal"
+                },
+                {
+                    "weight": 700,
+                    "style": "italic"
+                },
+                {
+                    "weight": 700,
+                    "style": "normal"
+                },
+                {
+                    "weight": 900,
+                    "style": "normal"
+                }
+            ]
+        },
+        {
+            "id": "ubuntu",
+            "family": "Ubuntu",
+            "category": "sans-serif",
+            "license": "UFL",
+            "licensePath": "ufl/ubuntu/UFL.txt",
+            "static": true,
+            "subsets": [
+                "latin",
+                "latin-ext",
+                "cyrillic",
+                "cyrillic-ext",
+                "greek",
+                "greek-ext"
+            ],
+            "variants": [
+                {
+                    "weight": 300,
+                    "style": "italic"
+                },
+                {
+                    "weight": 300,
+                    "style": "normal"
+                },
+                {
+                    "weight": 400,
+                    "style": "italic"
+                },
+                {
+                    "weight": 400,
+                    "style": "normal"
+                },
+                {
+                    "weight": 500,
+                    "style": "italic"
+                },
+                {
+                    "weight": 500,
+                    "style": "normal"
+                },
+                {
+                    "weight": 700,
+                    "style": "italic"
+                },
+                {
+                    "weight": 700,
+                    "style": "normal"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,10 @@
+vendor/
+node_modules/
+build/
+dist/
+coverage/
+tests/wp/vendor/
+languages/
+fonts/catalog.json
+*.md
+*.php

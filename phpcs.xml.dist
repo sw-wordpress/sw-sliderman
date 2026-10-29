@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<ruleset name="sw-sliderman">
+    <description>WordPress Coding Standards for all own PHP code (CODE-STYLE.md 2.1) with the documented PSR-4 naming exception.</description>
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <arg value="sp"/>
+    <arg name="cache" value=".phpcs.cache"/>
+
+    <file>src</file>
+    <file>tests/php</file>
+    <file>tests/coverage</file>
+    <file>tests/package-smoke.php</file>
+    <file>bin</file>
+    <file>sw-sliderman.php</file>
+    <file>uninstall.php</file>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+
+    <config name="minimum_wp_version" value="6.6"/>
+    <config name="testVersion" value="8.2-"/>
+
+    <rule ref="WordPress">
+        <!-- CODE-STYLE 2.1: classes and PSR-4 files use PascalCase (SliderDocument.php). -->
+        <exclude name="WordPress.Files.FileName"/>
+        <!-- JSON document fields are camelCase by contract (CODE-STYLE 7); PHP accesses them as
+             properties of decoded objects. Own variables and methods stay snake_case. -->
+        <exclude name="WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase"/>
+        <!-- Typed signatures carry the contract (CODE-STYLE 18: PHPDoc complements native types). -->
+        <exclude name="Squiz.Commenting.FunctionComment.Missing"/>
+        <exclude name="Squiz.Commenting.FunctionComment.MissingParamTag"/>
+        <exclude name="Squiz.Commenting.FunctionComment.MissingParamComment"/>
+        <exclude name="Squiz.Commenting.FunctionComment.ParamCommentFullStop"/>
+        <!-- PHPDoc types use PHPStan generics (list<T>, array shapes, closures). PHPStan level 8
+             validates PHPDoc types and parameter names; these sniffs cannot parse generics and
+             require every parameter to be documented even when only one needs a precise type. -->
+        <exclude name="Squiz.Commenting.FunctionComment.IncorrectTypeHint"/>
+        <exclude name="Squiz.Commenting.FunctionComment.ParamNameNoMatch"/>
+        <exclude name="Squiz.Commenting.FunctionCommentThrowTag.WrongNumber"/>
+        <exclude name="Squiz.Commenting.FunctionCommentThrowTag.Missing"/>
+        <exclude name="Squiz.Commenting.FunctionComment.EmptyThrows"/>
+        <exclude name="Squiz.Commenting.ClassComment.Missing"/>
+        <exclude name="Squiz.Commenting.VariableComment.Missing"/>
+        <exclude name="Squiz.Commenting.FileComment.Missing"/>
+        <exclude name="Generic.Commenting.DocComment.MissingShort"/>
+        <!-- Exception messages are never printed as HTML; REST maps them to translated WP_Error messages. -->
+        <exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped"/>
+        <!-- Short ternaries are not used; allow short array-destructuring syntax `[ $a, $b ] = ...`. -->
+        <exclude name="Universal.Arrays.DisallowShortArraySyntax.Found"/>
+    </rule>
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array"><element value="sw-sliderman"/></property>
+        </properties>
+    </rule>
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <properties>
+            <property name="prefixes" type="array">
+                <!-- CODE-STYLE 4.3 prescribes the short project prefix sws_/SWS_; with the separator
+                     it satisfies the minimum prefix length. -->
+                <element value="sws_"/>
+                <element value="SW\Slider"/>
+            </property>
+        </properties>
+    </rule>
+    <rule ref="PHPCompatibilityWP"/>
+
+    <!-- Tests and build scripts are not loaded by WordPress. -->
+    <rule ref="WordPress.WP.AlternativeFunctions">
+        <exclude-pattern>tests/*</exclude-pattern>
+        <exclude-pattern>bin/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.Security.EscapeOutput">
+        <exclude-pattern>bin/*</exclude-pattern>
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.PHP.DiscouragedPHPFunctions">
+        <exclude-pattern>tests/*</exclude-pattern>
+        <exclude-pattern>bin/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.WP.GlobalVariablesOverride">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+</ruleset>

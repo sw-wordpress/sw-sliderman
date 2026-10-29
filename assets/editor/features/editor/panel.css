@@ -1,0 +1,59 @@
+.sws-panel :deep(.sws-card__header) {
+  padding: 12px 12px 0 16px;
+}
+.sws-panel :deep(.sws-card__title) {
+  font-size: 14px;
+}
+.sws-panel__empty {
+  padding: 8px 16px 16px;
+  color: var(--sws-muted);
+  font-size: 13px;
+}
+.sws-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 8px 10px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+.sws-item {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: 10px;
+}
+.sws-item:hover {
+  background: var(--sws-surface-3);
+}
+.sws-item--active {
+  background: var(--sws-primary-bg);
+  color: var(--sws-primary-text);
+}
+.sws-item--off .sws-item__name {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+.sws-item__main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 10px;
+}
+.sws-item__swatch {
+  flex: none;
+  width: 22px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid var(--sws-border);
+}

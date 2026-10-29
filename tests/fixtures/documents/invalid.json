@@ -1,0 +1,675 @@
+{
+  "description": "Invalid document cases shared by the PHP and TypeScript validators. Each case patches valid/<base>.json (op set|remove at a JSON pointer; a value {\"repeat\": s, \"times\": n} expands to s repeated n times) and lists the exact expected issues (compared as a set).",
+  "cases": [
+    {
+      "name": "newer schema version is rejected without further inspection",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/schemaVersion",
+          "value": 2
+        },
+        {
+          "op": "remove",
+          "path": "/slides"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/schemaVersion",
+          "code": "schema_version"
+        }
+      ]
+    },
+    {
+      "name": "root must be an object",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "",
+          "value": [
+            1,
+            2
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "path": "",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "missing settings",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "remove",
+          "path": "/settings"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/settings",
+          "code": "required"
+        }
+      ]
+    },
+    {
+      "name": "unknown root key",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/script",
+          "value": "alert(1)"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/script",
+          "code": "unknown_key"
+        }
+      ]
+    },
+    {
+      "name": "settings must be an object, not a list",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/settings",
+          "value": []
+        }
+      ],
+      "issues": [
+        {
+          "path": "/settings",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "boolean required for autoplay",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/settings/autoplay",
+          "value": "yes"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/settings/autoplay",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "breakpoints must be strictly ascending",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/breakpoints/tablet/minWidth",
+          "value": 1024
+        }
+      ],
+      "issues": [
+        {
+          "path": "/breakpoints/desktop/minWidth",
+          "code": "breakpoint_order"
+        }
+      ]
+    },
+    {
+      "name": "mobile breakpoint starts at 0",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/breakpoints/mobile/minWidth",
+          "value": 10
+        }
+      ],
+      "issues": [
+        {
+          "path": "/breakpoints/mobile/minWidth",
+          "code": "breakpoint_order"
+        }
+      ]
+    },
+    {
+      "name": "stage width must be an integer",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/breakpoints/desktop/stageWidth",
+          "value": 1440.5
+        }
+      ],
+      "issues": [
+        {
+          "path": "/breakpoints/desktop/stageWidth",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "stage width range",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/breakpoints/mobile/stageWidth",
+          "value": 100
+        }
+      ],
+      "issues": [
+        {
+          "path": "/breakpoints/mobile/stageWidth",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "at least one slide",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides",
+          "value": []
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides",
+          "code": "count"
+        }
+      ]
+    },
+    {
+      "name": "duplicate layer id across slides",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/1/layers/0/id",
+          "value": "headline"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/1/layers/0/id",
+          "code": "duplicate_id"
+        }
+      ]
+    },
+    {
+      "name": "slide id equal to a layer id",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/1/id",
+          "value": "cta"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/1/id",
+          "code": "duplicate_id"
+        }
+      ]
+    },
+    {
+      "name": "invalid id pattern",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/id",
+          "value": "<script>"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/id",
+          "code": "pattern"
+        }
+      ]
+    },
+    {
+      "name": "unknown layer type",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/type",
+          "value": "html"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/type",
+          "code": "enum"
+        }
+      ]
+    },
+    {
+      "name": "javascript link is rejected",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/1/content/url",
+          "value": "javascript:alert(1)"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/1/content/url",
+          "code": "url"
+        }
+      ]
+    },
+    {
+      "name": "protocol-relative link is rejected",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/1/content/url",
+          "value": "//evil.example/x"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/1/content/url",
+          "code": "url"
+        }
+      ]
+    },
+    {
+      "name": "link with whitespace is rejected",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/1/content/url",
+          "value": "https://example.com/a b"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/1/content/url",
+          "code": "url"
+        }
+      ]
+    },
+    {
+      "name": "empty button label",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/1/content/label",
+          "value": ""
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/1/content/label",
+          "code": "length"
+        }
+      ]
+    },
+    {
+      "name": "free css is not a color",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/style/color",
+          "value": "red;background:url(x)"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/style/color",
+          "code": "pattern"
+        }
+      ]
+    },
+    {
+      "name": "fontRef must exist",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/style/fontRef",
+          "value": "font-missing"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/style/fontRef",
+          "code": "reference"
+        }
+      ]
+    },
+    {
+      "name": "font weight multiple of 100",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/fontRefs/0/weight",
+          "value": 450
+        }
+      ],
+      "issues": [
+        {
+          "path": "/fontRefs/0/weight",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "font weight out of range reported once",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/fontRefs/0/weight",
+          "value": 950
+        }
+      ],
+      "issues": [
+        {
+          "path": "/fontRefs/0/weight",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "fontSize below minimum",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/style/fontSize",
+          "value": 2
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/style/fontSize",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "override may not contain non-overridable style keys",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/overrides/mobile/style/color",
+          "value": "#ffffff"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/overrides/mobile/style/color",
+          "code": "unknown_key"
+        }
+      ]
+    },
+    {
+      "name": "override for desktop does not exist",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/overrides/desktop",
+          "value": {}
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/overrides/desktop",
+          "code": "unknown_key"
+        }
+      ]
+    },
+    {
+      "name": "override layout value is validated",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/overrides/mobile/layout/width",
+          "value": 0
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/overrides/mobile/layout/width",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "null is not allowed for layout values",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/overrides/mobile/layout/x",
+          "value": null
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/overrides/mobile/layout/x",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "unknown animation preset",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/animation/enter/preset",
+          "value": "explode"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/animation/enter/preset",
+          "code": "enum"
+        }
+      ]
+    },
+    {
+      "name": "timed exit before enter end",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/1/animation/exit/startMs",
+          "value": 800
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/1/animation/exit/startMs",
+          "code": "animation_order"
+        }
+      ]
+    },
+    {
+      "name": "slide-end exit has no further keys",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/animation/exit/startMs",
+          "value": 100
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/animation/exit/startMs",
+          "code": "unknown_key"
+        }
+      ]
+    },
+    {
+      "name": "exit mode missing",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/animation/exit",
+          "value": {}
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/animation/exit/mode",
+          "code": "required"
+        }
+      ]
+    },
+    {
+      "name": "slide duration too short",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/durationMs",
+          "value": 500
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/durationMs",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "attachment id must be a positive integer",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/1/layers/0/content/attachmentId",
+          "value": -3
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/1/layers/0/content/attachmentId",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "attachment id given as string",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/1/background/attachmentId",
+          "value": "42"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/1/background/attachmentId",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "text too long",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/content/text",
+          "value": {
+            "repeat": "ä",
+            "times": 5001
+          }
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/content/text",
+          "code": "length"
+        }
+      ]
+    },
+    {
+      "name": "text length counts code points",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/content/text",
+          "value": {
+            "repeat": "😀",
+            "times": 5000
+          }
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "several independent issues are all reported",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/settings/maxWidth",
+          "value": 10
+        },
+        {
+          "op": "remove",
+          "path": "/slides/0/layers/1/style/opacity"
+        },
+        {
+          "op": "set",
+          "path": "/slides/1/transition/type",
+          "value": "cube"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/settings/maxWidth",
+          "code": "range"
+        },
+        {
+          "path": "/slides/0/layers/1/style/opacity",
+          "code": "required"
+        },
+        {
+          "path": "/slides/1/transition/type",
+          "code": "enum"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+parameters:
+    level: 8
+    paths:
+        - src
+        - sw-sliderman.php
+        - uninstall.php
+    bootstrapFiles:
+        - tests/php/phpstan-constants.php
+    tmpDir: .phpstan.cache

@@ -1,0 +1,205 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: SW Sliderman\n"
+"Language: de_DE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Domain: sw-sliderman\n"
+
+#. Plugin Name of the plugin
+#: sw-sliderman.php
+#: src/Admin/AdminPage.php:49
+#: src/Rendering/SliderRenderer.php:88
+msgid "SW Sliderman"
+msgstr "SW Sliderman"
+
+#. Description of the plugin
+#: sw-sliderman.php
+msgid "Responsive layer slider with a visual editor, container-based mobile layouts and locally hosted Google Fonts."
+msgstr "Responsiver Layer-Slider mit visuellem Editor, containerbasierten Mobil-Layouts und lokal gehosteten Google Fonts."
+
+#. Author of the plugin
+#: sw-sliderman.php
+msgid "sw-wordpress"
+msgstr "sw-wordpress"
+
+#: src/Admin/AdminPage.php:50
+msgid "Sliderman"
+msgstr "Sliderman"
+
+#: src/Admin/AdminPage.php:65
+msgid "You do not have permission to access this page."
+msgstr "Keine Berechtigung für diese Seite."
+
+#: src/Admin/AdminPage.php:68
+msgid "The SW Sliderman editor has not been built. Install the release package or run \"npm run build\"."
+msgstr "Der SW-Sliderman-Editor wurde nicht gebaut. Das Release-Paket installieren oder „npm run build“ ausführen."
+
+#: src/Admin/AdminPage.php:71
+msgid "The slider editor requires JavaScript."
+msgstr "Der Slider-Editor benötigt JavaScript."
+
+#: src/Infrastructure/PostTypes.php:33
+msgid "Sliders"
+msgstr "Slider"
+
+#: src/Infrastructure/PostTypes.php:34
+msgid "Slider"
+msgstr "Slider"
+
+#: src/Infrastructure/PostTypes.php:55
+msgid "Installed fonts"
+msgstr "Installierte Schriften"
+
+#: src/Infrastructure/PostTypes.php:56
+msgid "Installed font"
+msgstr "Installierte Schrift"
+
+#: src/Rendering/SliderRenderer.php:51
+msgid "Slider not found."
+msgstr "Slider nicht gefunden."
+
+#: src/Rendering/SliderRenderer.php:51
+msgid "This slider has not been published yet."
+msgstr "Dieser Slider wurde noch nicht veröffentlicht."
+
+#: src/Rendering/SliderRenderer.php:56
+msgid "The published slider data is damaged."
+msgstr "Die veröffentlichten Sliderdaten sind beschädigt."
+
+#: src/Rendering/SliderRenderer.php:60
+msgid "This slider has no enabled slides."
+msgstr "Dieser Slider hat keine aktivierten Slides."
+
+#: src/Rendering/SliderRenderer.php:70
+msgid "carousel"
+msgstr "Karussell"
+
+#. translators: 1: slide position, 2: number of slides
+#: src/Rendering/SliderRenderer.php:98
+#, php-format
+msgid "%1$d of %2$d"
+msgstr "%1$d von %2$d"
+
+#: src/Rendering/SliderRenderer.php:103
+msgid "slide"
+msgstr "Slide"
+
+#: src/Rendering/SliderRenderer.php:199
+msgid "Pause slider"
+msgstr "Slider anhalten"
+
+#: src/Rendering/SliderRenderer.php:199
+msgid "Play slider"
+msgstr "Slider abspielen"
+
+#: src/Rendering/SliderRenderer.php:202
+msgid "Previous slide"
+msgstr "Vorheriger Slide"
+
+#. translators: %d: slide position
+#: src/Rendering/SliderRenderer.php:209
+#, php-format
+msgid "Show slide %d"
+msgstr "Slide %d anzeigen"
+
+#: src/Rendering/SliderRenderer.php:217
+msgid "Next slide"
+msgstr "Nächster Slide"
+
+#: src/Rest/Errors.php:33
+msgid "The slider was changed elsewhere. Reload it or export your changes."
+msgstr "Der Slider wurde an anderer Stelle geändert. Neu laden oder die eigenen Änderungen exportieren."
+
+#: src/Rest/Errors.php:43
+msgid "The slider contains invalid or missing data."
+msgstr "Der Slider enthält ungültige oder fehlende Daten."
+
+#: src/Rest/Errors.php:51
+msgid "The slider does not exist."
+msgstr "Der Slider existiert nicht."
+
+#: src/Rest/Errors.php:54
+msgid "The slider is being saved by another request. Please try again."
+msgstr "Der Slider wird gerade von einer anderen Anfrage gespeichert. Bitte erneut versuchen."
+
+#: src/Rest/Errors.php:64
+msgid "An unexpected error occurred."
+msgstr "Ein unerwarteter Fehler ist aufgetreten."
+
+#: src/Rest/Errors.php:74
+#: src/Rest/FontController.php:125
+msgid "The font selection is invalid."
+msgstr "Die Schriftauswahl ist ungültig."
+
+#: src/Rest/Errors.php:75
+msgid "The font family is not in the local catalog."
+msgstr "Die Schriftfamilie ist nicht im lokalen Katalog enthalten."
+
+#: src/Rest/Errors.php:76
+msgid "The font installation does not exist."
+msgstr "Die Schriftinstallation existiert nicht."
+
+#: src/Rest/Errors.php:77
+msgid "A selected style or weight is not available for this family."
+msgstr "Ein gewählter Schnitt ist für diese Familie nicht verfügbar."
+
+#: src/Rest/Errors.php:78
+msgid "A selected character set is not available for this family."
+msgstr "Ein gewählter Zeichensatz ist für diese Familie nicht verfügbar."
+
+#: src/Rest/Errors.php:79
+msgid "This family is only available as a variable font, which is not supported yet."
+msgstr "Diese Familie ist nur als variable Schrift verfügbar; das wird noch nicht unterstützt."
+
+#: src/Rest/Errors.php:80
+msgid "Font downloads are disabled (offline mode)."
+msgstr "Font-Downloads sind deaktiviert (Offline-Modus)."
+
+#: src/Rest/Errors.php:81
+msgid "This family is already being installed."
+msgstr "Diese Familie wird bereits installiert."
+
+#: src/Rest/Errors.php:82
+msgid "The font is still used by a slider, a revision or a published version."
+msgstr "Die Schrift wird noch von einem Slider, einer Revision oder einem veröffentlichten Stand verwendet."
+
+#: src/Rest/Errors.php:83
+msgid "The license of this family could not be verified."
+msgstr "Die Lizenz dieser Familie konnte nicht geprüft werden."
+
+#: src/Rest/Errors.php:85
+msgid "The font could not be downloaded or verified. Existing installations were not changed."
+msgstr "Die Schrift konnte nicht heruntergeladen oder geprüft werden. Bestehende Installationen wurden nicht verändert."
+
+#: src/Rest/JsonBody.php:29
+msgid "The slider is too large."
+msgstr "Der Slider ist zu groß."
+
+#: src/Rest/JsonBody.php:33
+msgid "The request body is not a JSON object."
+msgstr "Der Anfrageinhalt ist kein JSON-Objekt."
+
+#: src/Rest/JsonBody.php:41
+msgid "The title must be text."
+msgstr "Der Titel muss Text sein."
+
+#: src/Rest/JsonBody.php:45
+msgid "Please enter a name with at most 200 characters."
+msgstr "Bitte einen Namen mit höchstens 200 Zeichen eingeben."
+
+#: src/Rest/JsonBody.php:53
+msgid "The version is missing or invalid."
+msgstr "Die Version fehlt oder ist ungültig."
+
+#. translators: 1: required PHP version, 2: current PHP version
+#: sw-sliderman.php:35
+#, php-format
+msgid "SW Sliderman requires PHP %1$s or newer. You are running PHP %2$s."
+msgstr "SW Sliderman benötigt PHP %1$s oder neuer. Installiert ist PHP %2$s."
+
+#: sw-sliderman.php:54
+msgid "SW Sliderman: the vendor directory is missing. Install the release package or run \"composer install\"."
+msgstr "SW Sliderman: Das vendor-Verzeichnis fehlt. Das Release-Paket installieren oder „composer install“ ausführen."

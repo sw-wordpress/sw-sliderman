@@ -1,0 +1,54 @@
+{
+    "name": "sw-wordpress/sw-sliderman",
+    "description": "SW Sliderman - responsive WordPress layer slider with a visual editor and locally hosted fonts.",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=8.2",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "phpcompatibility/phpcompatibility-wp": "^2.1",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.0",
+        "phpunit/phpunit": "^11.0",
+        "squizlabs/php_codesniffer": "^3.10",
+        "szepeviktor/phpstan-wordpress": "^2.0",
+        "wp-coding-standards/wpcs": "^3.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "SW\\Slider\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SW\\Slider\\Tests\\": "tests/php/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "phpstan/extension-installer": true
+        },
+        "platform": {
+            "php": "8.2.0"
+        }
+    },
+    "scripts": {
+        "test": "phpunit --testsuite unit",
+        "test:wp": "cd tests/wp && vendor/bin/phpunit -c phpunit.xml.dist",
+        "stan": "phpstan analyse --memory-limit=1G",
+        "cs": "phpcs --runtime-set ignore_warnings_on_exit 1",
+        "cs:fix": "phpcbf",
+        "check": [
+            "@cs",
+            "@stan",
+            "@test"
+        ],
+        "coverage": "phpunit --testsuite unit --coverage-clover coverage/unit.xml"
+    }
+}

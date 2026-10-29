@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "new-slider",
+  "settings": {
+    "label": "",
+    "layout": "boxed",
+    "maxWidth": 1440,
+    "autoplay": false,
+    "loop": true,
+    "showArrows": true,
+    "showDots": true
+  },
+  "breakpoints": {
+    "desktop": { "minWidth": 1024, "stageWidth": 1440, "stageHeight": 600 },
+    "tablet": { "minWidth": 768, "stageWidth": 1024, "stageHeight": 560 },
+    "mobile": { "minWidth": 0, "stageWidth": 390, "stageHeight": 520 }
+  },
+  "fontRefs": [],
+  "slides": [
+    {
+      "id": "slide-1",
+      "name": "Slide 1",
+      "enabled": true,
+      "durationMs": 6000,
+      "background": { "color": "#1e293b", "attachmentId": null, "fit": "cover" },
+      "transition": { "type": "fade", "durationMs": 600 },
+      "layers": []
+    }
+  ]
+}

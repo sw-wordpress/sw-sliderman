@@ -1,0 +1,61 @@
+.sws-props {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.sws-props__section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sws-border);
+}
+.sws-props__section h3 {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sws-muted);
+}
+.sws-props__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.sws-props__field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.sws-props__warn {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--sws-warning-bg);
+  color: var(--sws-warning-text);
+  font-size: 13px;
+}
+.sws-props__color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sws-props__color {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
+}
+.sws-props__color input {
+  width: 44px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--sws-border);
+  border-radius: 8px;
+  background: var(--sws-surface);
+  cursor: pointer;
+}

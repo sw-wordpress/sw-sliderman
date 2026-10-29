@@ -1,0 +1,560 @@
+/*
+ * sw-backupit admin styles. Everything is namespaced with `sws-` / `.sws-root` so nothing
+ * leaks into wp-admin. Quasar's own CSS is scoped to `.sws-root` at build time
+ * (tools/postcssScope.ts).
+ */
+
+/* ---------- design tokens ---------- */
+.sws-root {
+  --sws-primary: #4f46e5;
+  --sws-primary-strong: #4338ca;
+  --sws-primary-soft: #eef2ff;
+  --sws-accent: #0d9488;
+  --sws-accent-bright: #14b8a6;
+  --sws-success: #16a34a;
+  --sws-warning: #f59e0b;
+  --sws-danger: #dc2626;
+  --sws-info: #0284c7;
+
+  --sws-success-text: #166534;
+  --sws-warning-text: #92400e;
+  --sws-danger-text: #b91c1c;
+  --sws-info-text: #075985;
+  --sws-neutral-text: #334155;
+  --sws-success-bg: #dcfce7;
+  --sws-warning-bg: #fef3c7;
+  --sws-danger-bg: #fee2e2;
+  --sws-info-bg: #e0f2fe;
+  --sws-neutral-bg: #eef1f6;
+  --sws-primary-text: #3730a3;
+  --sws-primary-bg: #e0e7ff;
+
+  --sws-bg: #f3f4fa;
+  --sws-surface: #ffffff;
+  --sws-surface-2: #f8f9fc;
+  --sws-surface-3: #eef0f7;
+  --sws-border: #e1e5ee;
+  --sws-text: #0f172a;
+  --sws-muted: #475569;
+  --sws-rail-bg: #ffffff;
+  --sws-focus: #4f46e5;
+  --sws-overlay: rgba(15, 23, 42, 0.45);
+
+  --sws-gradient: linear-gradient(135deg, #4f46e5 0%, #0d9488 100%);
+  --sws-gradient-soft: linear-gradient(
+    135deg,
+    rgba(79, 70, 229, 0.1) 0%,
+    rgba(20, 184, 166, 0.1) 100%
+  );
+
+  --sws-radius: 16px;
+  --sws-radius-sm: 10px;
+  --sws-shadow-1: 0 1px 2px rgba(15, 23, 42, 0.05), 0 2px 6px rgba(15, 23, 42, 0.04);
+  --sws-shadow-2:
+    0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 16px rgba(15, 23, 42, 0.06),
+    0 18px 40px rgba(15, 23, 42, 0.05);
+  --sws-font: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --sws-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* map to Quasar brand variables (set here instead of Quasar's runtime brand plugin) */
+  --q-primary: var(--sws-primary);
+  --q-secondary: var(--sws-accent);
+  --q-accent: var(--sws-accent-bright);
+  --q-positive: var(--sws-success);
+  --q-negative: var(--sws-danger);
+  --q-info: var(--sws-info);
+  --q-warning: var(--sws-warning);
+  --q-dark: var(--sws-surface);
+  --q-dark-page: var(--sws-bg);
+
+  color-scheme: light;
+  font-family: var(--sws-font);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--sws-text);
+  font-feature-settings: 'cv11', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.sws-root.sws-dark {
+  --sws-primary: #818cf8;
+  --sws-primary-strong: #a5b4fc;
+  --sws-primary-soft: rgba(129, 140, 248, 0.14);
+  --sws-accent: #2dd4bf;
+  --sws-accent-bright: #2dd4bf;
+  --sws-success: #4ade80;
+  --sws-warning: #fbbf24;
+  --sws-danger: #f87171;
+  --sws-info: #38bdf8;
+
+  --sws-success-text: #86efac;
+  --sws-warning-text: #fcd34d;
+  --sws-danger-text: #fca5a5;
+  --sws-info-text: #7dd3fc;
+  --sws-neutral-text: #cbd5e1;
+  --sws-primary-text: #c7d2fe;
+  --sws-success-bg: rgba(74, 222, 128, 0.14);
+  --sws-warning-bg: rgba(251, 191, 36, 0.14);
+  --sws-danger-bg: rgba(248, 113, 113, 0.16);
+  --sws-info-bg: rgba(56, 189, 248, 0.14);
+  --sws-neutral-bg: rgba(148, 163, 184, 0.16);
+  --sws-primary-bg: rgba(129, 140, 248, 0.2);
+
+  --sws-bg: #0a0f1f;
+  --sws-surface: #131a2e;
+  --sws-surface-2: #182038;
+  --sws-surface-3: #1f2946;
+  --sws-border: #263250;
+  --sws-text: #e8ecf8;
+  --sws-muted: #a3aecb;
+  --sws-rail-bg: #0e1427;
+  --sws-focus: #a5b4fc;
+  --sws-overlay: rgba(2, 6, 20, 0.65);
+
+  --sws-gradient: linear-gradient(135deg, #6366f1 0%, #14b8a6 100%);
+  --sws-gradient-soft: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.18) 0%,
+    rgba(20, 184, 166, 0.14) 100%
+  );
+  --sws-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --sws-shadow-2: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+}
+
+/* ---------- isolation reset (wp-admin styles bleeding in) ---------- */
+.sws-root *,
+.sws-root *::before,
+.sws-root *::after {
+  box-sizing: border-box;
+}
+.sws-root h1,
+.sws-root h2,
+.sws-root h3,
+.sws-root h4,
+.sws-root h5,
+.sws-root h6,
+.sws-root p,
+.sws-root ul,
+.sws-root ol,
+.sws-root dl,
+.sws-root dd,
+.sws-root figure {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  line-height: 1.35;
+}
+.sws-root ul,
+.sws-root ol {
+  list-style: none;
+}
+.sws-root a {
+  color: var(--sws-primary);
+  text-decoration: none;
+}
+.sws-root a:hover {
+  text-decoration: underline;
+}
+.sws-root button,
+.sws-root input,
+.sws-root select,
+.sws-root textarea {
+  font-family: inherit;
+}
+.sws-root table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin: 0;
+  width: 100%;
+  background: transparent;
+  border: 0;
+}
+.sws-root th,
+.sws-root td {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  vertical-align: middle;
+}
+.sws-root code {
+  font-family: var(--sws-mono);
+  font-size: 0.9em;
+  background: var(--sws-surface-3);
+  padding: 0.1em 0.4em;
+  border-radius: 6px;
+}
+.sws-root label {
+  display: inline;
+  margin: 0;
+  font-weight: inherit;
+}
+
+/* Standalone pseudo-roots created by Quasar for dialogs/menus/notifications */
+.sws-root.q-portal--dialog,
+.sws-root.q-portal--menu {
+  font-size: 15px;
+}
+
+/* ---------- WordPress integration ---------- */
+.sws-fullbleed {
+  margin: 0 0 0 -20px;
+}
+@media screen and (max-width: 782px) {
+  .sws-fullbleed {
+    margin-left: -10px;
+  }
+}
+body.sws-admin-page #wpfooter {
+  display: none;
+}
+body.sws-admin-page #wpbody-content {
+  padding-bottom: 0;
+}
+/* Quasar locks scroll with a class on body when a dialog is open */
+body.q-body--prevent-scroll {
+  overflow: hidden;
+}
+/* Dialogs/menus/notifications must sit above the WP admin bar (99999) and admin menu */
+.sws-root.q-portal--dialog .q-dialog,
+.sws-root.q-portal--menu .q-menu,
+.sws-root.q-portal--dialog .q-dialog__backdrop {
+  z-index: 100100;
+}
+.sws-root .q-notifications__list {
+  z-index: 100200;
+}
+.sws-root .q-menu,
+.sws-root.q-portal--menu .q-menu {
+  z-index: 100150;
+}
+.sws-root.q-portal--tooltip .q-tooltip,
+.sws-root .q-tooltip {
+  z-index: 100300;
+}
+
+/* ---------- utilities ---------- */
+.sws-sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.sws-num {
+  font-variant-numeric: tabular-nums;
+}
+.sws-muted {
+  color: var(--sws-muted);
+}
+.sws-mono {
+  font-family: var(--sws-mono);
+  font-size: 0.88em;
+}
+.sws-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.sws-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sws-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.sws-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+.sws-grid--wide {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+}
+.sws-eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sws-muted);
+}
+
+/* ---------- focus ---------- */
+.sws-root :focus-visible {
+  outline: 3px solid var(--sws-focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.sws-root .q-btn:focus-visible,
+.sws-root .q-field:focus-within .q-field__control {
+  outline: 3px solid var(--sws-focus);
+  outline-offset: 1px;
+}
+.sws-root .q-field__native:focus-visible,
+.sws-root .q-field__input:focus-visible {
+  outline: none;
+}
+
+/* ---------- Quasar tuning ---------- */
+.sws-root .q-btn {
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  border-radius: 10px;
+}
+.sws-root .q-btn--standard.bg-primary,
+.sws-root .q-btn.sws-btn-gradient {
+  background: var(--sws-gradient) !important;
+}
+.sws-root .q-btn.bg-primary {
+  color: #fff !important;
+}
+.sws-root .q-field--outlined .q-field__control {
+  border-radius: 10px;
+}
+.sws-root .q-field--outlined .q-field__control:before {
+  border-color: var(--sws-border);
+}
+.sws-root .q-field--outlined:not(.q-field--readonly) .q-field__control:hover:before {
+  border-color: var(--sws-muted);
+}
+.sws-root .q-field__label,
+.sws-root .q-field__bottom {
+  color: var(--sws-muted);
+}
+.sws-root .q-field--dark .q-field__native,
+.sws-root .q-field--dark .q-field__prefix,
+.sws-root .q-field--dark .q-field__suffix,
+.sws-root .q-field--dark .q-field__input {
+  color: var(--sws-text);
+}
+.sws-root .q-card {
+  background: var(--sws-surface);
+  color: var(--sws-text);
+  box-shadow: var(--sws-shadow-2);
+  border-radius: var(--sws-radius);
+}
+.sws-root .q-menu {
+  background: var(--sws-surface);
+  color: var(--sws-text);
+  border: 1px solid var(--sws-border);
+  border-radius: 12px;
+  box-shadow: var(--sws-shadow-2);
+}
+.sws-root .q-item--active,
+.sws-root .q-item.q-router-link--active {
+  color: var(--sws-primary);
+}
+.sws-root .q-tooltip {
+  background: var(--sws-text);
+  color: var(--sws-surface);
+  font-size: 13px;
+  border-radius: 8px;
+}
+.sws-root .q-tab {
+  text-transform: none;
+  font-weight: 600;
+}
+.sws-root .q-tabs {
+  color: var(--sws-muted);
+}
+.sws-root .q-tab--active {
+  color: var(--sws-primary);
+}
+.sws-root .q-skeleton {
+  background: var(--sws-surface-3);
+}
+.sws-root .q-skeleton--type-text,
+.sws-root .q-skeleton--type-rect {
+  border-radius: 8px;
+}
+.sws-root .q-notification {
+  border-radius: 12px;
+  box-shadow: var(--sws-shadow-2);
+  font-size: 14px;
+}
+.sws-root .q-linear-progress {
+  border-radius: 999px;
+}
+.sws-root .q-toggle__label,
+.sws-root .q-checkbox__label {
+  font-size: 14px;
+}
+.sws-root .q-dialog__backdrop {
+  background: var(--sws-overlay);
+}
+.sws-root .q-drawer {
+  background: var(--sws-surface);
+}
+.sws-root .q-separator {
+  background: var(--sws-border);
+}
+
+/* ---------- native tables that stack on small screens ---------- */
+.sws-table {
+  font-variant-numeric: tabular-nums;
+}
+.sws-table th {
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--sws-muted);
+  border-bottom: 1px solid var(--sws-border);
+  white-space: nowrap;
+}
+.sws-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--sws-border);
+  font-size: 14px;
+}
+.sws-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+.sws-table tbody tr:hover {
+  background: var(--sws-surface-2);
+}
+.sws-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+@media (max-width: 760px) {
+  .sws-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+  .sws-table,
+  .sws-table tbody,
+  .sws-table tr,
+  .sws-table td {
+    display: block;
+  }
+  .sws-table tr {
+    padding: 10px 6px;
+    border-bottom: 1px solid var(--sws-border);
+  }
+  .sws-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+  .sws-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 8px;
+    border: 0;
+    text-align: right;
+  }
+  .sws-table td::before {
+    content: attr(data-label);
+    flex: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--sws-muted);
+    text-align: left;
+  }
+  .sws-table td[data-label=''] {
+    justify-content: flex-end;
+  }
+  .sws-table td[data-label='']::before {
+    display: none;
+  }
+}
+
+/* ---------- motion ---------- */
+@keyframes sws-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes sws-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+@keyframes sws-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.sws-fade-enter-active,
+.sws-fade-leave-active {
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+.sws-fade-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.sws-fade-leave-to {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sws-root *,
+  .sws-root *::before,
+  .sws-root *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- SW Sliderman additions ---------- */
+.sws-root .sws-dialog {
+  width: min(520px, calc(100vw - 24px));
+  max-width: none;
+}
+.sws-root .sws-dialog__title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.sws-root .sws-form-error {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: var(--sws-radius-sm);
+  background: var(--sws-danger-bg);
+  color: var(--sws-danger-text);
+  font-size: 14px;
+}
+.sws-root .sws-noaccess {
+  padding: 24px;
+}
+/* The editor canvas renders the frontend slider markup; keep wp-admin/Quasar typography out. */
+.sws-root .sws-slider h1,
+.sws-root .sws-slider h2,
+.sws-root .sws-slider h3,
+.sws-root .sws-slider h4,
+.sws-root .sws-slider h5,
+.sws-root .sws-slider h6,
+.sws-root .sws-slider p {
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+}

@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client", "node"],
+    "strict": true,
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "jsx": "preserve",
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["assets/shared/*"],
+      "@editor/*": ["assets/editor/*"]
+    }
+  },
+  "include": [
+    "assets/**/*.ts",
+    "assets/**/*.vue",
+    "tests/unit/**/*.ts",
+    "tools/**/*.ts",
+    "vite.*.config.ts",
+    "vitest.config.ts",
+    "env.d.ts"
+  ],
+  "vueCompilerOptions": { "strictTemplates": false }
+}
