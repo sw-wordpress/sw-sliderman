@@ -6,9 +6,9 @@ Stand: 29.10.2026 · Konzeptversion: 1.0 · Status: Implementierungsgrundlage
 
 Entwickelt wird ein eigenständiges WordPress-Plugin für responsive Slider, animierte Hero-Bereiche und später frei gestaltbare Szenen. Ein visueller Editor ermöglicht die Gestaltung ohne Programmierkenntnisse. Funktionale Orientierung ist die Produktkategorie von Slider Revolution; eine vollständige Funktionsgleichheit ist kein Abnahmekriterium. Oberfläche, Code, Vorlagen und Assets werden eigenständig entwickelt.
 
-Arbeitstitel: **SW Slider**, vorgeschlagener Slug `sw-slider`, PHP-Namespace `SW\\Slider`, Textdomain `sw-slider`. Diese Namen sind vor dem ersten Release auf Verfügbarkeit zu prüfen und bis dahin Platzhalter.
+Arbeitstitel: **SW Sliderman**, vorgeschlagener Slug `sw-sliderman`, PHP-Namespace `SW\\Slider`, Textdomain `sw-sliderman`. Diese Namen sind vor dem ersten Release auf Verfügbarkeit zu prüfen und bis dahin Platzhalter.
 
-Dieses Dokument beschreibt Produkt, Architektur und verbindliches Verhalten. [TODO.md](TODO.md) zerlegt die Umsetzung in überprüfbare Milestones. Dort bedeutet eine offene Checkbox immer eine noch nicht nachgewiesene Umsetzung. Erweiterungen sind ausdrücklich späteren Milestones zugeordnet.
+Dieses Dokument beschreibt Produkt, Architektur und verbindliches Verhalten. [TODO.md](TODO.md) zerlegt die Umsetzung in überprüfbare Milestones. Dort bedeutet eine offene Checkbox immer eine noch nicht nachgewiesene Umsetzung. Erweiterungen sind ausdrücklich späteren Milestones zugeordnet. CODE-STYLE.md definiert Coding Richtlinien, welche einzuhalten sind.
 
 **Rollen:** Der Implementierungsagent entwickelt und prüft technisch. Stefan führt die praktische Machbarkeitsprüfung durch und nimmt Bedienung, Gestaltung und Ergebnis ab. Dieses Konzept führt die Machbarkeitsprüfung nicht aus und setzt ihr Ergebnis nicht voraus. Nach M0 werden notwendige Architekturkorrekturen dokumentiert.
 
@@ -143,7 +143,7 @@ Version 1.0 unterstützt statische Gewichte/Stile. Familien, die ausschließlich
 2. Server löst nur vom Provider erzeugte HTTPS-URLs auf; keine frei eingebbaren Remote-URLs.
 3. Safe HTTP API mit Timeouts, Antwort-/Dateigrößenlimits und vollständiger Prüfung jedes Redirect-Ziels. Nur bekannte Hosts und Pfade; private, Loopback-, Link-local- und Metadatenziele werden abgelehnt.
 4. Binärformat und Größe prüfen, kryptografischen Hash berechnen, temporär schreiben und atomar aktivieren. Schutz vor parallelen identischen Installationen.
-5. Dateien unter `uploads/sw-slider/fonts/<content-hash>/` ablegen; Pfade serverseitig erzeugen. CSS enthält nur lokale URLs und einen internen, kollisionsarmen Familiennamen.
+5. Dateien unter `uploads/sw-sliderman/fonts/<content-hash>/` ablegen; Pfade serverseitig erzeugen. CSS enthält nur lokale URLs und einen internen, kollisionsarmen Familiennamen.
 6. Registry schreibt Familienkennung, Variante, Subset, Hash, Quelldatenstand, Herkunft, Lizenztext/-kennung, Installationszeit und lokale Pfade. Nur vollständige Installationen werden als verfügbar markiert.
 7. Schrift im Editor lokal laden; erst dann ist sie zuverlässig messbar. Abbruch oder Netzwerkfehler lässt eine vorhandene funktionierende Installation unangetastet.
 
@@ -228,8 +228,8 @@ Der Admin-Editor ist eine Vue-Anwendung. Das Frontend erhält eine eigenständig
 Empfohlene Struktur:
 
 ```text
-sw-slider/
-  sw-slider.php
+sw-sliderman/
+  sw-sliderman.php
   src/{Domain,Application,Infrastructure,Rest,Admin,Rendering,Fonts,ImportExport}/
   assets/{editor,runtime,shared,block}/
   schemas/
@@ -244,7 +244,7 @@ Geteilte TypeScript-Module enthalten Dokumenttypen, Layoutauflösung und Zeitpla
 
 ### 10.2 REST-Schnittstellen
 
-Eigener Namespace `sw-slider/v1`. Routen für Liste/Anlegen, Lesen/Speichern, Revisionen, Vorschau, Veröffentlichen, Duplizieren, Import/Export sowie Font-Katalog, Installation, Status und Löschung. Alle verändernden Operationen prüfen Nonce bei Cookie-Authentifizierung und passende Capability. Objektbezogene Rechte und Leserechte für Entwürfe sind separat zu prüfen; ein Nonce ist keine Berechtigung.
+Eigener Namespace `sw-sliderman/v1`. Routen für Liste/Anlegen, Lesen/Speichern, Revisionen, Vorschau, Veröffentlichen, Duplizieren, Import/Export sowie Font-Katalog, Installation, Status und Löschung. Alle verändernden Operationen prüfen Nonce bei Cookie-Authentifizierung und passende Capability. Objektbezogene Rechte und Leserechte für Entwürfe sind separat zu prüfen; ein Nonce ist keine Berechtigung.
 
 Speichern erhält `expectedVersion`; Version und Dokument werden in einer serialisierten Schreiboperation aktualisiert. Veröffentlichen enthält die gewünschte Entwurfsversion. Import- und Font-Jobs liefern Fortschritt und wiederaufnehmbare Statusinformationen; lang laufende Schritte erfolgen in kleinen serverseitigen Jobs. Queue-Mechanismus wird in M1 festgelegt und darf keine zwingende Shell-, Python- oder Node-Installation auf dem Zielhosting benötigen.
 
