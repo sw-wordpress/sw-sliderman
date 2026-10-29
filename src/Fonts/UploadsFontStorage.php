@@ -81,6 +81,13 @@ final class UploadsFontStorage implements FontStorage {
 		return null !== $target && is_file( $target . '/font.css' );
 	}
 
+	public function verify_file( string $relative_dir, string $name, string $sha256 ): bool {
+		if ( 1 !== preg_match( '/^[a-zA-Z0-9._-]+$/D', $name ) || str_contains( $name, '..' ) ) {
+			return false; }
+		$path = UploadPaths::path( $relative_dir . '/' . $name );
+		return null !== $path && is_readable( $path ) && is_file( $path ) && hash_equals( $sha256, (string) hash_file( 'sha256', $path ) );
+	}
+
 	/** Removes the plain files of one directory level and the directory itself. */
 	private function remove_tree( string $dir ): void {
 		if ( ! is_dir( $dir ) || is_link( $dir ) ) {

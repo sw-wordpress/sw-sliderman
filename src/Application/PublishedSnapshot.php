@@ -34,7 +34,8 @@ final class PublishedSnapshot {
 		public readonly string $published_gmt,
 		public readonly string $document_json,
 		public readonly ?string $stylesheet,
-		public readonly array $font_installations
+		public readonly array $font_installations,
+		public readonly ?string $title = null
 	) {
 	}
 
@@ -44,6 +45,7 @@ final class PublishedSnapshot {
 	public function to_array(): array {
 		return array(
 			'version'           => $this->version,
+			'title'             => $this->title,
 			'documentHash'      => $this->document_hash,
 			'rendererVersion'   => $this->renderer_version,
 			'publishedGmt'      => $this->published_gmt,
@@ -62,6 +64,11 @@ final class PublishedSnapshot {
 		if ( ! is_array( $data ) || ! isset( $data['version'], $data['documentHash'], $data['rendererVersion'], $data['publishedGmt'], $data['document'] ) ) {
 			return null;
 		}
+		if ( ! is_int( $data['version'] ) || $data['version'] < 1 || ! is_int( $data['rendererVersion'] ) || $data['rendererVersion'] < 1
+			|| ! is_string( $data['publishedGmt'] ) || ! is_string( $data['document'] ) || ! is_string( $data['documentHash'] )
+			|| ! hash_equals( hash( 'sha256', $data['document'] ), $data['documentHash'] ) ) {
+			return null;
+		}
 		$fonts = is_array( $data['fontInstallations'] ?? null ) ? array_values( array_filter( $data['fontInstallations'], 'is_string' ) ) : array();
 		return new self(
 			(int) $data['version'],
@@ -70,7 +77,8 @@ final class PublishedSnapshot {
 			(string) $data['publishedGmt'],
 			(string) $data['document'],
 			is_string( $data['stylesheet'] ?? null ) ? $data['stylesheet'] : null,
-			$fonts
+			$fonts,
+			is_string( $data['title'] ?? null ) ? $data['title'] : null
 		);
 	}
 }

@@ -4,6 +4,8 @@ import { __, sprintf } from '@editor/i18n';
 
 /** Human-readable description of a validation issue, naming the slide/layer (CODE-STYLE 7). */
 export function describeIssue(issue: ValidationIssue, document: SliderDocument | null): string {
+  if (issue.code === 'too_large')
+    return __('The slider exceeds the maximum storage size. Reduce its content before saving.');
   const match = /^\/slides\/(\d+)(?:\/layers\/(\d+))?/.exec(issue.path);
   const slide = match ? document?.slides[Number(match[1])] : undefined;
   const layer = match?.[2] !== undefined ? slide?.layers[Number(match[2])] : undefined;

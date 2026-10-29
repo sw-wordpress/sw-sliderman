@@ -27,6 +27,7 @@ const creating = ref(false);
 const createError = ref<string | null>(null);
 const trashTarget = ref<SliderSummary | null>(null);
 const trashing = ref(false);
+const duplicating = ref<number | null>(null);
 let requestGeneration = 0;
 
 const statusLabel: Record<SliderStatus, () => string> = {
@@ -44,7 +45,8 @@ async function load(): Promise<void> {
     // A late response of an older search must not replace the current one.
     if (generation === requestGeneration) items.value = result;
   } catch (e) {
-    if (generation === requestGeneration) error.value = e instanceof ApiError ? e : new ApiError('sws_unknown', String(e), 0);
+    if (generation === requestGeneration)
+      error.value = e instanceof ApiError ? e : new ApiError('sws_unknown', String(e), 0);
   } finally {
     if (generation === requestGeneration) loading.value = false;
   }
@@ -58,7 +60,9 @@ watch(search, () => {
 
 onMounted(load);
 
-const canCreate = computed(() => createName.value.trim().length > 0 && createName.value.trim().length <= 200);
+const canCreate = computed(
+  () => createName.value.trim().length > 0 && createName.value.trim().length <= 200,
+);
 
 async function create(): Promise<void> {
   if (!canCreate.value || creating.value) return;
@@ -76,6 +80,25 @@ async function create(): Promise<void> {
   }
 }
 
+async function duplicate(item: SliderSummary): Promise<void> {
+  if (duplicating.value !== null) return;
+  duplicating.value = item.id;
+  try {
+    const copy = await sliders.duplicate(
+      item.id,
+      sprintf(__('%s (copy)'), item.title).slice(0, 200),
+    );
+    await router.push(`/sliders/${copy.id}`);
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: error instanceof ApiError ? error.message : String(error),
+    });
+  } finally {
+    duplicating.value = null;
+  }
+}
+
 async function trash(): Promise<void> {
   const target = trashTarget.value;
   if (!target) return;
@@ -83,7 +106,10 @@ async function trash(): Promise<void> {
   try {
     await sliders.trash(target.id);
     items.value = items.value.filter((item) => item.id !== target.id);
-    $q.notify({ type: 'positive', message: sprintf(__('“%s” was moved to the trash.'), target.title) });
+    $q.notify({
+      type: 'positive',
+      message: sprintf(__('“%s” was moved to the trash.'), target.title),
+    });
     trashTarget.value = null;
   } catch (e) {
     $q.notify({ type: 'negative', message: e instanceof ApiError ? e.message : String(e) });
@@ -95,8 +121,20 @@ async function trash(): Promise<void> {
 
 <template>
   <div class="sws-list">
-    <PageHeader :title="__('Sliders')" :subtitle="__('Create responsive sliders and hero sections. Visitors only see published versions.')">
-      <q-btn unelevated no-caps color="primary" icon="r_add" :label="__('New slider')" @click="createOpen = true" />
+    <PageHeader
+      :title="__('Sliders')"
+      :subtitle="
+        __('Create responsive sliders and hero sections. Visitors only see published versions.')
+      "
+    >
+      <q-btn
+        unelevated
+        no-caps
+        color="primary"
+        icon="r_add"
+        :label="__('New slider')"
+        @click="createOpen = true"
+      />
     </PageHeader>
 
     <SwsCard :padding="false">
@@ -122,10 +160,22 @@ async function trash(): Promise<void> {
         v-else-if="items.length === 0"
         :illustration="search ? 'search' : 'sliders'"
         :title="search ? __('No sliders found') : __('No sliders yet')"
-        :text="search ? __('Try a different search term.') : __('Create your first slider to get started.')"
+        :text="
+          search
+            ? __('Try a different search term.')
+            : __('Create your first slider to get started.')
+        "
         compact
       >
-        <q-btn v-if="!search" unelevated no-caps color="primary" icon="r_add" :label="__('New slider')" @click="createOpen = true" />
+        <q-btn
+          v-if="!search"
+          unelevated
+          no-caps
+          color="primary"
+          icon="r_add"
+          :label="__('New slider')"
+          @click="createOpen = true"
+        />
       </EmptyState>
       <table v-else class="sws-table">
         <thead>
@@ -134,16 +184,22 @@ async function trash(): Promise<void> {
             <th scope="col">{{ __('Status') }}</th>
             <th scope="col">{{ __('Embed code') }}</th>
             <th scope="col">{{ __('Last change') }}</th>
-            <th scope="col"><span class="sws-sr-only">{{ __('Actions') }}</span></th>
+            <th scope="col">
+              <span class="sws-sr-only">{{ __('Actions') }}</span>
+            </th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="item in items" :key="item.id">
             <td :data-label="__('Name')">
-              <router-link :to="`/sliders/${item.id}`" class="sws-list__name">{{ item.title }}</router-link>
+              <router-link :to="`/sliders/${item.id}`" class="sws-list__name">{{
+                item.title
+              }}</router-link>
             </td>
             <td :data-label="__('Status')">
-              <span class="sws-badge" :class="`sws-badge--${item.status}`">{{ statusLabel[item.status]() }}</span>
+              <span class="sws-badge" :class="`sws-badge--${item.status}`">{{
+                statusLabel[item.status]()
+              }}</span>
             </td>
             <td :data-label="__('Embed code')">
               <span class="sws-list__code">
@@ -151,10 +207,37 @@ async function trash(): Promise<void> {
                 <CopyButton :value="item.shortcode" :label="__('Copy embed code')" />
               </span>
             </td>
-            <td :data-label="__('Last change')" class="sws-num">{{ formatGmt(item.modifiedGmt) }}</td>
+            <td :data-label="__('Last change')" class="sws-num">
+              {{ formatGmt(item.modifiedGmt) }}
+            </td>
             <td data-label="" class="sws-list__actions">
-              <q-btn flat dense no-caps icon="r_edit" :label="__('Edit')" :to="`/sliders/${item.id}`" />
-              <q-btn flat dense round icon="r_delete" :aria-label="sprintf(__('Move “%s” to the trash'), item.title)" @click="trashTarget = item">
+              <q-btn
+                flat
+                dense
+                no-caps
+                icon="r_edit"
+                :label="__('Edit')"
+                :to="`/sliders/${item.id}`"
+              />
+              <q-btn
+                flat
+                dense
+                round
+                icon="r_content_copy"
+                :aria-label="__('Duplicate')"
+                :loading="duplicating === item.id"
+                :disable="duplicating !== null"
+                @click="duplicate(item)"
+                ><q-tooltip>{{ __('Duplicate') }}</q-tooltip></q-btn
+              >
+              <q-btn
+                flat
+                dense
+                round
+                icon="r_delete"
+                :aria-label="sprintf(__('Move “%s” to the trash'), item.title)"
+                @click="trashTarget = item"
+              >
                 <q-tooltip>{{ __('Move to trash') }}</q-tooltip>
               </q-btn>
             </td>
@@ -168,7 +251,9 @@ async function trash(): Promise<void> {
         <form @submit.prevent="create">
           <q-card-section>
             <h2 class="sws-dialog__title">{{ __('New slider') }}</h2>
-            <p class="sws-muted">{{ __('The slider starts with one empty slide. You can change the name later.') }}</p>
+            <p class="sws-muted">
+              {{ __('The slider starts with one empty slide. You can change the name later.') }}
+            </p>
           </q-card-section>
           <q-card-section>
             <q-input v-model="createName" outlined autofocus maxlength="200" :label="__('Name')" />
@@ -176,7 +261,15 @@ async function trash(): Promise<void> {
           </q-card-section>
           <q-card-actions align="right">
             <q-btn flat no-caps :label="__('Cancel')" @click="createOpen = false" />
-            <q-btn unelevated no-caps color="primary" type="submit" :label="__('Create and edit')" :loading="creating" :disable="!canCreate" />
+            <q-btn
+              unelevated
+              no-caps
+              color="primary"
+              type="submit"
+              :label="__('Create and edit')"
+              :loading="creating"
+              :disable="!canCreate"
+            />
           </q-card-actions>
         </form>
       </q-card>
@@ -186,10 +279,17 @@ async function trash(): Promise<void> {
       :model-value="trashTarget !== null"
       :title="__('Move slider to the trash?')"
       :target="trashTarget?.title"
-      :consequences="[__('Pages that embed it will no longer show the slider.'), __('Revisions and fonts are kept.')]"
+      :consequences="[
+        __('Pages that embed it will no longer show the slider.'),
+        __('Revisions and fonts are kept.'),
+      ]"
       :confirm-label="__('Move to trash')"
       :loading="trashing"
-      @update:model-value="(open: boolean) => { if (!open) trashTarget = null; }"
+      @update:model-value="
+        (open: boolean) => {
+          if (!open) trashTarget = null;
+        }
+      "
       @confirm="trash"
     />
   </div>

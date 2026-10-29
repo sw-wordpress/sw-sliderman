@@ -211,6 +211,31 @@
     margin-left: -10px;
   }
 }
+/* The editor owns the viewport; WordPress' .wrap margins belong to list pages. */
+body.sws-admin-page .sws-wrap:has(.sws-shell--editor) {
+  margin: 0;
+}
+body.sws-admin-page .sws-wrap:has(.sws-shell--editor) > .sws-fullbleed {
+  width: auto;
+  min-height: 0;
+}
+@media (min-width: 901px) {
+  /* Keep document scrolling out of the workspace; panels scroll independently. */
+  html:has(.sws-shell--editor) {
+    height: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  body.sws-admin-page:has(.sws-shell--editor) {
+    height: 100%;
+    overflow: hidden;
+  }
+  body.sws-admin-page:has(.sws-shell--editor) #wpwrap {
+    height: calc(100dvh - var(--wp-admin--admin-bar--height, 32px));
+    min-height: 0;
+    overflow: hidden;
+  }
+}
 body.sws-admin-page #wpfooter {
   display: none;
 }

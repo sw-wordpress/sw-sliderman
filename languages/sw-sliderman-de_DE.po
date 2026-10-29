@@ -7,11 +7,13 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: sw-sliderman\n"
+"Last-Translator: SW Sliderman\n"
+"Language-Team: German\n"
 
 #. Plugin Name of the plugin
 #: sw-sliderman.php
 #: src/Admin/AdminPage.php:49
-#: src/Rendering/SliderRenderer.php:88
+#: src/Rendering/SliderRenderer.php:108
 msgid "SW Sliderman"
 msgstr "SW Sliderman"
 
@@ -41,6 +43,11 @@ msgstr "Der SW-Sliderman-Editor wurde nicht gebaut. Das Release-Paket installier
 msgid "The slider editor requires JavaScript."
 msgstr "Der Slider-Editor benötigt JavaScript."
 
+#: src/Admin/DraftPreview.php:36
+#: src/Admin/DraftPreview.php:49
+msgid "This preview is not available."
+msgstr "Diese Vorschau ist nicht verfügbar."
+
 #: src/Infrastructure/PostTypes.php:33
 msgid "Sliders"
 msgstr "Slider"
@@ -57,120 +64,129 @@ msgstr "Installierte Schriften"
 msgid "Installed font"
 msgstr "Installierte Schrift"
 
-#: src/Rendering/SliderRenderer.php:51
+#: src/Rendering/SliderRenderer.php:53
 msgid "Slider not found."
 msgstr "Slider nicht gefunden."
 
-#: src/Rendering/SliderRenderer.php:51
+#: src/Rendering/SliderRenderer.php:53
 msgid "This slider has not been published yet."
 msgstr "Dieser Slider wurde noch nicht veröffentlicht."
 
-#: src/Rendering/SliderRenderer.php:56
+#: src/Rendering/SliderRenderer.php:61
+msgid "The draft contains invalid data."
+msgstr "Der Entwurf enthält ungültige Daten."
+
+#: src/Rendering/SliderRenderer.php:71
+#: src/Rendering/SliderRenderer.php:76
 msgid "The published slider data is damaged."
 msgstr "Die veröffentlichten Sliderdaten sind beschädigt."
 
-#: src/Rendering/SliderRenderer.php:60
+#: src/Rendering/SliderRenderer.php:80
 msgid "This slider has no enabled slides."
 msgstr "Dieser Slider hat keine aktivierten Slides."
 
-#: src/Rendering/SliderRenderer.php:70
+#: src/Rendering/SliderRenderer.php:90
 msgid "carousel"
 msgstr "Karussell"
 
 #. translators: 1: slide position, 2: number of slides
-#: src/Rendering/SliderRenderer.php:98
+#: src/Rendering/SliderRenderer.php:118
 #, php-format
 msgid "%1$d of %2$d"
 msgstr "%1$d von %2$d"
 
-#: src/Rendering/SliderRenderer.php:103
+#: src/Rendering/SliderRenderer.php:123
 msgid "slide"
 msgstr "Slide"
 
-#: src/Rendering/SliderRenderer.php:199
+#: src/Rendering/SliderRenderer.php:219
 msgid "Pause slider"
 msgstr "Slider anhalten"
 
-#: src/Rendering/SliderRenderer.php:199
+#: src/Rendering/SliderRenderer.php:219
 msgid "Play slider"
 msgstr "Slider abspielen"
 
-#: src/Rendering/SliderRenderer.php:202
+#: src/Rendering/SliderRenderer.php:222
 msgid "Previous slide"
 msgstr "Vorheriger Slide"
 
 #. translators: %d: slide position
-#: src/Rendering/SliderRenderer.php:209
+#: src/Rendering/SliderRenderer.php:229
 #, php-format
 msgid "Show slide %d"
 msgstr "Slide %d anzeigen"
 
-#: src/Rendering/SliderRenderer.php:217
+#: src/Rendering/SliderRenderer.php:237
 msgid "Next slide"
 msgstr "Nächster Slide"
 
-#: src/Rest/Errors.php:33
+#: src/Rest/Errors.php:34
 msgid "The slider was changed elsewhere. Reload it or export your changes."
 msgstr "Der Slider wurde an anderer Stelle geändert. Neu laden oder die eigenen Änderungen exportieren."
 
-#: src/Rest/Errors.php:43
+#: src/Rest/Errors.php:44
 msgid "The slider contains invalid or missing data."
 msgstr "Der Slider enthält ungültige oder fehlende Daten."
 
-#: src/Rest/Errors.php:51
+#: src/Rest/Errors.php:52
 msgid "The slider does not exist."
 msgstr "Der Slider existiert nicht."
 
-#: src/Rest/Errors.php:54
+#: src/Rest/Errors.php:55
+msgid "The changes could not be stored. The last published version was not changed."
+msgstr "Die Änderungen konnten nicht gespeichert werden. Die letzte veröffentlichte Version wurde nicht verändert."
+
+#: src/Rest/Errors.php:59
 msgid "The slider is being saved by another request. Please try again."
 msgstr "Der Slider wird gerade von einer anderen Anfrage gespeichert. Bitte erneut versuchen."
 
-#: src/Rest/Errors.php:64
+#: src/Rest/Errors.php:69
 msgid "An unexpected error occurred."
 msgstr "Ein unerwarteter Fehler ist aufgetreten."
 
-#: src/Rest/Errors.php:74
+#: src/Rest/Errors.php:79
 #: src/Rest/FontController.php:125
 msgid "The font selection is invalid."
 msgstr "Die Schriftauswahl ist ungültig."
 
-#: src/Rest/Errors.php:75
+#: src/Rest/Errors.php:80
 msgid "The font family is not in the local catalog."
 msgstr "Die Schriftfamilie ist nicht im lokalen Katalog enthalten."
 
-#: src/Rest/Errors.php:76
+#: src/Rest/Errors.php:81
 msgid "The font installation does not exist."
 msgstr "Die Schriftinstallation existiert nicht."
 
-#: src/Rest/Errors.php:77
+#: src/Rest/Errors.php:82
 msgid "A selected style or weight is not available for this family."
 msgstr "Ein gewählter Schnitt ist für diese Familie nicht verfügbar."
 
-#: src/Rest/Errors.php:78
+#: src/Rest/Errors.php:83
 msgid "A selected character set is not available for this family."
 msgstr "Ein gewählter Zeichensatz ist für diese Familie nicht verfügbar."
 
-#: src/Rest/Errors.php:79
+#: src/Rest/Errors.php:84
 msgid "This family is only available as a variable font, which is not supported yet."
 msgstr "Diese Familie ist nur als variable Schrift verfügbar; das wird noch nicht unterstützt."
 
-#: src/Rest/Errors.php:80
+#: src/Rest/Errors.php:85
 msgid "Font downloads are disabled (offline mode)."
 msgstr "Font-Downloads sind deaktiviert (Offline-Modus)."
 
-#: src/Rest/Errors.php:81
+#: src/Rest/Errors.php:86
 msgid "This family is already being installed."
 msgstr "Diese Familie wird bereits installiert."
 
-#: src/Rest/Errors.php:82
+#: src/Rest/Errors.php:87
 msgid "The font is still used by a slider, a revision or a published version."
 msgstr "Die Schrift wird noch von einem Slider, einer Revision oder einem veröffentlichten Stand verwendet."
 
-#: src/Rest/Errors.php:83
+#: src/Rest/Errors.php:88
 msgid "The license of this family could not be verified."
 msgstr "Die Lizenz dieser Familie konnte nicht geprüft werden."
 
-#: src/Rest/Errors.php:85
+#: src/Rest/Errors.php:90
 msgid "The font could not be downloaded or verified. Existing installations were not changed."
 msgstr "Die Schrift konnte nicht heruntergeladen oder geprüft werden. Bestehende Installationen wurden nicht verändert."
 

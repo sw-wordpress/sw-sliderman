@@ -1,0 +1,53 @@
+{
+  "description": "Size limit applies to the ASCII canonical storage encoding, including Unicode, quote and backslash escapes, so every saved document remains publishable.",
+  "cases": [
+    {
+      "name": "plain text fits",
+      "text": "a",
+      "repeat": 5000,
+      "layers": 60,
+      "tooLarge": false
+    },
+    {
+      "name": "Unicode expands in storage",
+      "text": "Ä",
+      "repeat": 5000,
+      "layers": 20,
+      "tooLarge": true
+    },
+    {
+      "name": "backslashes expand in storage",
+      "text": "\\",
+      "repeat": 5000,
+      "layers": 20,
+      "tooLarge": true
+    },
+    {
+      "name": "quotes expand in storage",
+      "text": "\"",
+      "repeat": 5000,
+      "layers": 20,
+      "tooLarge": true
+    }
+  ],
+  "samples": [
+    {
+      "value": {
+        "number": 1e-05
+      },
+      "bytes": 17
+    },
+    {
+      "value": {
+        "number": 1.2e-07
+      },
+      "bytes": 17
+    },
+    {
+      "value": {
+        "number": 0.0001
+      },
+      "bytes": 17
+    }
+  ]
+}

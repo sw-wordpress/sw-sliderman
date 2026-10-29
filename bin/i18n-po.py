@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Writes languages/sw-sliderman-de_DE.po from the POT and languages/src/php-de_DE.json.
 
-Usage: python3 bin/i18n-po.py   (then msgfmt compiles the .mo; see bin/i18n.sh)
+Usage: python3 bin/i18n-po.py [output.po]   (default: languages/sw-sliderman-de_DE.po; see bin/i18n.sh)
 Fails when a POT entry has no translation, so new PHP strings cannot ship untranslated.
 """
 import json
@@ -43,5 +43,6 @@ for entry in entries[1:]:
 if missing:
     sys.stderr.write('Untranslated PHP strings:\n' + '\n'.join(missing) + '\n')
     sys.exit(1)
-(root / 'languages/sw-sliderman-de_DE.po').write_text('\n\n'.join(out) + '\n', encoding='utf-8')
-print('languages/sw-sliderman-de_DE.po written')
+target = Path(sys.argv[1]) if len(sys.argv) > 1 else root / 'languages/sw-sliderman-de_DE.po'
+target.write_text('\n\n'.join(out) + '\n', encoding='utf-8')
+print(f'{target} written')

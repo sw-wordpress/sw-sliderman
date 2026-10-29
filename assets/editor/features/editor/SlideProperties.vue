@@ -8,7 +8,7 @@ import { pickImage, previewOf } from '@editor/composables/useMediaPicker';
 import { __, sprintf } from '@editor/i18n';
 import NumberField from '@editor/components/fields/NumberField.vue';
 
-const props = defineProps<{ slide: Slide }>();
+const props = defineProps<{ slide: Slide; scope?: 'slide' | 'slider' }>();
 const editor = useEditorStore();
 
 const schedule = computed(() => scheduleSlide(props.slide));
@@ -24,7 +24,11 @@ async function chooseBackground(): Promise<void> {
   });
 }
 
-function setStage(name: BreakpointName, key: 'stageWidth' | 'stageHeight' | 'minWidth', value: number): void {
+function setStage(
+  name: BreakpointName,
+  key: 'stageWidth' | 'stageHeight' | 'minWidth',
+  value: number,
+): void {
   editor.updateDocument((draft) => {
     draft.breakpoints[name][key] = value;
   });
@@ -38,7 +42,7 @@ const breakpointNames: Array<{ name: BreakpointName; label: string }> = [
 
 <template>
   <div class="sws-props">
-    <section class="sws-props__section">
+    <section v-if="scope !== 'slider'" class="sws-props__section">
       <h3>{{ __('Slide') }}</h3>
       <q-input
         :model-value="slide.name"
@@ -59,11 +63,20 @@ const breakpointNames: Array<{ name: BreakpointName; label: string }> = [
       />
       <p v-if="schedule.extended" class="sws-props__warn" role="status">
         <q-icon name="r_schedule" aria-hidden="true" />
-        {{ sprintf(__('The animations need %s s; the slide is shown that long.'), (schedule.durationMs / 1000).toFixed(1)) }}
+        {{
+          sprintf(
+            __('The animations need %s s; the slide is shown that long.'),
+            (schedule.durationMs / 1000).toFixed(1),
+          )
+        }}
       </p>
       <q-select
         :model-value="slide.transition.type"
-        :options="[{ value: 'cut', label: __('Cut') }, { value: 'fade', label: __('Fade') }, { value: 'slide', label: __('Push') }]"
+        :options="[
+          { value: 'cut', label: __('Cut') },
+          { value: 'fade', label: __('Fade') },
+          { value: 'slide', label: __('Push') },
+        ]"
         emit-value
         map-options
         dense
@@ -84,16 +97,42 @@ const breakpointNames: Array<{ name: BreakpointName; label: string }> = [
       <div class="sws-props__color-row">
         <label class="sws-props__color">
           <span>{{ __('Background colour') }}</span>
-          <input type="color" :value="slide.background.color ?? '#000000'" @change="(e) => editor.updateSlide(slide.id, (s) => (s.background.color = (e.target as HTMLInputElement).value))" />
+          <input
+            type="color"
+            :value="slide.background.color ?? '#000000'"
+            @change="
+              (e) =>
+                editor.updateSlide(
+                  slide.id,
+                  (s) => (s.background.color = (e.target as HTMLInputElement).value),
+                )
+            "
+          />
         </label>
       </div>
       <div class="sws-props__color-row">
-        <q-btn outline dense no-caps icon="r_wallpaper" :label="slide.background.attachmentId ? __('Replace background image') : __('Background image')" @click="chooseBackground" />
-        <q-btn v-if="slide.background.attachmentId" flat dense no-caps :label="__('Remove')" @click="editor.updateSlide(slide.id, (s) => (s.background.attachmentId = null))" />
+        <q-btn
+          outline
+          dense
+          no-caps
+          icon="r_wallpaper"
+          :label="
+            slide.background.attachmentId ? __('Replace background image') : __('Background image')
+          "
+          @click="chooseBackground"
+        />
+        <q-btn
+          v-if="slide.background.attachmentId"
+          flat
+          dense
+          no-caps
+          :label="__('Remove')"
+          @click="editor.updateSlide(slide.id, (s) => (s.background.attachmentId = null))"
+        />
       </div>
     </section>
 
-    <section v-if="settings" class="sws-props__section">
+    <section v-if="settings && scope !== 'slide'" class="sws-props__section">
       <h3>{{ __('Slider') }}</h3>
       <q-input
         :model-value="settings.label"
@@ -110,7 +149,10 @@ const breakpointNames: Array<{ name: BreakpointName; label: string }> = [
         unelevated
         dense
         toggle-color="primary"
-        :options="[{ value: 'boxed', label: __('Boxed') }, { value: 'full', label: __('Full width') }]"
+        :options="[
+          { value: 'boxed', label: __('Boxed') },
+          { value: 'full', label: __('Full width') },
+        ]"
         @update:model-value="(v) => editor.updateDocument((d) => (d.settings.layout = v))"
       />
       <NumberField
@@ -123,13 +165,35 @@ const breakpointNames: Array<{ name: BreakpointName; label: string }> = [
         :max="LIMITS.maxWidthMax"
         @commit="(v) => editor.updateDocument((d) => (d.settings.maxWidth = v))"
       />
-      <q-toggle :model-value="settings.autoplay" :label="__('Autoplay (with pause button)')" @update:model-value="(v: boolean) => editor.updateDocument((d) => (d.settings.autoplay = v))" />
-      <q-toggle :model-value="settings.loop" :label="__('Loop')" @update:model-value="(v: boolean) => editor.updateDocument((d) => (d.settings.loop = v))" />
-      <q-toggle :model-value="settings.showArrows" :label="__('Arrows')" @update:model-value="(v: boolean) => editor.updateDocument((d) => (d.settings.showArrows = v))" />
-      <q-toggle :model-value="settings.showDots" :label="__('Dots')" @update:model-value="(v: boolean) => editor.updateDocument((d) => (d.settings.showDots = v))" />
+      <q-toggle
+        :model-value="settings.autoplay"
+        :label="__('Autoplay (with pause button)')"
+        @update:model-value="
+          (v: boolean) => editor.updateDocument((d) => (d.settings.autoplay = v))
+        "
+      />
+      <q-toggle
+        :model-value="settings.loop"
+        :label="__('Loop')"
+        @update:model-value="(v: boolean) => editor.updateDocument((d) => (d.settings.loop = v))"
+      />
+      <q-toggle
+        :model-value="settings.showArrows"
+        :label="__('Arrows')"
+        @update:model-value="
+          (v: boolean) => editor.updateDocument((d) => (d.settings.showArrows = v))
+        "
+      />
+      <q-toggle
+        :model-value="settings.showDots"
+        :label="__('Dots')"
+        @update:model-value="
+          (v: boolean) => editor.updateDocument((d) => (d.settings.showDots = v))
+        "
+      />
     </section>
 
-    <section v-if="breakpoints" class="sws-props__section">
+    <section v-if="breakpoints && scope !== 'slide'" class="sws-props__section">
       <h3>{{ __('Screen sizes (container width)') }}</h3>
       <div v-for="bp in breakpointNames" :key="bp.name" class="sws-props__grid">
         <NumberField
@@ -142,8 +206,22 @@ const breakpointNames: Array<{ name: BreakpointName; label: string }> = [
           @commit="(v) => setStage(bp.name, 'minWidth', v)"
         />
         <div class="sws-props__grid">
-          <NumberField :model-value="breakpoints[bp.name].stageWidth" :label="__('Stage width')" integer :min="LIMITS.stageMin" :max="LIMITS.stageMax" @commit="(v) => setStage(bp.name, 'stageWidth', v)" />
-          <NumberField :model-value="breakpoints[bp.name].stageHeight" :label="__('Stage height')" integer :min="LIMITS.stageHeightMin" :max="LIMITS.stageHeightMax" @commit="(v) => setStage(bp.name, 'stageHeight', v)" />
+          <NumberField
+            :model-value="breakpoints[bp.name].stageWidth"
+            :label="__('Stage width')"
+            integer
+            :min="LIMITS.stageMin"
+            :max="LIMITS.stageMax"
+            @commit="(v) => setStage(bp.name, 'stageWidth', v)"
+          />
+          <NumberField
+            :model-value="breakpoints[bp.name].stageHeight"
+            :label="__('Stage height')"
+            integer
+            :min="LIMITS.stageHeightMin"
+            :max="LIMITS.stageHeightMax"
+            @commit="(v) => setStage(bp.name, 'stageHeight', v)"
+          />
         </div>
       </div>
     </section>

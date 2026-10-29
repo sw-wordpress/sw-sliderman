@@ -12,6 +12,11 @@ function basic(): SliderDocument {
   return result.document;
 }
 
+function must<T>(value: T | undefined): T {
+  if (value === undefined) throw new Error('missing test value');
+  return value;
+}
+
 function layer(document: SliderDocument, id: string): Layer {
   const found = document.slides.flatMap((s) => s.layers).find((l) => l.id === id);
   if (!found) throw new Error(id);
@@ -23,8 +28,8 @@ describe('history', () => {
     const history = new History();
     const start = basic();
     history.beginGesture(start);
-    const step1 = produce(start, (d) => setLayoutValue(findLayer(d, 'headline')!, 'desktop', 'x', 110));
-    const step2 = produce(step1, (d) => setLayoutValue(findLayer(d, 'headline')!, 'desktop', 'x', 120));
+    const step1 = produce(start, (d) => setLayoutValue(must(findLayer(d, 'headline')), 'desktop', 'x', 110));
+    const step2 = produce(step1, (d) => setLayoutValue(must(findLayer(d, 'headline')), 'desktop', 'x', 120));
     history.endGesture(step2);
     expect(history.undo(step2)).toBe(start);
     expect(history.canUndo).toBe(false);
@@ -63,7 +68,7 @@ describe('history', () => {
 describe('responsive editing', () => {
   it('writes overrides only for the edited breakpoint and resets back to inheritance', () => {
     const doc = produce(basic(), (d) => {
-      const target = findLayer(d, 'cta')!;
+      const target = must(findLayer(d, 'cta'));
       setStyleValue(target, 'tablet', 'fontSize', 30);
       setStyleValue(target, 'tablet', 'color', '#ff0000');
     });
@@ -73,7 +78,7 @@ describe('responsive editing', () => {
     expect(resolveLayerStyle(cta, 'desktop').fontSize).toBe(20);
     expect(cta.style.color).toBe('#ff0000');
     expect(cta.overrides.tablet?.style).toEqual({ fontSize: 30 });
-    const reset = produce(doc, (d) => resetOverride(findLayer(d, 'cta')!, 'tablet', 'style', 'fontSize'));
+    const reset = produce(doc, (d) => resetOverride(must(findLayer(d, 'cta')), 'tablet', 'style', 'fontSize'));
     expect(layer(reset, 'cta').overrides.tablet).toBeUndefined();
     expect(validateDocument(reset).ok).toBe(true);
   });
@@ -83,7 +88,7 @@ describe('responsive editing', () => {
     const stage = doc.breakpoints.mobile;
     const before = layerBox(layer(doc, 'cta'), 'mobile', stage.stageWidth, stage.stageHeight);
     const moved = produce(doc, (d) =>
-      setLayerBox(findLayer(d, 'cta')!, 'mobile', stage.stageWidth, stage.stageHeight, { ...before, left: before.left + 10, top: before.top - 20 }, { position: true, size: false }),
+      setLayerBox(must(findLayer(d, 'cta')), 'mobile', stage.stageWidth, stage.stageHeight, { ...before, left: before.left + 10, top: before.top - 20 }, { position: true, size: false }),
     );
     const cta = layer(moved, 'cta');
     const after = layerBox(cta, 'mobile', stage.stageWidth, stage.stageHeight);
@@ -98,14 +103,9 @@ describe('responsive editing', () => {
   it('new layers are valid document parts', () => {
     const doc = produce(basic(), (d) => {
       for (const type of ['text', 'image', 'button'] as const) {
-        d.slides[0]!.layers.push(structuredClone(createLayer(type, 1440, 600, type)) as never);
+        must(d.slides[0]).layers.push(structuredClone(createLayer(type, 1440, 600, type)) as never);
       }
     });
-    expect(validateDocument(doc).ok).toBe(false); // button default url 'https://' must be completed
-    const fixed = produce(doc, (d) => {
-      const button = d.slides[0]!.layers.at(-1)!;
-      if (button.type === 'button') button.content.url = 'https://example.com';
-    });
-    expect(validateDocument(fixed).ok).toBe(true);
+    expect(validateDocument(doc).ok).toBe(true);
   });
 });

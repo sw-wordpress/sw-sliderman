@@ -44,5 +44,8 @@
   "Please enter a name with at most 200 characters.": "Bitte einen Namen mit höchstens 200 Zeichen eingeben.",
   "The version is missing or invalid.": "Die Version fehlt oder ist ungültig.",
   "SW Sliderman requires PHP %1$s or newer. You are running PHP %2$s.": "SW Sliderman benötigt PHP %1$s oder neuer. Installiert ist PHP %2$s.",
-  "SW Sliderman: the vendor directory is missing. Install the release package or run \"composer install\".": "SW Sliderman: Das vendor-Verzeichnis fehlt. Das Release-Paket installieren oder „composer install“ ausführen."
+  "SW Sliderman: the vendor directory is missing. Install the release package or run \"composer install\".": "SW Sliderman: Das vendor-Verzeichnis fehlt. Das Release-Paket installieren oder „composer install“ ausführen.",
+  "This preview is not available.": "Diese Vorschau ist nicht verfügbar.",
+  "The draft contains invalid data.": "Der Entwurf enthält ungültige Daten.",
+  "The changes could not be stored. The last published version was not changed.": "Die Änderungen konnten nicht gespeichert werden. Die letzte veröffentlichte Version wurde nicht verändert."
 }

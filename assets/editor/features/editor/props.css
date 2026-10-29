@@ -1,13 +1,13 @@
 .sws-props {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
 }
 .sws-props__section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-top: 12px;
+  gap: 8px;
+  padding-top: 10px;
   border-top: 1px solid var(--sws-border);
 }
 .sws-props__section h3 {
@@ -20,7 +20,7 @@
 .sws-props__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
 }
 .sws-props__field {
   display: flex;
@@ -47,7 +47,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   font-size: 14px;
 }
 .sws-props__color input {
@@ -58,4 +58,20 @@
   border-radius: 8px;
   background: var(--sws-surface);
   cursor: pointer;
+}
+
+.sws-props__section:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+.sws-props :deep(.q-field--dense .q-field__control),
+.sws-props :deep(.q-field--dense .q-field__marginal) {
+  height: 36px;
+}
+.sws-props :deep(.q-field--dense .q-field__control) {
+  min-height: 36px;
+}
+.sws-props :deep(.q-field__native),
+.sws-props :deep(.q-field__label) {
+  font-size: 12px;
 }

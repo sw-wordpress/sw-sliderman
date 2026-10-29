@@ -72,8 +72,9 @@ export default tseslint.config(
     },
   },
   {
-    files: ['bin/**/*.mjs', 'tools/**/*.ts', 'vite.*.config.ts', 'vitest.config.ts', 'eslint.config.js'],
-    languageOptions: { globals: { ...globals.node } },
+    files: ['bin/**/*.mjs', 'tests/e2e/**/*.mjs', 'tools/**/*.ts', 'vite.*.config.ts', 'vitest.config.ts', 'eslint.config.js'],
+    // E2E scripts also contain callbacks evaluated in the browser.
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
   prettier,
 );

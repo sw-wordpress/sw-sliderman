@@ -3,6 +3,12 @@
  * contract test tests/unit/contract.test.ts compares both files.
  */
 export const LIMITS = {
+  jobBytes: 524288,
+  archiveBytes: 26214400,
+  archiveExtractedBytes: 104857600,
+  archiveEntries: 500,
+  fontFileBytes: 2097152,
+  fontJobBytes: 20971520,
   documentBytes: 524288,
   slides: 50,
   layersPerSlide: 100,

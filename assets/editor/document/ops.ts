@@ -98,7 +98,7 @@ export function createLayer(type: LayerType, stageWidth: number, stageHeight: nu
     case 'image':
       return { ...common, type, content: { attachmentId: null, alt: '', decorative: false, fit: 'cover' } };
     case 'button':
-      return { ...common, type, content: { label: name, url: 'https://', newTab: false } };
+      return { ...common, type, content: { label: name, url: '#', newTab: false } };
     default: {
       const unknown: never = type;
       throw new Error(`Unknown layer type ${String(unknown)}`);

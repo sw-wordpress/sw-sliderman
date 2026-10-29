@@ -2,7 +2,7 @@
   padding: 12px 12px 0 16px;
 }
 .sws-panel :deep(.sws-card__title) {
-  font-size: 14px;
+  font-size: 12px;
 }
 .sws-panel__empty {
   padding: 8px 16px 16px;
@@ -12,8 +12,8 @@
 .sws-items {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 4px 8px 10px;
+  gap: 0;
+  padding: 0;
   max-height: 340px;
   overflow-y: auto;
 }
@@ -21,7 +21,7 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  border-radius: 10px;
+  border-radius: 2px;
 }
 .sws-item:hover {
   background: var(--sws-surface-3);
@@ -40,15 +40,15 @@
   gap: 8px;
   flex: 1;
   min-width: 0;
-  padding: 7px 8px;
+  padding: 6px 12px;
   border: 0;
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 14px;
+  font-size: 12px;
   text-align: left;
   cursor: pointer;
-  border-radius: 10px;
+  border-radius: 2px;
 }
 .sws-item__swatch {
   flex: none;

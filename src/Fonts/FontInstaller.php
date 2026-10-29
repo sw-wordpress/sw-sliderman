@@ -82,10 +82,14 @@ final class FontInstaller {
 			$license = $this->provider->download_license( $family['licensePath'] );
 			$temp    = $this->storage->create_temp();
 
-			$manifest = array();
+			$manifest    = array();
+			$total_bytes = 0;
 			foreach ( $faces as $face ) {
-				$bytes = $this->provider->download_font( $face->url );
-				$hash  = hash( 'sha256', $bytes );
+				$bytes        = $this->provider->download_font( $face->url );
+				$total_bytes += strlen( $bytes );
+				if ( $total_bytes > \SW\Slider\Domain\Limits::FONT_JOB_BYTES ) {
+					throw new FontError( 'sws_font_too_large' ); }
+				$hash = hash( 'sha256', $bytes );
 				$this->storage->write( $temp, $hash . '.woff2', $bytes );
 				$key                         = $face->weight . '|' . $face->style;
 				$manifest[ $key ]          ??= array(

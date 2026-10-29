@@ -83,6 +83,10 @@ final class DocumentValidator {
 			}
 		}
 
+		if ( array() === $this->issues && strlen( CanonicalJson::encode( $document ) ) > Limits::DOCUMENT_BYTES ) {
+			return array( new ValidationIssue( '', 'too_large' ) );
+		}
+
 		return $this->issues;
 	}
 

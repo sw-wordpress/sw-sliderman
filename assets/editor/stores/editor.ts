@@ -1,6 +1,14 @@
 import { computed, ref, shallowRef, watch } from 'vue';
 import { defineStore } from 'pinia';
-import type { BreakpointName, Layer, LayerLayout, LayerStyle, LayerType, Slide, SliderDocument } from '@shared/types';
+import type {
+  BreakpointName,
+  Layer,
+  LayerLayout,
+  LayerStyle,
+  LayerType,
+  Slide,
+  SliderDocument,
+} from '@shared/types';
 import { collectIssues, type ValidationIssue } from '@shared/validate';
 import { LIMITS } from '@shared/limits';
 import { sliders } from '@editor/api';
@@ -18,6 +26,7 @@ import {
   ensureFontRef,
   findLayer,
   findSlide,
+  layerBox,
   moveItem,
   mutable,
   produce,
@@ -50,6 +59,7 @@ export const useEditorStore = defineStore('editor', () => {
   const serverVersion = ref(0);
   const published = ref<SliderDetail['published']>(null);
   const shortcode = ref('');
+  const previewUrl = ref('');
   const media = ref<Record<number, MediaInfo>>({});
 
   const loadState = ref<LoadState>('idle');
@@ -123,12 +133,15 @@ export const useEditorStore = defineStore('editor', () => {
       reset(detail);
       const entry = recovery.newest();
       recovered.value =
-        entry && entry.baseVersion === detail.version && JSON.stringify(entry.document) !== JSON.stringify(detail.document)
+        entry &&
+        entry.baseVersion === detail.version &&
+        JSON.stringify(entry.document) !== JSON.stringify(detail.document)
           ? entry
           : null;
       loadState.value = 'ready';
     } catch (error) {
-      loadError.value = error instanceof ApiError ? error : new ApiError('sws_unknown', String(error), 0);
+      loadError.value =
+        error instanceof ApiError ? error : new ApiError('sws_unknown', String(error), 0);
       loadState.value = 'error';
     }
   }
@@ -140,6 +153,7 @@ export const useEditorStore = defineStore('editor', () => {
     serverVersion.value = detail.version;
     published.value = detail.published;
     shortcode.value = detail.shortcode;
+    previewUrl.value = detail.previewUrl;
     media.value = { ...detail.media };
     saveState.value = 'saved';
     saveError.value = null;
@@ -341,7 +355,13 @@ export const useEditorStore = defineStore('editor', () => {
     if (next) selectSlide(next.id);
   }
   function moveSlide(id: string, delta: number): void {
-    edit((draft) => moveItem(draft.slides, draft.slides.findIndex((s) => s.id === id), delta));
+    edit((draft) =>
+      moveItem(
+        draft.slides,
+        draft.slides.findIndex((s) => s.id === id),
+        delta,
+      ),
+    );
   }
   function updateSlide(id: string, recipe: (slide: DeepMutable<Slide>) => void): void {
     edit((draft) => {
@@ -355,7 +375,11 @@ export const useEditorStore = defineStore('editor', () => {
     const current = slide.value;
     const doc = document.value;
     if (!current || !doc || current.layers.length >= LIMITS.layersPerSlide) return;
-    const names: Record<LayerType, string> = { text: __('Text'), image: __('Image'), button: __('Button') };
+    const names: Record<LayerType, string> = {
+      text: __('Text'),
+      image: __('Image'),
+      button: __('Button'),
+    };
     const desktop = doc.breakpoints.desktop;
     const layer = createLayer(type, desktop.stageWidth, desktop.stageHeight, names[type]);
     edit((draft) => {
@@ -366,12 +390,18 @@ export const useEditorStore = defineStore('editor', () => {
   function duplicateLayers(): void {
     const current = slide.value;
     if (!current) return;
-    const copies = selectedLayers.value.map((layer) => cloneLayer(layer, sprintf(__('%s (copy)'), layer.name)));
-    if (copies.length === 0 || current.layers.length + copies.length > LIMITS.layersPerSlide) return;
+    const copies = selectedLayers.value.map((layer) =>
+      cloneLayer(layer, sprintf(__('%s (copy)'), layer.name)),
+    );
+    if (copies.length === 0 || current.layers.length + copies.length > LIMITS.layersPerSlide)
+      return;
     edit((draft) => {
       const target = findSlide(draft, current.id);
       copies.forEach((copy) => {
-        const moved = { ...copy, layout: { ...copy.layout, x: copy.layout.x + 20, y: copy.layout.y + 20 } };
+        const moved = {
+          ...copy,
+          layout: { ...copy.layout, x: copy.layout.x + 20, y: copy.layout.y + 20 },
+        };
         target?.layers.push(mutable(moved));
       });
     });
@@ -393,7 +423,12 @@ export const useEditorStore = defineStore('editor', () => {
     if (!current) return;
     edit((draft) => {
       const target = findSlide(draft, current.id);
-      if (target) moveItem(target.layers, target.layers.findIndex((l) => l.id === id), delta);
+      if (target)
+        moveItem(
+          target.layers,
+          target.layers.findIndex((l) => l.id === id),
+          delta,
+        );
     });
   }
   function updateLayer(id: string, recipe: (layer: DeepMutable<Layer>) => void): void {
@@ -411,11 +446,16 @@ export const useEditorStore = defineStore('editor', () => {
   function resetLayerOverride(id: string, group: 'layout' | 'style', key: string): void {
     updateLayer(id, (layer) => resetOverride(layer, device.value, group, key));
   }
-  function setLayerFont(id: string, font: { installationId: string; weight: number; style: 'normal' | 'italic' } | null): void {
+  function setLayerFont(
+    id: string,
+    font: { installationId: string; weight: number; style: 'normal' | 'italic' } | null,
+  ): void {
     edit((draft) => {
       const layer = findLayer(draft, id);
       if (!layer) return;
-      layer.style.fontRef = font ? ensureFontRef(draft, font.installationId, font.weight, font.style) : null;
+      layer.style.fontRef = font
+        ? ensureFontRef(draft, font.installationId, font.weight, font.style)
+        : null;
       pruneFontRefs(draft);
     });
   }
@@ -429,7 +469,46 @@ export const useEditorStore = defineStore('editor', () => {
     if (!current) return;
     gestureEdit((draft) => {
       const layer = findLayer(draft, id);
-      if (layer && !layer.locked) setLayerBox(layer, device.value, current.stageWidth, current.stageHeight, box, changed);
+      if (layer && !layer.locked)
+        setLayerBox(layer, device.value, current.stageWidth, current.stageHeight, box, changed);
+    });
+  }
+  /** One undoable edit, using the existing anchor/breakpoint conversion. */
+  function fitImage(id: string, axis: 'width' | 'height'): void {
+    const layer = slide.value?.layers.find((item) => item.id === id);
+    const current = stage.value;
+    if (!layer || layer.type !== 'image' || layer.locked || !current) return;
+    const box = layerBox(layer, device.value, current.stageWidth, current.stageHeight);
+    const image =
+      layer.content.attachmentId === null ? null : media.value[layer.content.attachmentId];
+    const ratio =
+      image && image.width > 0 && image.height > 0
+        ? image.width / image.height
+        : box.width / box.height;
+    const width = axis === 'width' ? current.stageWidth : current.stageHeight * ratio;
+    const height = axis === 'height' ? current.stageHeight : current.stageWidth / ratio;
+    if (
+      ![width, height].every(
+        (size) => Number.isFinite(size) && size >= LIMITS.sizeMin && size <= LIMITS.sizeMax,
+      )
+    )
+      return;
+    edit((draft) => {
+      const target = findLayer(draft, id);
+      if (target)
+        setLayerBox(
+          target,
+          device.value,
+          current.stageWidth,
+          current.stageHeight,
+          {
+            left: (current.stageWidth - width) / 2,
+            top: (current.stageHeight - height) / 2,
+            width,
+            height,
+          },
+          { position: true, size: true },
+        );
     });
   }
   function updateDocument(recipe: (draft: DeepMutable<SliderDocument>) => void): void {
@@ -449,7 +528,8 @@ export const useEditorStore = defineStore('editor', () => {
   // Keep the selection valid after undo/redo or deletions.
   watch(document, (doc) => {
     if (!doc) return;
-    if (!doc.slides.some((s) => s.id === selectedSlideId.value)) selectedSlideId.value = doc.slides[0]?.id ?? null;
+    if (!doc.slides.some((s) => s.id === selectedSlideId.value))
+      selectedSlideId.value = doc.slides[0]?.id ?? null;
     const ids = new Set(doc.slides.flatMap((s) => s.layers.map((l) => l.id)));
     selectedLayerIds.value = selectedLayerIds.value.filter((id) => ids.has(id));
   });
@@ -461,6 +541,7 @@ export const useEditorStore = defineStore('editor', () => {
     serverVersion,
     published,
     shortcode,
+    previewUrl,
     media,
     loadState,
     loadError,
@@ -512,6 +593,7 @@ export const useEditorStore = defineStore('editor', () => {
     resetOverride: resetLayerOverride,
     setLayerFont,
     moveLayerBox,
+    fitImage,
     updateDocument,
     setTitle,
     rememberMedia,

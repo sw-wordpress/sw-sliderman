@@ -11,6 +11,7 @@ namespace SW\Slider\Rest;
 
 use SW\Slider\Application\InvalidDocument;
 use SW\Slider\Application\RepositoryBusy;
+use SW\Slider\Application\StorageFailure;
 use SW\Slider\Application\SliderNotFound;
 use SW\Slider\Application\VersionConflict;
 use SW\Slider\Domain\ValidationIssue;
@@ -50,6 +51,10 @@ final class Errors {
 		if ( $error instanceof SliderNotFound ) {
 			return new WP_Error( 'sws_not_found', __( 'The slider does not exist.', 'sw-sliderman' ), array( 'status' => 404 ) );
 		}
+		if ( $error instanceof StorageFailure ) {
+			return new WP_Error( 'sws_storage_failed', __( 'The changes could not be stored. The last published version was not changed.', 'sw-sliderman' ), array( 'status' => 500 ) );
+		}
+
 		if ( $error instanceof RepositoryBusy ) {
 			return new WP_Error( 'sws_busy', __( 'The slider is being saved by another request. Please try again.', 'sw-sliderman' ), array( 'status' => 409 ) );
 		}

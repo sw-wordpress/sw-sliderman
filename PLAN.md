@@ -215,7 +215,7 @@ Beispielhafte Struktur, noch kein vollständiges JSON Schema:
 }
 ```
 
-Ein JSON Schema und passende TypeScript-Typen werden in M1 verbindlich. Der Server validiert unabhängig vom Browser, mit identischen Grenzen und gemeinsamer Konformitäts-Fixture-Sammlung. Unbekannte neuere Schemaversionen werden nicht verändert oder still herunterkonvertiert. Migrationen laufen schrittweise und erhalten einen wiederherstellbaren Ausgangsstand.
+Für M1 sind `schemas/slider-document.v1.schema.json`, die TypeScript-Typen und die gemeinsamen PHP-/TS-Fixtures verbindlich. Die Dokumentgrenze von 512 KiB bezieht sich auf die kanonische ASCII-Speicherkodierung. Der Server validiert unabhängig vom Browser, mit identischen Grenzen und gemeinsamer Konformitäts-Fixture-Sammlung. Unbekannte neuere Schemaversionen werden nicht verändert oder still herunterkonvertiert. Migrationen laufen schrittweise und erhalten einen wiederherstellbaren Ausgangsstand.
 
 ## 10. Technische Architektur
 

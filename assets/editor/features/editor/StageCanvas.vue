@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { prepareImages } from '../../../browser/images';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { enterKeyframes, exitKeyframes, phaseTiming } from '@shared/animation';
 import { layerDeclarations, styleObject } from '@shared/css';
@@ -19,6 +20,7 @@ const editor = useEditorStore();
 const scroller = ref<HTMLElement | null>(null);
 const stageEl = ref<HTMLElement | null>(null);
 const available = ref(800);
+const availableHeight = ref(500);
 const snapToGrid = ref(false);
 const GRID = 10;
 const SNAP_PX = 6;
@@ -28,6 +30,9 @@ onMounted(() => {
   if (!scroller.value) return;
   observer = new ResizeObserver((entries) => {
     const width = entries[0]?.contentRect.width;
+    const height = entries[0]?.contentRect.height;
+    if (height !== undefined && Math.abs(height - availableHeight.value) > 1)
+      availableHeight.value = height;
     // Ignore sub-pixel jitter to avoid resize/scale feedback loops.
     if (width !== undefined && Math.abs(width - available.value) > 1) available.value = width;
   });
@@ -42,7 +47,12 @@ onBeforeUnmount(() => {
 const stage = computed(() => editor.stage ?? { stageWidth: 1440, stageHeight: 600, minWidth: 0 });
 const scale = computed(() => {
   const zoom = editor.zoom;
-  if (zoom === 'fit') return Math.min(1, Math.max(0.1, (available.value - 32) / stage.value.stageWidth));
+  if (zoom === 'fit')
+    return Math.min(
+      1,
+      Math.max(0.1, available.value / stage.value.stageWidth),
+      Math.max(0.1, availableHeight.value / stage.value.stageHeight),
+    );
   return zoom;
 });
 const frameWidth = computed(() => Math.round(stage.value.stageWidth * scale.value));
@@ -53,7 +63,12 @@ const resolved = computed(() => {
   if (!doc || !slide) return [];
   return slide.layers.map((layer) => {
     const item = resolveLayer(layer, editor.device, doc.breakpoints);
-    const css = layerDeclarations(item, stage.value.stageWidth, stage.value.stageHeight, doc.fontRefs);
+    const css = layerDeclarations(
+      item,
+      stage.value.stageWidth,
+      stage.value.stageHeight,
+      doc.fontRefs,
+    );
     return {
       layer,
       item,
@@ -106,7 +121,14 @@ function startPointer(event: PointerEvent, layer: Layer, mode: PointerState['mod
     if (entry) boxes.set(target.id, entry.item.box);
   }
   (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-  pointer = { id: event.pointerId, mode, startX: event.clientX, startY: event.clientY, boxes, moved: false };
+  pointer = {
+    id: event.pointerId,
+    mode,
+    startX: event.clientX,
+    startY: event.clientY,
+    boxes,
+    moved: false,
+  };
   editor.beginGesture();
   window.addEventListener('keydown', onEscape, true);
 }
@@ -160,7 +182,11 @@ function onPointerMove(event: PointerEvent): void {
         else height = width / ratio;
       }
     }
-    editor.moveLayerBox(id, { left, top, width, height }, { position: true, size: pointer.mode !== 'move' });
+    editor.moveLayerBox(
+      id,
+      { left, top, width, height },
+      { position: true, size: pointer.mode !== 'move' },
+    );
   }
 }
 
@@ -195,28 +221,48 @@ function onEscape(event: KeyboardEvent): void {
 }
 
 const selectionBoxes = computed(() =>
-  resolved.value.filter((r) => editor.selectedLayerIds.includes(r.layer.id)).map((r) => ({ id: r.layer.id, layer: r.layer, box: r.box })),
+  resolved.value
+    .filter((r) => editor.selectedLayerIds.includes(r.layer.id))
+    .map((r) => ({ id: r.layer.id, layer: r.layer, box: r.box })),
 );
 const handles: Handle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
 
 // ---------- animation preview ----------
 const running: Animation[] = [];
+let previewResources = new AbortController();
+let previewTimer: number | null = null;
 function cancelPreview(): void {
+  if (previewTimer !== null) window.clearTimeout(previewTimer);
+  previewTimer = null;
+  previewResources.abort();
+  previewResources = new AbortController();
   running.splice(0).forEach((animation) => animation.cancel());
 }
 watch(
   () => editor.previewToken,
-  () => {
+  async () => {
     cancelPreview();
+    const signal = previewResources.signal;
     const slide = editor.slide;
-    if (!slide || !stageEl.value || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!slide || !stageEl.value || window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+      return;
+    await prepareImages(scroller.value ?? stageEl.value, signal);
+    if (signal.aborted || !stageEl.value) return;
     for (const layer of scheduleSlide(slide).layers) {
-      const el = stageEl.value.querySelector<HTMLElement>(`[data-sws-layer="${CSS.escape(layer.layerId)}"] .sws-layer__anim`);
+      const el = stageEl.value.querySelector<HTMLElement>(
+        `[data-sws-layer="${CSS.escape(layer.layerId)}"] .sws-layer__anim`,
+      );
       if (!el) continue;
-      if (layer.enter) running.push(el.animate(enterKeyframes(layer.enter, scale.value), phaseTiming(layer.enter, 'enter')));
-      if (layer.exit) running.push(el.animate(exitKeyframes(layer.exit, scale.value), phaseTiming(layer.exit, 'exit')));
+      if (layer.enter)
+        running.push(
+          el.animate(enterKeyframes(layer.enter, scale.value), phaseTiming(layer.enter, 'enter')),
+        );
+      if (layer.exit)
+        running.push(
+          el.animate(exitKeyframes(layer.exit, scale.value), phaseTiming(layer.exit, 'exit')),
+        );
     }
-    window.setTimeout(cancelPreview, scheduleSlide(slide).durationMs + 100);
+    previewTimer = window.setTimeout(cancelPreview, scheduleSlide(slide).durationMs + 100);
   },
 );
 watch(() => [editor.slide?.id, editor.device], cancelPreview);
@@ -230,14 +276,28 @@ const deviceLabel = computed(
   <section class="sws-canvas" :aria-label="__('Canvas')">
     <div class="sws-canvas__bar">
       <span class="sws-num">
-        {{ sprintf(__('%1$s stage %2$d × %3$d px · %4$s %%'), deviceLabel, stage.stageWidth, stage.stageHeight, formatNumber(scale * 100, 0)) }}
+        {{
+          sprintf(
+            __('%1$s stage %2$d × %3$d px · %4$s %%'),
+            deviceLabel,
+            stage.stageWidth,
+            stage.stageHeight,
+            formatNumber(scale * 100, 0),
+          )
+        }}
       </span>
       <q-toggle v-model="snapToGrid" dense size="sm" :label="sprintf(__('Grid %d px'), GRID)" />
     </div>
     <div ref="scroller" class="sws-canvas__scroller" @pointerdown.self="editor.clearSelection()">
       <div class="sws-slider sws-canvas__frame" :style="{ width: `${frameWidth}px` }">
         <div class="sws-slide sws-is-active" :style="{ backgroundColor: background?.color }">
-          <img v-if="background?.image" class="sws-slide__bg" :class="`sws-fit-${background.fit}`" :src="background.image" alt="" />
+          <img
+            v-if="background?.image"
+            class="sws-slide__bg"
+            :class="`sws-fit-${background.fit}`"
+            :src="background.image"
+            alt=""
+          />
           <div
             ref="stageEl"
             class="sws-stage"
@@ -248,8 +308,18 @@ const deviceLabel = computed(
               v-for="entry in resolved"
               :key="entry.layer.id"
               class="sws-layer sws-canvas__layer"
-              :class="[`sws-layer--${entry.layer.type}`, { 'sws-canvas__layer--overflow': entry.overflow, 'sws-canvas__layer--locked': entry.layer.locked }]"
-              :style="entry.item.layout.visible ? entry.box : { ...entry.box, display: 'block', opacity: '0.25' }"
+              :class="[
+                `sws-layer--${entry.layer.type}`,
+                {
+                  'sws-canvas__layer--overflow': entry.overflow,
+                  'sws-canvas__layer--locked': entry.layer.locked,
+                },
+              ]"
+              :style="
+                entry.item.layout.visible
+                  ? entry.box
+                  : { ...entry.box, display: 'block', opacity: '0.25' }
+              "
               :data-sws-layer="entry.layer.id"
               @pointerdown="startPointer($event, entry.layer, 'move')"
               @pointermove="onPointerMove"
@@ -263,7 +333,13 @@ const deviceLabel = computed(
               </div>
             </div>
 
-            <div v-for="sel in selectionBoxes" :key="`sel-${sel.id}`" class="sws-canvas__selection" :style="sel.box" aria-hidden="true">
+            <div
+              v-for="sel in selectionBoxes"
+              :key="`sel-${sel.id}`"
+              class="sws-canvas__selection"
+              :style="sel.box"
+              aria-hidden="true"
+            >
               <template v-if="selectionBoxes.length === 1 && !sel.layer.locked">
                 <span
                   v-for="handle in handles"
@@ -277,14 +353,26 @@ const deviceLabel = computed(
                 />
               </template>
             </div>
-            <div v-if="guides.x !== null" class="sws-canvas__guide sws-canvas__guide--v" :style="{ left: `${(guides.x / stage.stageWidth) * 100}%` }" />
-            <div v-if="guides.y !== null" class="sws-canvas__guide sws-canvas__guide--h" :style="{ top: `${(guides.y / stage.stageHeight) * 100}%` }" />
+            <div
+              v-if="guides.x !== null"
+              class="sws-canvas__guide sws-canvas__guide--v"
+              :style="{ left: `${(guides.x / stage.stageWidth) * 100}%` }"
+            />
+            <div
+              v-if="guides.y !== null"
+              class="sws-canvas__guide sws-canvas__guide--h"
+              :style="{ top: `${(guides.y / stage.stageHeight) * 100}%` }"
+            />
           </div>
         </div>
       </div>
     </div>
     <p class="sws-canvas__hint">
-      {{ __('Drag to move, handles to resize (Shift keeps the ratio), arrow keys move by 1 px (Shift: 10 px), Esc cancels.') }}
+      {{
+        __(
+          'Drag to move, handles to resize (Shift keeps the ratio), arrow keys move by 1 px (Shift: 10 px), Esc cancels.',
+        )
+      }}
     </p>
   </section>
 </template>
@@ -310,7 +398,13 @@ const deviceLabel = computed(
   border-radius: var(--sws-radius);
   border: 1px solid var(--sws-border);
   background:
-    conic-gradient(var(--sws-surface-3) 25%, transparent 0 50%, var(--sws-surface-3) 0 75%, transparent 0) 0 0 / 20px 20px,
+    conic-gradient(
+        var(--sws-surface-3) 25%,
+        transparent 0 50%,
+        var(--sws-surface-3) 0 75%,
+        transparent 0
+      )
+      0 0 / 20px 20px,
     var(--sws-surface-2);
 }
 .sws-canvas__frame {
@@ -349,14 +443,46 @@ const deviceLabel = computed(
   background: #fff;
   pointer-events: auto;
 }
-.sws-canvas__handle--nw { left: 0; top: 0; cursor: nwse-resize; }
-.sws-canvas__handle--n { left: 50%; top: 0; cursor: ns-resize; }
-.sws-canvas__handle--ne { left: 100%; top: 0; cursor: nesw-resize; }
-.sws-canvas__handle--e { left: 100%; top: 50%; cursor: ew-resize; }
-.sws-canvas__handle--se { left: 100%; top: 100%; cursor: nwse-resize; }
-.sws-canvas__handle--s { left: 50%; top: 100%; cursor: ns-resize; }
-.sws-canvas__handle--sw { left: 0; top: 100%; cursor: nesw-resize; }
-.sws-canvas__handle--w { left: 0; top: 50%; cursor: ew-resize; }
+.sws-canvas__handle--nw {
+  left: 0;
+  top: 0;
+  cursor: nwse-resize;
+}
+.sws-canvas__handle--n {
+  left: 50%;
+  top: 0;
+  cursor: ns-resize;
+}
+.sws-canvas__handle--ne {
+  left: 100%;
+  top: 0;
+  cursor: nesw-resize;
+}
+.sws-canvas__handle--e {
+  left: 100%;
+  top: 50%;
+  cursor: ew-resize;
+}
+.sws-canvas__handle--se {
+  left: 100%;
+  top: 100%;
+  cursor: nwse-resize;
+}
+.sws-canvas__handle--s {
+  left: 50%;
+  top: 100%;
+  cursor: ns-resize;
+}
+.sws-canvas__handle--sw {
+  left: 0;
+  top: 100%;
+  cursor: nesw-resize;
+}
+.sws-canvas__handle--w {
+  left: 0;
+  top: 50%;
+  cursor: ew-resize;
+}
 .sws-canvas__guide {
   position: absolute;
   z-index: 6;
@@ -376,5 +502,31 @@ const deviceLabel = computed(
 .sws-canvas__hint {
   font-size: 12px;
   color: var(--sws-muted);
+}
+</style>
+
+<style scoped>
+.sws-canvas {
+  gap: 0;
+}
+.sws-canvas__bar {
+  padding: 4px 12px;
+  font-size: 11px;
+  border-bottom: 1px solid var(--sws-border);
+}
+.sws-canvas__scroller {
+  flex: 1;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 24px;
+  background: var(--sws-surface-2);
+  align-content: center;
+}
+.sws-canvas__hint {
+  padding: 5px 12px;
+  margin: 0;
+  font-size: 11px;
+  border-top: 1px solid var(--sws-border);
 }
 </style>

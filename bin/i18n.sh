@@ -16,8 +16,10 @@ case "${1:-check}" in
     node bin/i18n-js.mjs build
     ;;
   check)
-    python3 bin/i18n-po.py >/dev/null
-    git diff --quiet -- languages/sw-sliderman-de_DE.po || { echo "de_DE.po is outdated: run bin/i18n.sh update" >&2; exit 1; }
+    expected="$(mktemp)"
+    trap 'rm -f "$expected"' EXIT
+    python3 bin/i18n-po.py "$expected" >/dev/null
+    cmp -s "$expected" languages/sw-sliderman-de_DE.po || { echo "de_DE.po is outdated: run bin/i18n.sh update" >&2; exit 1; }
     msgfmt --check --statistics --output-file=/dev/null languages/sw-sliderman-de_DE.po
     node bin/i18n-js.mjs check
     ;;

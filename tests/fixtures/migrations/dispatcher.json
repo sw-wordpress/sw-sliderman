@@ -1,0 +1,7 @@
+{
+  "description": "Migration dispatcher contract only: synthetic target version 3 exercises sequential upgrades without introducing a production schema beyond v1.",
+  "source": { "schemaVersion": 1, "id": "stable-document", "label": "original" },
+  "targetVersion": 3,
+  "expected": { "schemaVersion": 3, "id": "stable-document", "label": "migrated" },
+  "rejectedVersions": [0, 4, "1"]
+}

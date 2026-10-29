@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SW\Slider;
 
 use SW\Slider\Admin\AdminPage;
+use SW\Slider\Admin\DraftPreview;
 use SW\Slider\Application\SliderService;
 use SW\Slider\Domain\DocumentValidator;
 use SW\Slider\Fonts\DownloadPolicy;
@@ -22,6 +23,7 @@ use SW\Slider\Fonts\UploadsFontStorage;
 use SW\Slider\Fonts\WpFontRepository;
 use SW\Slider\Fonts\WpHttpClient;
 use SW\Slider\Infrastructure\Lifecycle;
+use SW\Slider\Infrastructure\SliderWriteScope;
 use SW\Slider\Infrastructure\PostTypes;
 use SW\Slider\Infrastructure\Translations;
 use SW\Slider\Infrastructure\UploadsArtifactStore;
@@ -76,8 +78,11 @@ final class Plugin {
 		( new Translations( SWS_DIR . 'languages' ) )->register();
 		( new Lifecycle() )->register();
 		( new PostTypes() )->register();
+		( new SliderWriteScope() )->register();
 		$assets->register();
-		( new Shortcode( new SliderRenderer( $sliders, $assets ) ) )->register();
+		$renderer = new SliderRenderer( $sliders, $assets );
+		( new Shortcode( $renderer ) )->register();
+		( new DraftPreview( $service, $renderer ) )->register();
 		( new SliderController( $service ) )->register();
 		( new FontController( $catalog, $installer, $library, $offline ) )->register();
 		if ( is_admin() ) {

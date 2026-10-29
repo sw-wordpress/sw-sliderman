@@ -1,3 +1,4 @@
+import { prepareImages } from '../browser/images';
 import { enterKeyframes, exitKeyframes, phaseTiming } from '@shared/animation';
 import { resolveStage } from '@shared/layout';
 import { scheduleSlide } from '@shared/schedule';
@@ -7,7 +8,7 @@ import type { RuntimeConfig } from './config';
  * One slider on the page (PLAN.md 5.3, 7.1, 12; CODE-STYLE 13).
  *
  * State model:
- * - `phase`: 'ready' | 'transitioning'. Every navigation increments `generation`; timers and
+ * - `phase`: 'loading' | 'ready' | 'transitioning'. Every navigation increments `generation`; timers and
  *   animation callbacks of an older generation are ignored, so fast navigation never produces
  *   overlapping states.
  * - Autoplay runs only while none of the pause reasons applies. A user pause has priority: no
@@ -29,7 +30,9 @@ export class SliderInstance {
 
   private index = 0;
   private generation = 0;
-  private phase: 'ready' | 'transitioning' = 'ready';
+  private phase: 'loading' | 'ready' | 'transitioning' = 'loading';
+  private resources = new AbortController();
+  private readonly prepared: Animation[] = [];
   private timer: number | null = null;
   private userPaused = false;
   private hovered = false;
@@ -55,7 +58,7 @@ export class SliderInstance {
     root.classList.add('sws-js');
     this.listen(motion, 'change', () => {
       this.reducedMotion = motion.matches;
-      if (this.reducedMotion) this.cancelAll();
+      if (this.reducedMotion) this.settleCurrent();
       this.updateToggle();
       this.schedule();
     });
@@ -81,8 +84,19 @@ export class SliderInstance {
   private async start(): Promise<void> {
     const generation = this.generation;
     const fonts = document.fonts?.ready ?? Promise.resolve();
-    await Promise.race([fonts, new Promise((resolve) => window.setTimeout(resolve, 1200))]);
+    let timeout: number | undefined;
+    await Promise.all([
+      Promise.race([
+        fonts,
+        new Promise((resolve) => {
+          timeout = window.setTimeout(resolve, 1200);
+        }),
+      ]),
+      prepareImages(this.slides[0] ?? this.root, this.resources.signal),
+    ]);
+    window.clearTimeout(timeout);
     if (this.destroyed || generation !== this.generation) return;
+    this.phase = 'ready';
     this.playLayers(0);
     this.schedule();
   }
@@ -140,7 +154,10 @@ export class SliderInstance {
       this.schedule();
     });
     this.listen(document, 'visibilitychange', () => {
-      if (document.hidden) this.cancelLayers();
+      if (document.hidden) {
+        if (this.phase === 'transitioning') this.settleCurrent();
+        else this.cancelLayers();
+      }
       this.schedule();
     });
     if ('IntersectionObserver' in window) {
@@ -217,23 +234,56 @@ export class SliderInstance {
     if (this.destroyed || index === this.index || index < 0 || index >= this.count) return;
     const generation = ++this.generation;
     this.cancelAll();
-    const outgoing = this.slides[this.index];
+    const outgoing = this.slides.find((el) => el.classList.contains('sws-is-active'));
     const incoming = this.slides[index];
     const slide = this.config.slides[index];
     if (!outgoing || !incoming || !slide) return;
-
-    // Finish any previous transition instantly: only the outgoing slide may stay visible.
     this.slides.forEach((el) => {
       if (el !== outgoing) this.hide(el);
     });
+    outgoing.classList.remove('sws-is-leaving');
+    outgoing.hidden = false;
+    outgoing.inert = false;
+
+    if (outgoing === incoming) {
+      this.index = index;
+      this.settleCurrent();
+      this.updateNavigation();
+      if (user) this.announce();
+      this.playLayers(index);
+      this.schedule();
+      return;
+    }
     this.index = index;
+    this.phase = 'loading';
+    this.updateNavigation();
+    if (user) this.announce();
+    const ready = prepareImages(incoming, this.resources.signal);
+    if (ready) void ready.then(() => this.show(generation, outgoing, incoming, direction));
+    else this.show(generation, outgoing, incoming, direction);
+  }
+
+  private show(
+    generation: number,
+    outgoing: HTMLElement,
+    incoming: HTMLElement,
+    direction: 1 | -1,
+  ): void {
+    if (generation !== this.generation || this.destroyed) return;
+    const slide = this.config.slides[this.index];
+    if (!slide) return;
+    this.slides.forEach((el) => {
+      if (el !== outgoing) this.hide(el);
+    });
+    // Install the hidden entrance frame before the incoming slide can paint. Its clock starts
+    // only after the slide transition, so delayed entrances cannot flash their static content.
+    this.playLayers(this.index, true);
     incoming.hidden = false;
     incoming.classList.add('sws-is-active');
     outgoing.classList.remove('sws-is-active');
-    this.updateNavigation();
-    if (user) this.announce();
+    outgoing.inert = true;
 
-    const type = this.reducedMotion ? 'cut' : slide.transition.type;
+    const type = this.reducedMotion || document.hidden ? 'cut' : slide.transition.type;
     const duration = slide.transition.durationMs;
     if (type === 'cut' || duration === 0) {
       this.finish(generation, outgoing, incoming);
@@ -249,8 +299,12 @@ export class SliderInstance {
       outgoing.classList.add('sws-is-leaving');
       const from = `${direction * 100}%`;
       const to = `${direction * -100}%`;
-      animations.push(incoming.animate([{ transform: `translateX(${from})` }, { transform: 'none' }], timing));
-      animations.push(outgoing.animate([{ transform: 'none' }, { transform: `translateX(${to})` }], timing));
+      animations.push(
+        incoming.animate([{ transform: `translateX(${from})` }, { transform: 'none' }], timing),
+      );
+      animations.push(
+        outgoing.animate([{ transform: 'none' }, { transform: `translateX(${to})` }], timing),
+      );
     }
     animations.forEach((animation) => this.running.add(animation));
     Promise.all(animations.map((animation) => animation.finished))
@@ -262,39 +316,74 @@ export class SliderInstance {
 
   private finish(generation: number, outgoing: HTMLElement, incoming: HTMLElement): void {
     if (generation !== this.generation || this.destroyed) return;
-    this.cancelAll();
+    this.running.forEach((animation) => {
+      if (!this.prepared.includes(animation)) {
+        animation.cancel();
+        this.running.delete(animation);
+      }
+    });
     this.hide(outgoing);
     incoming.inert = false;
     this.phase = 'ready';
-    this.playLayers(this.index);
+    this.prepared.splice(0).forEach((animation) => animation.play());
     this.schedule();
   }
 
+  /** Cancellation must leave exactly one readable slide, even in a hidden tab. */
+  private settleCurrent(): void {
+    this.generation++;
+    this.cancelAll();
+    this.slides.forEach((slide, index) => {
+      if (index !== this.index) this.hide(slide);
+      else {
+        slide.classList.remove('sws-is-leaving');
+        slide.classList.add('sws-is-active');
+        slide.hidden = false;
+        slide.inert = false;
+      }
+    });
+  }
+
   private hide(slide: HTMLElement): void {
-    slide.classList.remove('sws-is-leaving');
+    slide.classList.remove('sws-is-leaving', 'sws-is-active');
     slide.hidden = true;
     // `hidden` alone is undone during transitions; `inert` keeps links out of focus order and AT.
     slide.inert = true;
   }
 
-  private playLayers(index: number): void {
+  private playLayers(index: number, paused = false): void {
     if (this.reducedMotion || document.hidden) return;
     const slideEl = this.slides[index];
     const slide = this.config.slides[index];
     if (!slideEl || !slide) return;
     const { breakpoints } = this.config;
-    const width = slideEl.getBoundingClientRect().width;
+    const width = this.viewport.getBoundingClientRect().width;
     const stage = resolveStage(breakpoints, width);
     const schedule = scheduleSlide(slide);
     for (const layer of schedule.layers) {
-      const el = slideEl.querySelector<HTMLElement>(`[data-sws-layer="${CSS.escape(layer.layerId)}"] .sws-layer__anim`);
+      const el = slideEl.querySelector<HTMLElement>(
+        `[data-sws-layer="${CSS.escape(layer.layerId)}"] .sws-layer__anim`,
+      );
       if (!el) continue;
-      if (layer.enter) this.track(el.animate(enterKeyframes(layer.enter, stage.scale), phaseTiming(layer.enter, 'enter')));
-      if (layer.exit) this.track(el.animate(exitKeyframes(layer.exit, stage.scale), phaseTiming(layer.exit, 'exit')));
+      if (layer.enter)
+        this.track(
+          el.animate(enterKeyframes(layer.enter, stage.scale), phaseTiming(layer.enter, 'enter')),
+          paused,
+        );
+      if (layer.exit)
+        this.track(
+          el.animate(exitKeyframes(layer.exit, stage.scale), phaseTiming(layer.exit, 'exit')),
+          paused,
+        );
     }
   }
 
-  private track(animation: Animation): void {
+  private track(animation: Animation, paused: boolean): void {
+    if (paused) {
+      animation.pause();
+      animation.currentTime = 0;
+      this.prepared.push(animation);
+    }
     this.running.add(animation);
     animation.finished.then(
       () => {
@@ -307,9 +396,12 @@ export class SliderInstance {
   private cancelLayers(): void {
     this.running.forEach((animation) => animation.cancel());
     this.running.clear();
+    this.prepared.length = 0;
   }
 
   private cancelAll(): void {
+    this.resources.abort();
+    this.resources = new AbortController();
     this.cancelLayers();
     this.phase = 'ready';
     if (this.timer !== null) {

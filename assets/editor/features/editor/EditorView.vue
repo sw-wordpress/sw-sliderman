@@ -7,7 +7,7 @@ import { layerBox } from '@editor/document/ops';
 import { __ } from '@editor/i18n';
 import ErrorState from '@editor/components/ui/ErrorState.vue';
 import EditorTopBar from './EditorTopBar.vue';
-import SlidesPanel from './SlidesPanel.vue';
+import StageToolbar from './StageToolbar.vue';
 import LayersPanel from './LayersPanel.vue';
 import StageCanvas from './StageCanvas.vue';
 import PropertiesPanel from './PropertiesPanel.vue';
@@ -30,7 +30,8 @@ function isTyping(target: EventTarget | null): boolean {
 }
 
 function onKeydown(event: KeyboardEvent): void {
-  if (editor.loadState !== 'ready' || isTyping(event.target) || document.querySelector('.q-dialog')) return;
+  if (editor.loadState !== 'ready' || isTyping(event.target) || document.querySelector('.q-dialog'))
+    return;
   const mod = event.ctrlKey || event.metaKey;
   const key = event.key.toLowerCase();
   if (mod && key === 'z' && !event.shiftKey) {
@@ -45,7 +46,10 @@ function onKeydown(event: KeyboardEvent): void {
   } else if (mod && key === 'd' && editor.selectedLayers.length > 0) {
     event.preventDefault();
     editor.duplicateLayers();
-  } else if ((event.key === 'Delete' || event.key === 'Backspace') && editor.selectedLayers.length > 0) {
+  } else if (
+    (event.key === 'Delete' || event.key === 'Backspace') &&
+    editor.selectedLayers.length > 0
+  ) {
     event.preventDefault();
     editor.removeLayers();
   } else if (event.key === 'Escape') {
@@ -65,7 +69,11 @@ function nudge(key: string, step: number): void {
   editor.beginGesture();
   for (const layer of editor.selectedLayers) {
     const box = layerBox(layer, editor.device, stage.stageWidth, stage.stageHeight);
-    editor.moveLayerBox(layer.id, { ...box, left: box.left + dx, top: box.top + dy }, { position: true, size: false });
+    editor.moveLayerBox(
+      layer.id,
+      { ...box, left: box.left + dx, top: box.top + dy },
+      { position: true, size: false },
+    );
   }
   editor.endGesture();
 }
@@ -107,20 +115,28 @@ onBeforeRouteLeave(async () => {
 
 <template>
   <div class="sws-editor">
-    <div v-if="editor.loadState === 'loading' || editor.loadState === 'idle'" class="sws-editor__loading" aria-busy="true">
+    <div
+      v-if="editor.loadState === 'loading' || editor.loadState === 'idle'"
+      class="sws-editor__loading"
+      aria-busy="true"
+    >
       <q-spinner size="40px" color="primary" />
       <span>{{ __('Loading slider …') }}</span>
     </div>
-    <ErrorState v-else-if="editor.loadState === 'error' && editor.loadError" :error="editor.loadError" @retry="editor.load(id)" />
+    <ErrorState
+      v-else-if="editor.loadState === 'error' && editor.loadError"
+      :error="editor.loadError"
+      @retry="editor.load(id)"
+    />
     <template v-else-if="editor.document">
       <EditorTopBar />
       <EditorNotices />
       <div class="sws-editor__grid">
-        <aside class="sws-editor__left" :aria-label="__('Slides and layers')">
-          <SlidesPanel />
-          <LayersPanel />
-        </aside>
-        <StageCanvas class="sws-editor__canvas" />
+        <div class="sws-editor__center">
+          <StageToolbar />
+          <StageCanvas class="sws-editor__canvas" />
+          <LayersPanel class="sws-editor__layers" />
+        </div>
         <PropertiesPanel class="sws-editor__right" />
       </div>
     </template>
@@ -131,8 +147,9 @@ onBeforeRouteLeave(async () => {
 .sws-editor {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  min-height: calc(100vh - var(--wp-admin--admin-bar--height, 32px) - 48px);
+  height: calc(100dvh - var(--wp-admin--admin-bar--height, 32px));
+  min-height: 0;
+  min-width: 0;
 }
 .sws-editor__loading {
   display: flex;
@@ -144,28 +161,43 @@ onBeforeRouteLeave(async () => {
 }
 .sws-editor__grid {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr) 320px;
-  gap: 12px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) 320px;
   flex: 1;
+  min-height: 0;
 }
-.sws-editor__left {
+.sws-editor__center {
   display: flex;
   flex-direction: column;
-  gap: 12px;
   min-width: 0;
+  min-height: 0;
 }
-@media (max-width: 1280px) {
-  .sws-editor__grid {
-    grid-template-columns: 220px minmax(0, 1fr) 290px;
+.sws-editor__canvas {
+  flex: 1;
+  min-height: 0;
+}
+.sws-editor__layers {
+  flex: none;
+  max-height: 220px;
+  overflow: auto;
+  border-radius: 0;
+  border-width: 1px 0 0;
+  box-shadow: none;
+}
+.sws-editor__layers :deep(.sws-card__header) {
+  padding: 4px 12px;
+}
+.sws-editor__layers :deep(.sws-card__body) {
+  padding: 0;
+}
+@media (max-width: 900px) {
+  .sws-editor {
+    height: auto;
   }
-}
-@media (max-width: 1000px) {
   .sws-editor__grid {
     grid-template-columns: minmax(0, 1fr);
   }
   .sws-editor__canvas {
-    order: -1;
+    min-height: 340px;
   }
 }
 </style>

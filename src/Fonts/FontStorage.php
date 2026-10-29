@@ -41,4 +41,7 @@ interface FontStorage {
 	public function remove( string $relative_dir ): void;
 
 	public function exists( string $relative_dir ): bool;
+
+	/** Verify an installed resource without exposing storage paths. */
+	public function verify_file( string $relative_dir, string $name, string $sha256 ): bool;
 }

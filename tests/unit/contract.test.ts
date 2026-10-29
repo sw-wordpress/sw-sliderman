@@ -1,9 +1,15 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { canonicalBytes } from '@shared/canonical';
 import { LIMITS } from '@shared/limits';
 import { collectIssues, validateDocument } from '@shared/validate';
-import { breakpointForWidth, resolveLayer, resolveLayerLayout, resolveLayerStyle } from '@shared/layout';
+import {
+  breakpointForWidth,
+  resolveLayer,
+  resolveLayerLayout,
+  resolveLayerStyle,
+} from '@shared/layout';
 import { layerDeclarations, serializeDeclarations, formatNumber } from '@shared/css';
 import { effectiveSlideDurationMs, scheduleSlide } from '@shared/schedule';
 import type { BreakpointName, Layer, SliderDocument } from '@shared/types';
@@ -32,7 +38,9 @@ describe('document validator contract', () => {
   });
 
   it('default template is valid', () => {
-    const template = JSON.parse(readFileSync(resolve(ROOT, 'schemas/defaults/new-slider.json'), 'utf8'));
+    const template = JSON.parse(
+      readFileSync(resolve(ROOT, 'schemas/defaults/new-slider.json'), 'utf8'),
+    );
     expect(collectIssues(template)).toEqual([]);
   });
 
@@ -52,9 +60,36 @@ describe('document validator contract', () => {
       [...php.matchAll(/const ([A-Z_]+)\s*=\s*(-?[0-9.]+);/g)].map((m) => [m[1], Number(m[2])]),
     );
     const typescript = new Map(
-      Object.entries(LIMITS).map(([key, value]) => [key.replace(/[A-Z]/g, (c) => `_${c}`).toUpperCase(), value]),
+      Object.entries(LIMITS).map(([key, value]) => [
+        key.replace(/[A-Z]/g, (c) => `_${c}`).toUpperCase(),
+        value,
+      ]),
     );
     expect(Object.fromEntries(typescript)).toEqual(Object.fromEntries(constants));
+  });
+});
+
+describe('canonical document size', () => {
+  const data = fixture('documents/size.json') as {
+    cases: Array<{ name: string; text: string; repeat: number; layers: number; tooLarge: boolean }>;
+  };
+  const samples = fixture('documents/size.json') as {
+    samples: Array<{ value: unknown; bytes: number }>;
+  };
+  it.each(samples.samples)('matches PHP canonical bytes for $value', (sample) => {
+    expect(canonicalBytes(sample.value)).toBe(sample.bytes);
+  });
+  it.each(data.cases)('$name', (item) => {
+    const doc = JSON.parse(JSON.stringify(basic()));
+    const layer = doc.slides[0].layers[0];
+    doc.slides = [doc.slides[0]];
+    doc.slides[0].layers = Array.from({ length: item.layers }, (_, index) => ({
+      ...structuredClone(layer),
+      id: `layer-${index}`,
+      content: { ...layer.content, text: item.text.repeat(item.repeat) },
+    }));
+    expect(canonicalBytes(doc) > LIMITS.documentBytes).toBe(item.tooLarge);
+    expect(collectIssues(doc)).toEqual(item.tooLarge ? [{ path: '', code: 'too_large' }] : []);
   });
 });
 
@@ -69,19 +104,27 @@ describe('layout and css contract', () => {
     }>;
   };
 
-  it.each(golden.cases.map((c) => [`${c.breakpoint}/${c.layer}`, c] as const))('%s', (_label, c) => {
-    const document = basic();
-    const layer = layersById(document).get(c.layer);
-    if (!layer) throw new Error(`missing layer ${c.layer}`);
-    const stage = document.breakpoints[c.breakpoint];
-    const resolved = resolveLayer(layer, c.breakpoint, document.breakpoints);
-    for (const [key, value] of Object.entries(c.box)) {
-      expect(resolved.box[key as keyof typeof resolved.box]).toBeCloseTo(value, 9);
-    }
-    const css = layerDeclarations(resolved, stage.stageWidth, stage.stageHeight, document.fontRefs);
-    expect(serializeDeclarations(css.box)).toBe(c.boxCss);
-    expect(serializeDeclarations(css.body)).toBe(c.bodyCss);
-  });
+  it.each(golden.cases.map((c) => [`${c.breakpoint}/${c.layer}`, c] as const))(
+    '%s',
+    (_label, c) => {
+      const document = basic();
+      const layer = layersById(document).get(c.layer);
+      if (!layer) throw new Error(`missing layer ${c.layer}`);
+      const stage = document.breakpoints[c.breakpoint];
+      const resolved = resolveLayer(layer, c.breakpoint, document.breakpoints);
+      for (const [key, value] of Object.entries(c.box)) {
+        expect(resolved.box[key as keyof typeof resolved.box]).toBeCloseTo(value, 9);
+      }
+      const css = layerDeclarations(
+        resolved,
+        stage.stageWidth,
+        stage.stageHeight,
+        document.fontRefs,
+      );
+      expect(serializeDeclarations(css.box)).toBe(c.boxCss);
+      expect(serializeDeclarations(css.body)).toBe(c.bodyCss);
+    },
+  );
 
   it('inherits desktop -> tablet -> mobile per property', () => {
     const layer = layersById(basic()).get('headline');

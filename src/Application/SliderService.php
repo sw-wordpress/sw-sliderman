@@ -30,7 +30,8 @@ final class SliderService {
 		private readonly ArtifactStore $artifacts,
 		private readonly ArtifactBuilder $builder,
 		private readonly SystemPorts $system,
-		private readonly string $template_json
+		private readonly string $template_json,
+		private readonly \SW\Slider\Domain\DocumentMigrator $migrator = new \SW\Slider\Domain\DocumentMigrator()
 	) {
 	}
 
@@ -118,11 +119,83 @@ final class SliderService {
 		$version    = $this->builder->renderer_version();
 		$css        = $this->builder->build_stylesheet( $document, substr( $hash, 0, 12 ) );
 		$stylesheet = $this->artifacts->store_stylesheet( substr( $hash, 0, 16 ) . '-r' . $version . '.css', $css );
-		$fonts      = array_values( array_unique( array_map( static fn ( array $ref ): string => (string) $ref['installationId'], $document['fontRefs'] ) ) );
+		if ( null === $stylesheet ) {
+			throw new StorageFailure( 'Could not store the complete publication artifact.' ); }
+		$fonts = array_values( array_unique( array_map( static fn ( array $ref ): string => (string) $ref['installationId'], $document['fontRefs'] ) ) );
 
-		$snapshot = new PublishedSnapshot( $expected_version, $hash, $version, $this->system->now_gmt(), $stored->document_json, $stylesheet, $fonts );
+		$snapshot = new PublishedSnapshot( $expected_version, $hash, $version, $this->system->now_gmt(), $stored->document_json, $stylesheet, $fonts, $stored->title );
 		$this->repository->activate_snapshot( $id, $expected_version, $snapshot );
 		return $snapshot;
+	}
+
+	public function migrate_draft( int $id, int $expected_version ): int {
+		$stored = $this->get( $id );
+		if ( $stored->version !== $expected_version ) {
+			throw new VersionConflict( $stored->version ); }
+		try {
+			$source = CanonicalJson::decode_tree( $stored->document_json );
+			if ( ! $source instanceof \stdClass ) {
+				throw new \InvalidArgumentException( 'Invalid source.' ); }
+			$target = $this->migrator->migrate( $source );
+		} catch ( \InvalidArgumentException | JsonException ) {
+			throw new InvalidDocument( array( new ValidationIssue( '/schemaVersion', 'schema_version' ) ) );
+		}
+		$issues = $this->validator->validate( $target );
+		if ( array() !== $issues ) {
+			throw new InvalidDocument( $issues ); }
+		$json = CanonicalJson::encode( $target );
+		if ( $json === $stored->document_json ) {
+			return $stored->version; }
+		return $this->save_draft( $id, $stored->title, $target, $expected_version );
+	}
+
+	/** Duplicates document-local identities; installed resource references remain pinned. */
+	public function duplicate( int $id, string $title ): int {
+		$source = $this->get( $id );
+		$issues = $this->validator->validate_json( $source->document_json );
+		if ( array() !== $issues ) {
+			throw new InvalidDocument( $issues ); }
+		$tree     = CanonicalJson::decode_tree( $source->document_json );
+		$tree->id = $this->system->uuid();
+		$fonts    = array();
+		foreach ( $tree->fontRefs as $ref ) {
+			$old           = $ref->id;
+			$ref->id       = $this->system->uuid();
+			$fonts[ $old ] = $ref->id;
+		}
+		foreach ( $tree->slides as $slide ) {
+			$slide->id = $this->system->uuid();
+			foreach ( $slide->layers as $layer ) {
+				$layer->id = $this->system->uuid();
+				if ( null !== $layer->style->fontRef ) {
+					$layer->style->fontRef = $fonts[ $layer->style->fontRef ]; }
+			}
+		}
+		return $this->repository->create( $title, CanonicalJson::encode( $tree ) );
+	}
+
+	/** @return list<SliderRevision> Historical snapshots, never public. */
+	public function revisions( int $id ): array {
+		$this->get( $id );
+		return $this->repository->revisions( $id );
+	}
+
+	public function restore_revision( int $id, int $revision_id, int $expected_version ): int {
+		$revision = $this->repository->revision( $id, $revision_id );
+		if ( null === $revision ) {
+			throw new SliderNotFound( 'Revision not found.' ); }
+		return $this->save_draft( $id, $revision->title, CanonicalJson::decode_tree( $revision->document_json ), $expected_version );
+	}
+
+	public function autosave( int $id, string $title, mixed $document, int $expected_version ): int {
+		$issues = $this->validator->validate( $document );
+		if ( array() !== $issues ) {
+			throw new InvalidDocument( $issues ); }
+		$stored = $this->get( $id );
+		if ( ! CanonicalJson::is_object( $document ) || $document->id !== $this->document_id( $stored->document_json ) ) {
+			throw new InvalidDocument( array( new ValidationIssue( '/id', 'immutable' ) ) );
+		}
+		return $this->repository->autosave( $id, $title, CanonicalJson::encode( $document ), $expected_version );
 	}
 
 	/**

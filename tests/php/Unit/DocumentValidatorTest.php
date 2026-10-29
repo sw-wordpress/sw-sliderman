@@ -85,4 +85,24 @@ final class DocumentValidatorTest extends TestCase {
 		$issues = ( new DocumentValidator() )->validate_json( $json );
 		self::assertSame( '/slides/0/layers/0/style/fontSize type', $issues[0]->path . ' ' . $issues[0]->code );
 	}
+	public function test_canonical_storage_size_matches_the_shared_cases(): void {
+		$data = Fixtures::object( 'documents/size.json' );
+		foreach ( $data->samples as $sample ) {
+			self::assertSame( $sample->bytes, strlen( \SW\Slider\Domain\CanonicalJson::encode( $sample->value ) ) ); }
+		foreach ( $data->cases as $case ) {
+			$doc                    = Fixtures::object( 'documents/valid/basic.json' );
+			$layer                  = $doc->slides[0]->layers[0];
+			$doc->slides            = array( $doc->slides[0] );
+			$doc->slides[0]->layers = array();
+			for ( $index = 0; $index < $case->layers; ++$index ) {
+				$copy                     = \SW\Slider\Domain\CanonicalJson::decode_tree( \SW\Slider\Domain\CanonicalJson::encode( $layer ) );
+				$copy->id                 = 'layer-' . $index;
+				$copy->content->text      = str_repeat( $case->text, $case->repeat );
+				$doc->slides[0]->layers[] = $copy;
+			}
+			$issues = ( new DocumentValidator() )->validate( $doc );
+			self::assertSame( $case->tooLarge, strlen( \SW\Slider\Domain\CanonicalJson::encode( $doc ) ) > Limits::DOCUMENT_BYTES, $case->name );
+			self::assertSame( $case->tooLarge ? array( 'too_large' ) : array(), array_map( static fn ( ValidationIssue $issue ): string => $issue->code, $issues ), $case->name );
+		}
+	}
 }

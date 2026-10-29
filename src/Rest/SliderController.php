@@ -11,6 +11,7 @@ namespace SW\Slider\Rest;
 
 use SW\Slider\Application\SliderService;
 use SW\Slider\Application\StoredSlider;
+use SW\Slider\Application\SliderRevision;
 use SW\Slider\Domain\CanonicalJson;
 use SW\Slider\Infrastructure\Capabilities;
 use SW\Slider\Rendering\Shortcode;
@@ -114,19 +115,48 @@ final class SliderController {
 				'args'                => $id_arg,
 			)
 		);
+		foreach ( array( 'duplicate', 'autosave', 'restore', 'migrate' ) as $action ) {
+			register_rest_route(
+				self::NAMESPACE,
+				'/sliders/(?P<id>\d+)/' . $action,
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, $action . '_slider' ),
+					'permission_callback' => array( $this, 'can_edit' ),
+					'args'                => $id_arg,
+				)
+			);
+		}
+		register_rest_route(
+			self::NAMESPACE,
+			'/sliders/(?P<id>\d+)/revisions',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'list_revisions' ),
+				'permission_callback' => array( $this, 'can_edit' ),
+				'args'                => $id_arg,
+			)
+		);
 	}
 
-	public function can_edit(): bool {
-		return current_user_can( Capabilities::EDIT );
+	public function can_edit( ?WP_REST_Request $request = null ): bool {
+		if ( ! current_user_can( Capabilities::EDIT ) ) {
+			return false; }
+		if ( null === $request || ! $request['id'] ) {
+			return true; }
+		$post = get_post( (int) $request['id'] );
+		// Missing/wrong objects are handled as 404 by the service, never exposed as other posts.
+		return ! $post instanceof \WP_Post || \SW\Slider\Infrastructure\PostTypes::SLIDER !== $post->post_type || current_user_can( 'edit_post', $post->ID );
 	}
 
-	public function can_publish(): bool {
-		return current_user_can( Capabilities::EDIT ) && current_user_can( Capabilities::PUBLISH );
+	public function can_publish( WP_REST_Request $request ): bool {
+		return $this->can_edit( $request ) && current_user_can( Capabilities::PUBLISH );
 	}
 
 	public function list_sliders( WP_REST_Request $request ): WP_REST_Response {
 		$result   = $this->sliders_list( (int) $request['page'], (int) $request['perPage'], (string) $request['search'] );
 		$response = new WP_REST_Response( array_map( array( $this, 'summary' ), $result['items'] ) );
+		$response->header( 'Cache-Control', 'private, no-store' );
 		$response->header( 'X-WP-Total', (string) $result['total'] );
 		return $response;
 	}
@@ -208,6 +238,85 @@ final class SliderController {
 		}
 	}
 
+	public function migrate_slider( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$body = JsonBody::decode( $request );
+		if ( $body instanceof WP_Error ) {
+			return $body; }
+		$version = JsonBody::version( $body->expectedVersion ?? null );
+		if ( $version instanceof WP_Error ) {
+			return $version; }
+		try {
+			return new WP_REST_Response( array( 'version' => $this->sliders->migrate_draft( (int) $request['id'], $version ) ) ); } catch ( Throwable $error ) {
+			return Errors::from( $error ); }
+	}
+
+	public function duplicate_slider( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$body = JsonBody::decode( $request );
+		if ( $body instanceof WP_Error ) {
+			return $body; }
+		$title = JsonBody::title( $body->title ?? null );
+		if ( $title instanceof WP_Error ) {
+			return $title; }
+		try {
+			$id = $this->sliders->duplicate( (int) $request['id'], $title );
+			return new WP_REST_Response( $this->detail( $this->sliders->get( $id ) ), 201 );
+		} catch ( Throwable $error ) {
+			return Errors::from( $error ); }
+	}
+
+	public function list_revisions( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		try {
+			$response = new WP_REST_Response(
+				array_map(
+					static fn ( SliderRevision $revision ): array => array(
+						'id'          => $revision->id,
+						'title'       => $revision->title,
+						'modifiedGmt' => $revision->modified_gmt,
+						'autosave'    => $revision->autosave,
+					),
+					$this->sliders->revisions( (int) $request['id'] )
+				)
+			);
+			$response->header( 'Cache-Control', 'private, no-store' );
+			return $response;
+		} catch ( Throwable $error ) {
+			return Errors::from( $error ); }
+	}
+
+	public function restore_slider( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$body = JsonBody::decode( $request );
+		if ( $body instanceof WP_Error ) {
+			return $body; }
+		$version  = JsonBody::version( $body->expectedVersion ?? null );
+		$revision = JsonBody::version( $body->revisionId ?? null );
+		if ( $version instanceof WP_Error ) {
+			return $version; }
+		if ( $revision instanceof WP_Error ) {
+			return $revision; }
+		try {
+			$new_version = $this->sliders->restore_revision( (int) $request['id'], $revision, $version );
+			return new WP_REST_Response( array( 'version' => $new_version ) );
+		} catch ( Throwable $error ) {
+			return Errors::from( $error ); }
+	}
+
+	public function autosave_slider( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$body = JsonBody::decode( $request );
+		if ( $body instanceof WP_Error ) {
+			return $body; }
+		$title   = JsonBody::title( $body->title ?? null );
+		$version = JsonBody::version( $body->expectedVersion ?? null );
+		if ( $title instanceof WP_Error ) {
+			return $title; }
+		if ( $version instanceof WP_Error ) {
+			return $version; }
+		try {
+			$revision = $this->sliders->autosave( (int) $request['id'], $title, $body->document ?? null, $version );
+			return new WP_REST_Response( array( 'revisionId' => $revision ) );
+		} catch ( Throwable $error ) {
+			return Errors::from( $error ); }
+	}
+
 	public function trash_slider( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		try {
 			$this->sliders->trash( (int) $request['id'] );
@@ -236,13 +345,21 @@ final class SliderController {
 	 * @return array<string, mixed>
 	 */
 	private function detail( StoredSlider $slider ): array {
-		$detail              = $this->summary( $slider );
-		$detail['document']  = CanonicalJson::decode_tree( $slider->document_json );
-		$detail['published'] = null === $slider->published ? null : array(
+		$detail               = $this->summary( $slider );
+		$detail['previewUrl'] = add_query_arg(
+			array(
+				'action'   => 'sws_preview',
+				'id'       => $slider->id,
+				'_wpnonce' => wp_create_nonce( 'sws_preview_' . $slider->id ),
+			),
+			admin_url( 'admin-post.php' )
+		);
+		$detail['document']   = CanonicalJson::decode_tree( $slider->document_json );
+		$detail['published']  = null === $slider->published ? null : array(
 			'version'      => $slider->published->version,
 			'publishedGmt' => $slider->published->published_gmt,
 		);
-		$detail['media']     = (object) $this->media( CanonicalJson::decode_assoc( $slider->document_json ) );
+		$detail['media']      = (object) $this->media( CanonicalJson::decode_assoc( $slider->document_json ) );
 		return $detail;
 	}
 

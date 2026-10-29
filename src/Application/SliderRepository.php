@@ -58,5 +58,10 @@ interface SliderRepository {
 	 */
 	public function all_documents(): iterable;
 
+	/** @return list<SliderRevision> Newest first, restricted to this parent. */
+	public function revisions( int $id ): array;
+	public function revision( int $id, int $revision_id ): ?SliderRevision;
+	/** Saves a user-specific recovery draft without changing the working draft or live snapshot. */
+	public function autosave( int $id, string $title, string $document_json, int $expected_version ): int;
 	public function trash( int $id ): bool;
 }

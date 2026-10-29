@@ -1,3 +1,4 @@
+import { canonicalBytes } from './canonical';
 import { LIMITS } from './limits';
 import {
   ANIMATION_PRESETS,
@@ -17,6 +18,7 @@ import {
  */
 
 export type IssueCode =
+  | 'too_large'
   | 'type'
   | 'required'
   | 'unknown_key'
@@ -91,7 +93,8 @@ function object(
     if (!(key in value)) ctx.add(`${path}/${key}`, 'required');
   }
   for (const key of Object.keys(value)) {
-    if (!required.includes(key) && !optional.includes(key)) ctx.add(`${path}/${key}`, 'unknown_key');
+    if (!required.includes(key) && !optional.includes(key))
+      ctx.add(`${path}/${key}`, 'unknown_key');
   }
   return value;
 }
@@ -100,14 +103,7 @@ function present(obj: Json, key: string): boolean {
   return key in obj;
 }
 
-function str(
-  ctx: Context,
-  obj: Json,
-  key: string,
-  path: string,
-  min: number,
-  max: number,
-): void {
+function str(ctx: Context, obj: Json, key: string, path: string, min: number, max: number): void {
   if (!present(obj, key)) return;
   const value = obj[key];
   const at = `${path}/${key}`;
@@ -135,7 +131,11 @@ function num(
   if (!present(obj, key)) return;
   const value = obj[key];
   const at = `${path}/${key}`;
-  if (typeof value !== 'number' || !Number.isFinite(value) || (integer && !Number.isInteger(value))) {
+  if (
+    typeof value !== 'number' ||
+    !Number.isFinite(value) ||
+    (integer && !Number.isInteger(value))
+  ) {
     ctx.add(at, 'type');
     return;
   }
@@ -194,7 +194,14 @@ function id(ctx: Context, obj: Json, key: string, path: string, unique: boolean)
   }
 }
 
-function list(ctx: Context, obj: Json, key: string, path: string, min: number, max: number): unknown[] {
+function list(
+  ctx: Context,
+  obj: Json,
+  key: string,
+  path: string,
+  min: number,
+  max: number,
+): unknown[] {
   if (!present(obj, key)) return [];
   const value = obj[key];
   const at = `${path}/${key}`;
@@ -302,7 +309,8 @@ const STYLE_RULES: Record<string, (ctx: Context, obj: Json, path: string) => voi
   letterSpacing: (ctx, obj, path) =>
     num(ctx, obj, 'letterSpacing', path, LIMITS.letterSpacingMin, LIMITS.letterSpacingMax),
   color: (ctx, obj, path) => color(ctx, obj, 'color', path, false),
-  textAlign: (ctx, obj, path) => enumeration(ctx, obj, 'textAlign', path, ['left', 'center', 'right']),
+  textAlign: (ctx, obj, path) =>
+    enumeration(ctx, obj, 'textAlign', path, ['left', 'center', 'right']),
   backgroundColor: (ctx, obj, path) => color(ctx, obj, 'backgroundColor', path, true),
   borderRadius: (ctx, obj, path) => num(ctx, obj, 'borderRadius', path, 0, LIMITS.radiusMax),
   paddingX: (ctx, obj, path) => num(ctx, obj, 'paddingX', path, 0, LIMITS.paddingMax),
@@ -416,7 +424,11 @@ function validateContent(ctx: Context, type: unknown, value: unknown, path: stri
       if (!content) return;
       str(ctx, content, 'label', path, 1, LIMITS.buttonLabelLength);
       str(ctx, content, 'url', path, 1, LIMITS.urlLength);
-      if (typeof content.url === 'string' && content.url !== '' && !LINK_PATTERN.test(content.url)) {
+      if (
+        typeof content.url === 'string' &&
+        content.url !== '' &&
+        !LINK_PATTERN.test(content.url)
+      ) {
         ctx.add(`${path}/url`, 'url');
       }
       bool(ctx, content, 'newTab', path);
@@ -454,7 +466,11 @@ function validateLayer(ctx: Context, value: unknown, path: string, fontRefs: Set
     const style = object(ctx, layer.style, `${path}/style`, STYLE_KEY_LIST);
     if (style) {
       applyRules(ctx, style, `${path}/style`, STYLE_RULES);
-      if (typeof style.fontRef === 'string' && ID_PATTERN.test(style.fontRef) && !fontRefs.has(style.fontRef)) {
+      if (
+        typeof style.fontRef === 'string' &&
+        ID_PATTERN.test(style.fontRef) &&
+        !fontRefs.has(style.fontRef)
+      ) {
         ctx.add(`${path}/style/fontRef`, 'reference');
       }
     }
@@ -533,6 +549,9 @@ export function collectIssues(raw: unknown): ValidationIssue[] {
     list(ctx, doc, 'slides', '', 1, LIMITS.slides).forEach((slide, index) => {
       validateSlide(ctx, slide, `/slides/${index}`, fontRefs);
     });
+  }
+  if (ctx.issues.length === 0 && canonicalBytes(raw) > LIMITS.documentBytes) {
+    return [{ path: '', code: 'too_large' }];
   }
   return ctx.issues;
 }

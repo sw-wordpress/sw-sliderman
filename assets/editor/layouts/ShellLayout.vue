@@ -30,10 +30,14 @@ const transitionKey = computed(() => String(route.name ?? ''));
 </script>
 
 <template>
-  <div class="sws-shell" :class="{ 'sws-shell--collapsed': app.railCollapsed }">
-    <a href="#sws-main" class="sws-skip" @click.prevent="focusMain">{{
-      __('Skip to content')
-    }}</a>
+  <div
+    class="sws-shell"
+    :class="{
+      'sws-shell--collapsed': app.railCollapsed,
+      'sws-shell--editor': route.name === 'editor',
+    }"
+  >
+    <a href="#sws-main" class="sws-skip" @click.prevent="focusMain">{{ __('Skip to content') }}</a>
 
     <aside class="sws-rail">
       <div class="sws-rail__brand">
@@ -79,7 +83,9 @@ const transitionKey = computed(() => String(route.name ?? ''));
           :aria-pressed="app.isDark"
           @click="app.toggleTheme()"
         >
-          <q-tooltip>{{ app.isDark ? __('Switch to light mode') : __('Switch to dark mode') }}</q-tooltip>
+          <q-tooltip>{{
+            app.isDark ? __('Switch to light mode') : __('Switch to dark mode')
+          }}</q-tooltip>
         </q-btn>
         <q-btn
           class="sws-rail__collapse"
@@ -97,7 +103,9 @@ const transitionKey = computed(() => String(route.name ?? ''));
     </aside>
 
     <main id="sws-main" ref="main" class="sws-main" tabindex="-1">
-      <p v-if="!allowed" class="sws-noaccess" role="alert">{{ __('You do not have permission to edit sliders.') }}</p>
+      <p v-if="!allowed" class="sws-noaccess" role="alert">
+        {{ __('You do not have permission to edit sliders.') }}
+      </p>
       <router-view v-else v-slot="{ Component }">
         <transition name="sws-fade" mode="out-in">
           <component :is="Component" :key="transitionKey" />
@@ -362,6 +370,39 @@ const transitionKey = computed(() => String(route.name ?? ''));
   }
   .sws-main {
     padding-top: 20px;
+  }
+}
+</style>
+
+<style scoped>
+.sws-shell--editor .sws-main {
+  padding: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+@media (min-width: 901px) {
+  .sws-shell--editor {
+    height: calc(100dvh - var(--bar-h));
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+@media (min-width: 861px) {
+  .sws-shell--editor.sws-shell--collapsed {
+    --rail-w: 56px;
+  }
+  .sws-shell--editor.sws-shell--collapsed .sws-rail {
+    padding: 12px 6px;
+  }
+  .sws-shell--editor.sws-shell--collapsed .sws-rail__logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    box-shadow: none;
+  }
+  .sws-shell--editor.sws-shell--collapsed .sws-nav-link {
+    padding: 8px;
+    border-radius: 4px;
   }
 }
 </style>

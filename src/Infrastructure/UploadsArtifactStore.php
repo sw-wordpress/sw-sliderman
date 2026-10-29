@@ -25,7 +25,7 @@ final class UploadsArtifactStore implements ArtifactStore {
 			return null;
 		}
 		if ( is_file( $target ) ) {
-			return $relative;
+			return hash_equals( hash( 'sha256', $css ), (string) hash_file( 'sha256', $target ) ) ? $relative : null;
 		}
 		$dir = dirname( $target );
 		if ( ! UploadPaths::ensure_dir( $dir ) ) {
@@ -33,7 +33,8 @@ final class UploadsArtifactStore implements ArtifactStore {
 		}
 		$temporary = $dir . '/.tmp-' . wp_generate_password( 12, false ) . '.css';
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- direct, atomic write inside our own uploads root; WP_Filesystem may require credentials.
-		if ( false === file_put_contents( $temporary, $css, LOCK_EX ) ) {
+		if ( strlen( $css ) !== file_put_contents( $temporary, $css, LOCK_EX ) ) {
+			wp_delete_file( $temporary );
 			return null;
 		}
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- atomic switch within one directory.

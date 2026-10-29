@@ -16,7 +16,7 @@ namespace SW\Slider\Fonts;
  */
 final class Woff2 {
 
-	public const MAX_BYTES = 2097152;
+	public const MAX_BYTES = \SW\Slider\Domain\Limits::FONT_FILE_BYTES;
 
 	public static function is_valid( string $bytes ): bool {
 		$size = strlen( $bytes );

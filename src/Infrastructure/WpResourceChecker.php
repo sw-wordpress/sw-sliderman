@@ -35,7 +35,7 @@ final class WpResourceChecker implements ResourceChecker {
 		}
 		foreach ( $document['slides'] as $slide_index => $slide ) {
 			$background = $slide['background']['attachmentId'];
-			if ( is_int( $background ) && ! wp_attachment_is_image( $background ) ) {
+			if ( is_int( $background ) && ! $this->has_image( $background ) ) {
 				$issues[] = new ValidationIssue( '/slides/' . $slide_index . '/background/attachmentId', 'missing_resource' );
 			}
 			foreach ( $slide['layers'] as $layer_index => $layer ) {
@@ -43,7 +43,7 @@ final class WpResourceChecker implements ResourceChecker {
 					continue;
 				}
 				$attachment = $layer['content']['attachmentId'];
-				if ( ! is_int( $attachment ) || ! wp_attachment_is_image( $attachment ) ) {
+				if ( ! is_int( $attachment ) || ! $this->has_image( $attachment ) ) {
 					$issues[] = new ValidationIssue( '/slides/' . $slide_index . '/layers/' . $layer_index . '/content/attachmentId', 'missing_resource' );
 				}
 			}
@@ -51,14 +51,29 @@ final class WpResourceChecker implements ResourceChecker {
 		return $issues;
 	}
 
+	private function has_image( int $id ): bool {
+		$file = get_attached_file( $id );
+		return wp_attachment_is_image( $id ) && current_user_can( 'read_post', $id ) && is_string( $file ) && is_file( $file ) && is_readable( $file );
+	}
+
 	private function has_font_variant( string $installation_id, int $weight, string $style ): bool {
 		$installation = $this->fonts->find( $installation_id );
 		if ( null === $installation || ! $this->font_storage->exists( $installation['directory'] ) ) {
 			return false;
 		}
+		if ( ! $this->font_storage->verify_file( $installation['directory'], 'font.css', hash( 'sha256', \SW\Slider\Fonts\LocalFontCss::build( 'sws-' . $installation_id, $installation['variants'] ) ) ) ) {
+			return false; }
 		foreach ( $installation['variants'] as $variant ) {
 			if ( $variant['weight'] === $weight && $variant['style'] === $style ) {
-				return true;
+				if ( array() === $variant['files'] ) {
+					return false; }
+				foreach ( $variant['files'] as $file ) {
+					if ( ! $this->font_storage->verify_file( $installation['directory'], $file['file'], $file['sha256'] ) ) {
+						return false; }
+				}
+				$directory = UploadPaths::path( $installation['directory'] );
+				$license   = null === $directory ? null : $directory . '/LICENSE.txt';
+				return null !== $license && is_file( $license ) && is_readable( $license );
 			}
 		}
 		return false;

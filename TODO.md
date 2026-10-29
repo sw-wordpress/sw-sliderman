@@ -16,7 +16,7 @@ Stand: 29.10.2026 · Konzeptversion: 1.0 · Referenz: [PLAN.md](PLAN.md)
 
 | Milestone | Ergebnis | Abhängigkeit | Freigabe |
 | --- | --- | --- | --- |
-| M0 | Durchgängiger Machbarkeitsprototyp | Keine | Stefan entscheidet über Fortführung/Anpassung |
+| M0 | Durchgängiger Machbarkeitsprototyp | Keine | Von Stefan abgenommen; Fortführung bestätigt |
 | M1 | Plugin-Fundament und stabile Datenverträge | M0-Ergebnis | Technisches Review |
 | M2 | Lokale Google-Fonts-Verwaltung | M1 | Technisch und Schriftvorschau praktisch |
 | M3 | Produktiver visueller Editor und responsive Layouts | M1, M2 | Stefan prüft Gestaltung |
@@ -33,29 +33,52 @@ Stand: 29.10.2026 · Konzeptversion: 1.0 · Referenz: [PLAN.md](PLAN.md)
 
 ### Prototypumfang
 
-- [ ] M0.01 Minimalen Plugin-Rahmen mit Adminseite, Vue-Editor und eigenständiger Frontend-Laufzeit bereitstellen.
-- [ ] M0.02 Zwei Slides mit Bild, Text und Button erstellen, speichern und erneut öffnen.
-- [ ] M0.03 Text/Bild auswählen, verschieben, skalieren und Ebenenreihenfolge ändern.
-- [ ] M0.04 Containerbasiertes Desktop-/Mobil-Layout mit sichtbar vererbten Overrides umsetzen.
-- [ ] M0.05 Ein Fade und eine Bewegungsanimation mit Startzeit/Dauer in Vorschau und Frontend abspielen.
-- [ ] M0.06 Zwei statische Google-Font-Varianten inklusive Lizenz lokal installieren; Schrift lokal im Editor und Frontend laden.
-- [ ] M0.07 Beschaffungsroute für WOFF2 inklusive Metadaten-/Lizenzzuordnung nachweisen; ungeeignete Familien ausdrücklich ablehnen.
-- [ ] M0.08 Ausgabe per Shortcode und zwei unabhängige Instanzen auf einer Seite nachweisen.
-- [ ] M0.09 Statischen ersten Slide ohne JavaScript und lesbaren Zustand bei reduzierter Bewegung zeigen.
+- [x] M0.01 Minimalen Plugin-Rahmen mit Adminseite, Vue-Editor und eigenständiger Frontend-Laufzeit bereitstellen.
+- [x] M0.02 Zwei Slides mit Bild, Text und Button erstellen, speichern und erneut öffnen.
+- [x] M0.03 Text/Bild auswählen, verschieben, skalieren und Ebenenreihenfolge ändern.
+- [x] M0.04 Containerbasiertes Desktop-/Mobil-Layout mit sichtbar vererbten Overrides umsetzen.
+- [x] M0.05 Ein Fade und eine Bewegungsanimation mit Startzeit/Dauer in Vorschau und Frontend abspielen.
+- [x] M0.06 Zwei statische Google-Font-Varianten inklusive Lizenz lokal installieren; Schrift lokal im Editor und Frontend laden.
+- [x] M0.07 Beschaffungsroute für WOFF2 inklusive Metadaten-/Lizenzzuordnung nachweisen; ungeeignete Familien ausdrücklich ablehnen.
+- [x] M0.08 Ausgabe per Shortcode und zwei unabhängige Instanzen auf einer Seite nachweisen.
+- [x] M0.09 Statischen ersten Slide ohne JavaScript und lesbaren Zustand bei reduzierter Bewegung zeigen.
 
 ### Prüfung durch Stefan
 
-- [ ] M0.10 Einen Slider mit eigenen Inhalten auf Desktop erstellen; Editorverhalten und Vorschautreue bewerten.
-- [ ] M0.11 Mobile Overrides setzen, auf echter mobiler Darstellung prüfen und Desktop unverändert bestätigen.
-- [ ] M0.12 Google-Font-Darstellung mit ÄÖÜäöüß und € prüfen; Browsernetzwerk auf ausschließlich lokale Fontdateien kontrollieren.
-- [ ] M0.13 Nach Fontinstallation Netzwerkzugriff nach außen unterbinden; gespeicherten Slider bearbeiten und ausliefern.
-- [ ] M0.14 Bedienungsprobleme, Unterschiede zwischen Vorschau und Ausgabe und offene technische Risiken festhalten.
+- [x] M0.10 Einen Slider mit eigenen Inhalten auf Desktop erstellen; Editorverhalten und Vorschautreue bewerten.
+- [x] M0.11 Mobile Overrides setzen, auf echter mobiler Darstellung prüfen und Desktop unverändert bestätigen.
+- [x] M0.12 Google-Font-Darstellung mit ÄÖÜäöüß und € prüfen; Browsernetzwerk auf ausschließlich lokale Fontdateien kontrollieren.
+- [x] M0.13 Nach Fontinstallation Netzwerkzugriff nach außen unterbinden; gespeicherten Slider bearbeiten und ausliefern.
+- [x] M0.14 Bedienungsprobleme, Unterschiede zwischen Vorschau und Ausgabe und offene technische Risiken festhalten.
 
 ### Entscheidungen und Ausgang
 
-- [ ] M0.15 Entscheidung zu Drag-/Resize-Bibliothek, Render-Wrappers, Animation und Font-Provider dokumentieren.
-- [ ] M0.16 Baseline für WordPress/PHP und Namensgebung festlegen.
-- [ ] M0.17 Ergebnis festhalten: weiterführen / mit benannten Änderungen weiterführen / Architektur überarbeiten.
+- [x] M0.15 Entscheidung zu Drag-/Resize-Bibliothek, Render-Wrappers, Animation und Font-Provider dokumentieren.
+- [x] M0.16 Baseline für WordPress/PHP und Namensgebung festlegen.
+- [x] M0.17 Ergebnis festhalten: weiterführen / mit benannten Änderungen weiterführen / Architektur überarbeiten.
+
+### Praktische Abnahme und Entscheidung durch Stefan (29.10.2026)
+
+Stefan hat alle M0-Punkte getestet und ausdrücklich bestätigt: „Es funktioniert soweit, wie ich es zu Beginn eines Projektes erwarten würde.“ Die praktische Machbarkeit ist damit abgenommen; Ergebnis M0.17: **weiterführen**. Dies bestätigt die Projektbasis, nicht die Produktreife oder die Abnahme späterer Milestones.
+
+M0.16 ist bestätigt: **PHP 8.2+, WordPress 6.6+**, CI gegen WordPress 6.6 und die neueste Version, Plugin-Slug **`sw-sliderman`**, PHP-Namespace **`SW\Slider`**. Die Entscheidung ist in ADR 0003 festgehalten.
+
+### Technischer Stand M0 (29.10.2026, Implementierungsagent)
+
+Nachweise: `composer check` (PHPCS/WPCS, PHPStan Level 8, 84 PHPUnit-Unit-/Vertragstests), 12 WordPress-Integrationstests (`tests/wp`), 73 Vitest-Tests, `bin/check-bundles.mjs`, `bin/i18n.sh check`, E2E `tests/e2e/editor.mjs` auf der lokalen Dev-Site (27 Prüfungen).
+
+- M0.01: Adminseite „Sliderman“, Vue/Quasar-Editor im sw-backupit-Design, eigenständige Runtime (3,7 KiB gzip) – E2E.
+- M0.02 (praktisch durch Stefan bestätigt): Speichern/Öffnen mit Text und Button per E2E, zwei Slides mit Text per WP-Test; Bildebene über die Mediathek ist implementiert und durch Stefans praktische Abnahme bestätigt; hierfür bestand kein automatisierter Nachweis.
+- M0.03 (praktisch durch Stefan bestätigt): Auswahl, Verschieben (ein Undo-Schritt, Esc bricht ab) per E2E; Skalieren und Ebenenreihenfolge durch Stefan praktisch geprüft und bestätigt.
+- M0.04: Containerbasierte Overrides mit Vererbungsanzeige/Reset; Editor und Frontend (390 px) per E2E, Resolver per gemeinsamen Fixtures.
+- M0.05 (praktisch durch Stefan bestätigt): Fade und Bewegungsvorgaben mit Start/Dauer in Vorschau und Runtime implementiert (gemeinsame Keyframes); Abspielen durch Stefan visuell geprüft und bestätigt; zusätzliche Runtime-Regressionstests sind im Stabilitätsprotokoll dokumentiert.
+- M0.06/M0.07: Lato 400/700 inkl. OFL lokal installiert; Editor und Frontend laden die Schrift bei blockiertem Google; variable Familien werden abgelehnt (ADR 0002).
+- M0.08: Shortcode, zwei unabhängige Instanzen mit eindeutigen IDs – WP-Test und E2E.
+- M0.09: Erster Slide ohne JavaScript lesbar, Steuerelemente ausgeblendet; Reduced Motion ohne Animationen/Autoplay – E2E.
+- M0.15: ADR 0001–0003. M0.16 wurde von Stefan bestätigt; ADR 0003 dokumentiert die verbindliche Baseline.
+- Hinweis Dev-Site: Das Theme dt-the7 lädt selbst Google Fonts (`dt-web-fonts-css`); das Plugin erzeugt keine solche Anfrage (PLAN.md 8.1).
+- Vorgezogene, noch nicht abgehakte Grundlagen: Schema v1/Validierung/Limits (M1.05–M1.08), Versionsprüfung mit HTTP 409 unter DB-Lock (M1.13, ADR 0001), getrennter veröffentlichter Snapshot mit atomarem Artefakt (M1.14/M1.15 teilweise), CI (M1.03), Font-Negativtests (M2.08–M2.13 teilweise), lokale Wiederherstellung/Autosave (M3.22 teilweise).
+- Bekannte Grenzen: kein Rich Text (M3.09), keine Gruppen/Formen, keine geschützte Frontend-Vorschau von Entwürfen (M1.16), kein Gutenberg-Block (M4.11), kein Jobsystem (Fontinstallation läuft synchron im Request), keine Zwei-Prozess-Konkurrenzprüfung (M1.20).
 
 **Abnahmekriterium:** Stefan kann den vollständigen Ablauf selbst durchführen; die lokale Fontbereitstellung ist nachweisbar. Keine Behauptung über vollständige Produktreife.
 
@@ -367,3 +390,12 @@ Fehler / Einschränkungen / Belege:
 Entscheidung: bestanden / mit Auflagen / nicht bestanden
 Nächste notwendige Änderung:
 ```
+
+
+## Stabilitätsprüfung PROBLEMS.md – 29.10.2026
+
+- Bildbereitschaft mit Decodierung, Fehlerbehandlung und 1.200-ms-Grenze für Laufzeit und Editor-Vorschau ergänzt; veraltete Ladevorgänge werden bei Navigation abgebrochen.
+- Eingangszustände vor dem Slidewechsel vorbereitet; Animationsuhr und Autoplay starten erst nach dem Übergang. Abbruch beim Tabwechsel hinterlässt genau einen lesbaren Slide.
+- Bildanpassung auf volle Bühnenbreite/-höhe mit Seitenverhältnis, Zentrierung, responsive Überschreibungen und Undo ergänzt.
+- Nachweise: Vitest-Lifecycle-/Store-Tests, nativer Chromium-Ressourcen-/Animationscheck, PHP-Prüfungen und 12 WordPress-Integrationstests auf einer separaten Testdatenbank. Details und Grenzen in `PROBLEMS.md` und `docs/runtime-readiness.md`.
+- Stefans praktische M0-Abnahme ist inzwischen bestätigt (siehe Abnahmeprotokoll oben); die spätere grafische Timeline bleibt offen.

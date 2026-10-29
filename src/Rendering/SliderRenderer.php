@@ -11,6 +11,8 @@ namespace SW\Slider\Rendering;
 
 use JsonException;
 use SW\Slider\Application\SliderRepository;
+use SW\Slider\Application\StoredSlider;
+use SW\Slider\Application\PublishedSnapshot;
 use SW\Slider\Domain\CanonicalJson;
 use SW\Slider\Domain\DocumentValidator;
 use SW\Slider\Domain\Schedule;
@@ -50,6 +52,24 @@ final class SliderRenderer {
 		if ( null === $slider || null === $published ) {
 			return $this->diagnostic( null === $slider ? __( 'Slider not found.', 'sw-sliderman' ) : __( 'This slider has not been published yet.', 'sw-sliderman' ) );
 		}
+		return $this->render_snapshot( $slider, $published );
+	}
+
+	/** A private request may render a validated draft, without writing a public CSS artifact. */
+	public function render_preview( StoredSlider $slider ): string {
+		if ( array() !== ( new DocumentValidator() )->validate_json( $slider->document_json ) ) {
+			return $this->diagnostic( __( 'The draft contains invalid data.', 'sw-sliderman' ) );
+		}
+		$document = CanonicalJson::decode_assoc( $slider->document_json );
+		$fonts    = array_values( array_unique( array_column( $document['fontRefs'], 'installationId' ) ) );
+		$snapshot = new PublishedSnapshot( $slider->version, CanonicalJson::hash( $slider->document_json ), 1, '', $slider->document_json, null, $fonts, $slider->title );
+		return $this->render_snapshot( $slider, $snapshot );
+	}
+
+	private function render_snapshot( StoredSlider $slider, PublishedSnapshot $published ): string {
+		if ( array() !== ( new DocumentValidator() )->validate_json( $published->document_json ) ) {
+			return $this->diagnostic( __( 'The published slider data is damaged.', 'sw-sliderman' ) );
+		}
 		try {
 			$document = CanonicalJson::decode_assoc( $published->document_json );
 		} catch ( JsonException ) {
@@ -61,9 +81,9 @@ final class SliderRenderer {
 		}
 
 		$scope    = substr( $published->document_hash, 0, 12 );
-		$instance = 'sws-' . $slider_id . '-' . ( ++$this->instances );
+		$instance = 'sws-' . $slider->id . '-' . ( ++$this->instances );
 		$styles   = $this->assets->use_slider( $published, $document, $scope );
-		$label    = '' !== trim( (string) $document['settings']['label'] ) ? (string) $document['settings']['label'] : $slider->title;
+		$label    = '' !== trim( (string) $document['settings']['label'] ) ? (string) $document['settings']['label'] : ( $published->title ?? $slider->title );
 		$count    = count( $slides );
 
 		$html  = $styles;

@@ -17,6 +17,12 @@ namespace SW\Slider\Domain;
  */
 final class Limits {
 
+	public const JOB_BYTES                 = 524288;
+	public const ARCHIVE_BYTES             = 26214400;
+	public const ARCHIVE_EXTRACTED_BYTES   = 104857600;
+	public const ARCHIVE_ENTRIES           = 500;
+	public const FONT_FILE_BYTES           = 2097152;
+	public const FONT_JOB_BYTES            = 20971520;
 	public const DOCUMENT_BYTES            = 524288;
 	public const SLIDES                    = 50;
 	public const LAYERS_PER_SLIDE          = 100;

@@ -55,4 +55,8 @@ final class MemoryFontStorage implements FontStorage {
 	public function exists( string $relative_dir ): bool {
 		return isset( $this->active[ $relative_dir ] );
 	}
+	public function verify_file( string $relative_dir, string $name, string $sha256 ): bool {
+		$bytes = $this->active[ $relative_dir ][ $name ] ?? null;
+		return is_string( $bytes ) && hash_equals( $sha256, hash( 'sha256', $bytes ) );
+	}
 }
