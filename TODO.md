@@ -1,6 +1,6 @@
 # TODO.md – Umsetzung nach Milestones
 
-Stand: 29.10.2026 · Konzeptversion: 1.0 · Referenz: [PLAN.md](PLAN.md)
+Stand: 30.10.2026 · Konzeptversion: 1.0 · Referenz: [PLAN.md](PLAN.md)
 
 ## Arbeitsregeln
 
@@ -17,7 +17,7 @@ Stand: 29.10.2026 · Konzeptversion: 1.0 · Referenz: [PLAN.md](PLAN.md)
 | Milestone | Ergebnis | Abhängigkeit | Freigabe |
 | --- | --- | --- | --- |
 | M0 | Durchgängiger Machbarkeitsprototyp | Keine | Von Stefan abgenommen; Fortführung bestätigt |
-| M1 | Plugin-Fundament und stabile Datenverträge | M0-Ergebnis | Technisches Review |
+| M1 | Plugin-Fundament und stabile Datenverträge | M0-Ergebnis | Technisch geprüft; Nachweise unten |
 | M2 | Lokale Google-Fonts-Verwaltung | M1 | Technisch und Schriftvorschau praktisch |
 | M3 | Produktiver visueller Editor und responsive Layouts | M1, M2 | Stefan prüft Gestaltung |
 | M4 | Animation und vollständige Frontend-Wiedergabe | M3 | Stefan prüft Verhalten |
@@ -77,8 +77,8 @@ Nachweise: `composer check` (PHPCS/WPCS, PHPStan Level 8, 84 PHPUnit-Unit-/Vertr
 - M0.09: Erster Slide ohne JavaScript lesbar, Steuerelemente ausgeblendet; Reduced Motion ohne Animationen/Autoplay – E2E.
 - M0.15: ADR 0001–0003. M0.16 wurde von Stefan bestätigt; ADR 0003 dokumentiert die verbindliche Baseline.
 - Hinweis Dev-Site: Das Theme dt-the7 lädt selbst Google Fonts (`dt-web-fonts-css`); das Plugin erzeugt keine solche Anfrage (PLAN.md 8.1).
-- Vorgezogene, noch nicht abgehakte Grundlagen: Schema v1/Validierung/Limits (M1.05–M1.08), Versionsprüfung mit HTTP 409 unter DB-Lock (M1.13, ADR 0001), getrennter veröffentlichter Snapshot mit atomarem Artefakt (M1.14/M1.15 teilweise), CI (M1.03), Font-Negativtests (M2.08–M2.13 teilweise), lokale Wiederherstellung/Autosave (M3.22 teilweise).
-- Bekannte Grenzen: kein Rich Text (M3.09), keine Gruppen/Formen, keine geschützte Frontend-Vorschau von Entwürfen (M1.16), kein Gutenberg-Block (M4.11), kein Jobsystem (Fontinstallation läuft synchron im Request), keine Zwei-Prozess-Konkurrenzprüfung (M1.20).
+- Im M0 bereits vorbereitete Grundlagen (damaliger Stand, aktueller Abschluss siehe M1): Schema v1/Validierung/Limits (M1.05–M1.08), Versionsprüfung mit HTTP 409 unter DB-Lock (M1.13, ADR 0001), getrennter veröffentlichter Snapshot mit atomarem Artefakt (M1.14/M1.15 teilweise), CI (M1.03), Font-Negativtests (M2.08–M2.13 teilweise), lokale Wiederherstellung/Autosave (M3.22 teilweise).
+- Zum M0-Abschluss offene Grenzen (geschützte Vorschau und Konkurrenznachweis inzwischen in M1 ergänzt): kein Rich Text (M3.09), keine Gruppen/Formen, keine geschützte Frontend-Vorschau von Entwürfen (M1.16), kein Gutenberg-Block (M4.11), kein Jobsystem (Fontinstallation läuft synchron im Request), keine Zwei-Prozess-Konkurrenzprüfung (M1.20).
 
 **Abnahmekriterium:** Stefan kann den vollständigen Ablauf selbst durchführen; die lokale Fontbereitstellung ist nachweisbar. Keine Behauptung über vollständige Produktreife.
 
@@ -88,38 +88,55 @@ Nachweise: `composer check` (PHPCS/WPCS, PHPStan Level 8, 84 PHPUnit-Unit-/Vertr
 
 ### Repository und Architektur
 
-- [ ] M1.01 Projektstruktur gemäß PLAN.md einrichten; Editor, Runtime, Block und geteilte Module trennen.
-- [ ] M1.02 Composer-/npm-Konfiguration, Lockfiles, Entwicklungsumgebung und produktiven Build erstellen.
-- [ ] M1.03 WordPress-Coding-Standards, PHP-Analyse, TypeScript-Prüfung und CI einrichten.
-- [ ] M1.04 Eigenen Namespace, Slug, Textdomain und Capability-Konzept festlegen.
-- [ ] M1.05 Verbindliche Limits definieren: Dokumentgröße, Slides, Ebenen, Jobgröße, Archive und Fontdateien.
+- [x] M1.01 Projektstruktur gemäß PLAN.md einrichten; Editor, Runtime, Block und geteilte Module trennen.
+- [x] M1.02 Composer-/npm-Konfiguration, Lockfiles, Entwicklungsumgebung und produktiven Build erstellen.
+- [x] M1.03 WordPress-Coding-Standards, PHP-Analyse, TypeScript-Prüfung und CI einrichten.
+- [x] M1.04 Eigenen Namespace, Slug, Textdomain und Capability-Konzept festlegen.
+- [x] M1.05 Verbindliche Limits definieren: Dokumentgröße, Slides, Ebenen, Jobgröße, Archive und Fontdateien.
 
 ### Datenmodell
 
-- [ ] M1.06 JSON Schema v1 mit Typen, Defaults, Einheiten und erlaubten Wertbereichen erstellen.
-- [ ] M1.07 UUIDs, Ressourcenreferenzen, Breakpoints, Overrides und Animationsphasen vollständig spezifizieren.
-- [ ] M1.08 TypeScript-Typen und serverseitige Validierung über gemeinsame gültige/ungültige Fixtures abstimmen.
-- [ ] M1.09 Schrittweise Migration und Ablehnung unbekannter neuer Schemaversionen implementieren.
-- [ ] M1.10 Duplizieren mit neuer Identität und konsistentem Remapping implementieren.
+- [x] M1.06 JSON Schema v1 mit Typen, Defaults, Einheiten und erlaubten Wertbereichen erstellen.
+- [x] M1.07 UUIDs, Ressourcenreferenzen, Breakpoints, Overrides und Animationsphasen vollständig spezifizieren.
+- [x] M1.08 TypeScript-Typen und serverseitige Validierung über gemeinsame gültige/ungültige Fixtures abstimmen.
+- [x] M1.09 Schrittweise Migration und Ablehnung unbekannter neuer Schemaversionen implementieren.
+- [x] M1.10 Duplizieren mit neuer Identität und konsistentem Remapping implementieren.
 
 ### WordPress und API
 
-- [ ] M1.11 Internen Slider-CPT, kanonisches JSON in post_content, Revisionen und Papierkorb einrichten.
-- [ ] M1.12 REST-Routen mit objektbezogenen Rechten, Nonce-Prüfung und sauberer Fehlerstruktur implementieren.
-- [ ] M1.13 Konkurrierende Schreibzugriffe serialisieren; expectedVersion prüfen und HTTP 409 liefern.
-- [ ] M1.14 Entwurf, Autosave, Revision und veröffentlichten Stand trennen.
-- [ ] M1.15 Veröffentlichung mit vollständiger Ressourcenprüfung und atomarem Artefaktwechsel umsetzen.
-- [ ] M1.16 Geschützte Entwurfsvorschau ohne öffentliche Rohdateien bereitstellen.
-- [ ] M1.17 Wiederherstellung einer Revision zunächst als Entwurf implementieren; Live-Ausgabe bleibt bis erneuter Veröffentlichung stabil.
-- [ ] M1.18 Jobsystem und Locking für Fontinstallation/Import bestimmen; keine zwingenden externen Serverprogramme voraussetzen.
+- [x] M1.11 Internen Slider-CPT, kanonisches JSON in post_content, Revisionen und Papierkorb einrichten.
+- [x] M1.12 REST-Routen mit objektbezogenen Rechten, Nonce-Prüfung und sauberer Fehlerstruktur implementieren.
+- [x] M1.13 Konkurrierende Schreibzugriffe serialisieren; expectedVersion prüfen und HTTP 409 liefern.
+- [x] M1.14 Entwurf, Autosave, Revision und veröffentlichten Stand trennen.
+- [x] M1.15 Veröffentlichung mit vollständiger Ressourcenprüfung und atomarem Artefaktwechsel umsetzen.
+- [x] M1.16 Geschützte Entwurfsvorschau ohne öffentliche Rohdateien bereitstellen.
+- [x] M1.17 Wiederherstellung einer Revision zunächst als Entwurf implementieren; Live-Ausgabe bleibt bis erneuter Veröffentlichung stabil.
+- [x] M1.18 Jobsystem und Locking für Fontinstallation/Import bestimmen; keine zwingenden externen Serverprogramme voraussetzen.
 
 ### Nachweise
 
-- [ ] M1.19 Unberechtigtes Lesen/Ändern/Veröffentlichen von Entwürfen sowie Rechtewechsel prüfen.
-- [ ] M1.20 Zwei konkurrierende Speicheraktionen und fehlgeschlagene Veröffentlichung prüfen.
-- [ ] M1.21 Schema-Migration mit Ausgangssicherung und Revision-Wiederherstellung prüfen.
+- [x] M1.19 Unberechtigtes Lesen/Ändern/Veröffentlichen von Entwürfen sowie Rechtewechsel prüfen.
+- [x] M1.20 Zwei konkurrierende Speicheraktionen und fehlgeschlagene Veröffentlichung prüfen.
+- [x] M1.21 Schema-Migration mit Ausgangssicherung und Revision-Wiederherstellung prüfen.
 
 **Abnahmekriterium:** Daten können validiert, versioniert und veröffentlicht werden; Fehler oder Konflikte verändern den letzten funktionierenden veröffentlichten Stand nicht.
+
+### Technischer Abschluss M1 (30.10.2026)
+
+- M1.01–M1.04: Module, Composer/npm-Lockfiles, produktive Vite-Bundles, WordPress-Coding-Standards, PHPStan und CI-Matrix für WordPress 6.6/aktuell sind eingerichtet. Der separate Block-Einstieg ist reserviert; der funktionale Gutenberg-Block folgt ausdrücklich in M4.11. Slug/Textdomain, Namespace und drei eigene Verwaltungs-Capabilities bleiben wie in M0 bestätigt.
+- M1.05–M1.08: JSON Schema v1, Standarddokument, dokumentierte Einheiten/Referenzen und gemeinsame gültige/ungültige PHP-/TS-Fixtures. Größenlimits gelten auch für die kanonische ASCII-Speicherung; Unicode-, Quote- und Backslash-Fälle sind getestet. Weitere Grenzen für Jobs, Archive und Fontdateien sind in ADR 0004 festgelegt; Archivimport bleibt M5.
+- M1.09/M1.21: Expliziter Migrationsdispatcher mit sequenziellen Einzelschritten, unveränderlicher Dokumentidentität und eigener Quellkopie; synthetische gemeinsame Fixtures prüfen die Kette. Produktiv ist ausschließlich v1 freigegeben, daher existiert noch kein historischer Konverter. Der Migrationsendpunkt behandelt v1 ohne Änderung und lehnt unbekannte Versionen ohne Quellenverlust ab. Vor einem tatsächlichen Ersatz bewahrt der normale Speicherpfad eine Ausgangsrevision auf; Revisionswiederherstellung ist separat integriert geprüft.
+- M1.10: Duplizieren in API und Sliderliste; Dokument-, Slide-, Layer- und lokale Font-Referenz-IDs werden remappt, installierte Ressourcen bleiben gepinnt, die Kopie ist unveröffentlicht.
+- M1.11–M1.14: Interner CPT, kanonischer Entwurf, Revisionen, Papierkorb und separate benutzerspezifische Autosave-API. Generische WordPress-Schreibwege können Versionierung/Validierung nicht umgehen. Der Editor sichert weiterhin periodisch den versionierten Entwurf; die separate WordPress-Autosave-API ersetzt diese Funktion nicht stillschweigend.
+- M1.12/M1.19: Aktuelle globale und objektbezogene Rechte, Cookie-Nonce-Prüfung und private Antworten; Tests für anonyme Zugriffe, fehlende Rechte, objektbezogenen Rechteentzug, fremde Revisionen und objektgebundene Vorschau-Nonces. Unbekannte gespeicherte Schemaversionen liefern einen Validierungsfehler statt einer ungeprüften Editorantwort.
+- M1.13/M1.20: Zwei unabhängige PHP-/DB-Prozesse konkurrieren mit derselben Ausgangsversion; genau ein Save gelingt, der andere erhält 409. Ein einzelnes SQL-Statement liest Dokument und Version konsistent. InnoDB-Transaktionen sichern Dokument, Version und Revisionen atomar ab; fehlgeschlagene Versionsschreibzugriffe werden zurückgerollt (ADR 0001).
+- M1.15: Dateiprüfung für Bilder, Fontdatei-Hashes und regeneriertes lokales Font-CSS; vollständiges, atomar geschriebenes CSS-Artefakt vor Snapshot-Aktivierung. Tests für fehlende Dateien, fehlerhafte Artefaktspeicherung und fehlgeschlagene Snapshot-Metadaten. Neue Snapshots bewahren auch den veröffentlichten Titel für den zugänglichen Namen auf.
+- M1.16/M1.17: Private, noncegebundene HTML-Vorschau des gespeicherten Entwurfs ohne öffentliche Entwurfsdateien; im lokalen Chromium mit no-store/noindex und abgewiesenem anonymem Zugriff geprüft. Revisionsdialog lädt erfolgreich; Wiederherstellung speichert einen neuen Entwurf und lässt die Live-Version unangetastet.
+- M1.18: WP-Cron-/Runner-, Zustands-, Größen- und Locking-Entscheidung in ADR 0004. Die asynchrone Queue-Implementierung für Fonts/Import folgt in M2/M5; der bestehende synchrone Installer bleibt bis dahin bestehen.
+
+Nachweise: `composer check` (88 PHP-Unit-/Vertragstests, PHPCS/WPCS, PHPStan Level 8), 95 Vitest-Tests, 28 WordPress-Integrationstests auf einer privaten Testdatenbank, `npm run lint`, `npm run build`, `bin/i18n.sh check` und lokale Browserprüfung von Revisionsdialog und geschützter Vorschau. Die vorhandene CI-Konfiguration wurde geprüft; ein entfernter CI-Lauf wurde in dieser Sitzung nicht gestartet.
+
+Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe sind damit nicht vorweggenommen.
 
 ## M2 – Google Fonts vollständig lokal
 

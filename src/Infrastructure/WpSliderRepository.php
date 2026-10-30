@@ -274,7 +274,15 @@ final class WpSliderRepository implements SliderRepository {
 	}
 
 	public function trash( int $id ): bool {
-		return 1 === $this->locked( $id, static fn (): int => wp_trash_post( $id ) instanceof WP_Post ? 1 : 0 );
+		return 1 === $this->locked(
+			$id,
+			static function () use ( $id ): int {
+				if ( ! wp_trash_post( $id ) instanceof WP_Post ) {
+					throw new StorageFailure( 'Could not move slider to trash.' );
+				}
+				return 1;
+			}
+		);
 	}
 
 

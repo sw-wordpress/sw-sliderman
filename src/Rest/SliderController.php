@@ -155,7 +155,8 @@ final class SliderController {
 
 	public function list_sliders( WP_REST_Request $request ): WP_REST_Response {
 		$result   = $this->sliders_list( (int) $request['page'], (int) $request['perPage'], (string) $request['search'] );
-		$response = new WP_REST_Response( array_map( array( $this, 'summary' ), $result['items'] ) );
+		$visible  = array_values( array_filter( $result['items'], static fn ( StoredSlider $slider ): bool => current_user_can( 'edit_post', $slider->id ) ) );
+		$response = new WP_REST_Response( array_map( array( $this, 'summary' ), $visible ) );
 		$response->header( 'Cache-Control', 'private, no-store' );
 		$response->header( 'X-WP-Total', (string) $result['total'] );
 		return $response;
@@ -187,7 +188,7 @@ final class SliderController {
 
 	public function get_slider( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		try {
-			$response = new WP_REST_Response( $this->detail( $this->sliders->get( (int) $request['id'] ) ) );
+			$response = new WP_REST_Response( $this->detail( $this->sliders->get_draft( (int) $request['id'] ) ) );
 			$response->header( 'Cache-Control', 'no-store' );
 			return $response;
 		} catch ( Throwable $error ) {

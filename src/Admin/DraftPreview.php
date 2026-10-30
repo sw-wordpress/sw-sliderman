@@ -48,13 +48,13 @@ final class DraftPreview {
 		} catch ( Throwable ) {
 			wp_die( esc_html__( 'This preview is not available.', 'sw-sliderman' ), '', array( 'response' => 404 ) );
 		}
-			echo '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>' . esc_html( $slider->title ) . '</title>';
-			wp_print_styles();
-			echo '</head><body>';
-        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- rendered and context-escaped by SliderRenderer.
-			echo $html;
-			wp_print_footer_scripts();
-			echo '</body></html>';
-			exit;
+		echo '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>' . esc_html( $slider->title ) . '</title>';
+		wp_print_styles();
+		echo '</head><body>';
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- rendered and context-escaped by SliderRenderer.
+		echo $html;
+		wp_print_footer_scripts();
+		echo '</body></html>';
+		exit;
 	}
 }

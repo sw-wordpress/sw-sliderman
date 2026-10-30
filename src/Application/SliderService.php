@@ -69,6 +69,16 @@ final class SliderService {
 		return $slider;
 	}
 
+	/** Validates persisted draft data before exposing it to the editor. */
+	public function get_draft( int $id ): StoredSlider {
+		$stored = $this->get( $id );
+		$issues = $this->validator->validate_json( $stored->document_json );
+		if ( array() !== $issues ) {
+			throw new InvalidDocument( $issues );
+		}
+		return $stored;
+	}
+
 	/**
 	 * Validates and stores a new draft version. Never publishes.
 	 *

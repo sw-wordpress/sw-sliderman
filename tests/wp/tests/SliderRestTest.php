@@ -532,6 +532,8 @@ final class SliderRestTest extends WP_UnitTestCase {
 			foreach ( array( array( 'GET', '' ), array( 'PUT', '' ), array( 'DELETE', '' ), array( 'GET', '/revisions' ), array( 'POST', '/restore' ), array( 'POST', '/duplicate' ), array( 'POST', '/publish' ), array( 'POST', '/autosave' ) ) as $route ) {
 				$this->assertSame( 403, $this->request( $route[0], '/sliders/' . $detail['id'] . $route[1] )->get_status(), $route[0] . $route[1] );
 			}
+			$listed = $this->request( 'GET', '/sliders' )->get_data();
+			$this->assertNotContains( $detail['id'], array_column( $listed, 'id' ) );
 		} finally {
 			remove_filter( 'map_meta_cap', $deny, 10 ); }
 	}
@@ -652,6 +654,7 @@ final class SliderRestTest extends WP_UnitTestCase {
 		$rejected = $this->request( 'POST', '/sliders/' . $detail['id'] . '/migrate', array( 'expectedVersion' => 1 ) );
 		$this->assertSame( 422, $rejected->get_status() );
 		$this->assertSame( $json, get_post( $detail['id'] )->post_content );
+		$this->assertSame( 422, $this->request( 'GET', '/sliders/' . $detail['id'] )->get_status() );
 		$this->assertNotSame( $raw, $json );
 	}
 
@@ -660,8 +663,9 @@ final class SliderRestTest extends WP_UnitTestCase {
 		$detail              = $this->create();
 		$previous            = $wp_rest_auth_cookie;
 		$wp_rest_auth_cookie = true;
-		$request_before      = $_REQUEST;
-		$server_before       = $_SERVER;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- snapshot raw fixture state solely for restoration after the missing-nonce test.
+		$request_before = $_REQUEST;
+		$server_before  = $_SERVER;
 		unset( $_REQUEST['_wpnonce'], $_SERVER['HTTP_X_WP_NONCE'] );
 		try {
 			$this->assertTrue( rest_cookie_check_errors( null ) );
@@ -778,5 +782,14 @@ final class SliderRestTest extends WP_UnitTestCase {
 		} finally {
 			$storage->discard( $temp );
 			$storage->remove( $directory ); }
+	}
+	public function test_rejected_trash_is_not_reported_as_success(): void {
+		$detail = $this->create();
+		add_filter( 'pre_trash_post', '__return_false' );
+		try {
+			$response = $this->request( 'DELETE', '/sliders/' . $detail['id'] ); } finally {
+			remove_filter( 'pre_trash_post', '__return_false' ); }
+			$this->assertSame( 500, $response->get_status() );
+			$this->assertSame( 200, $this->request( 'GET', '/sliders/' . $detail['id'] )->get_status() );
 	}
 }

@@ -22,3 +22,12 @@ Node 18.18 is enough locally (versions pinned like sw-backupit); CI uses Node 22
 ## Admin CSS isolation
 
 As in sw-backupit: the app mounts in `#sw-sliderman-app` with `.sws-root`; Quasar CSS is rewritten to `.sws-root …` by `tools/postcssScope.ts`; portals get the root class. The editor canvas renders the frontend markup (`.sws-slider`) with the same runtime stylesheet.
+
+
+## M1 persistence verification
+
+`tests/wp/tests/SliderRestTest.php` covers separate recovery autosaves, revision restoration, duplicate identity remapping, private preview authorization, rejected unknown schemas, missing media/font files, failed publication storage, and rollback after metadata failures. `tests/wp/workers/save.php` starts two independent WordPress/database processes against the private test database; exactly one can save the same expected version. The test harness ends its own repeatable-read snapshot before observing those external writes.
+
+The repository owns InnoDB transaction boundaries and requires named-lock support. Do not call it from a caller-owned transaction. The plugin uses no external database executable at runtime; `bin/test-db.sh` is development tooling only. When a temporary test database exits with its command session, start it and run the suite in the same shell invocation. Use a separate `SWS_TEST_DB_DIR` and `SWS_TEST_DB_PORT` when another private instance is already using the defaults.
+
+The local M1 browser check opened an existing slider, loaded the revisions dialog and opened its saved-draft preview; it made no slider changes. The preview returned private/no-store and noindex headers, ran the native runtime and denied an anonymous request using the same URL. Duplication/restoration effects are exercised against the isolated integration database, not the development site's sliders.
