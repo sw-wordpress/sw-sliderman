@@ -15,6 +15,10 @@ use SW\Slider\Application\SliderService;
 use SW\Slider\Domain\DocumentValidator;
 use SW\Slider\Fonts\DownloadPolicy;
 use SW\Slider\Fonts\FontCatalog;
+use SW\Slider\Fonts\CatalogUpdater;
+use SW\Slider\Infrastructure\WpFontJobs;
+use SW\Slider\Infrastructure\UploadPaths;
+use SW\Slider\Rest\FontManagementController;
 use SW\Slider\Fonts\FontFaceParser;
 use SW\Slider\Fonts\FontInstaller;
 use SW\Slider\Fonts\FontLibrary;
@@ -48,23 +52,27 @@ final class Plugin {
 	public function boot(): void {
 		global $wpdb;
 
-		$offline      = (bool) get_option( self::OFFLINE_OPTION, false );
-		$template     = (string) file_get_contents( SWS_DIR . 'schemas/defaults/new-slider.json' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- bundled local file.
-		$system       = new WpSystemPorts();
-		$sliders      = new WpSliderRepository( $wpdb );
-		$font_repo    = new WpFontRepository();
-		$font_storage = new UploadsFontStorage();
-		$catalog      = new FontCatalog( SWS_DIR . 'fonts/catalog.json' );
-		$policy       = new DownloadPolicy(
-			static function ( string $host ): array {
-				$addresses = gethostbynamel( $host );
-				return false === $addresses ? array() : $addresses;
+		$offline         = (bool) get_option( self::OFFLINE_OPTION, false );
+		$template        = (string) file_get_contents( SWS_DIR . 'schemas/defaults/new-slider.json' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- bundled local file.
+		$system          = new WpSystemPorts();
+		$sliders         = new WpSliderRepository( $wpdb );
+		$font_repo       = new WpFontRepository();
+		$font_storage    = new UploadsFontStorage();
+		$catalog         = new FontCatalog(
+			SWS_DIR . 'fonts/catalog.json',
+			static function (): ?string {
+				$relative = get_option( CatalogUpdater::OPTION );
+				return is_string( $relative ) && preg_match( '#^fonts/catalog-[a-f0-9]{24}\.json$#D', $relative ) ? UploadPaths::path( $relative ) : null;
 			}
 		);
-		$provider     = new GoogleFontsProvider( new WpHttpClient(), $policy, new FontFaceParser() );
-		$installer    = new FontInstaller( $catalog, $provider, $font_repo, $font_storage, static fn (): string => $system->now_gmt(), $offline );
-		$library      = new FontLibrary( $font_repo, $font_storage, static fn (): iterable => $sliders->all_documents() );
-		$service      = new SliderService(
+		$policy          = new DownloadPolicy( \SW\Slider\Fonts\WpDnsResolver::resolve( ... ) );
+		$provider        = new GoogleFontsProvider( new WpHttpClient(), $policy, new FontFaceParser() );
+		$current_offline = static function () use ( $wpdb ): bool {
+			return '1' === $wpdb->get_var( $wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name=%s', $wpdb->options, self::OFFLINE_OPTION ) );
+		};
+		$installer       = new FontInstaller( $catalog, $provider, $font_repo, $font_storage, static fn (): string => $system->now_gmt(), $current_offline );
+		$library         = new FontLibrary( $font_repo, $font_storage, static fn (): iterable => $sliders->all_documents(), static fn ( \Closure $operation ): mixed => \SW\Slider\Infrastructure\ResourceGuard::run( $wpdb, $operation ) );
+		$service         = new SliderService(
 			$sliders,
 			new DocumentValidator(),
 			new WpResourceChecker( $font_repo, $font_storage ),
@@ -73,7 +81,7 @@ final class Plugin {
 			$system,
 			$template
 		);
-		$assets       = new Assets( $sliders, $font_repo, SWS_URL, SWS_DIR, SWS_VERSION );
+		$assets          = new Assets( $sliders, $font_repo, SWS_URL, SWS_DIR, SWS_VERSION );
 
 		( new Translations( SWS_DIR . 'languages' ) )->register();
 		( new Lifecycle() )->register();
@@ -85,6 +93,9 @@ final class Plugin {
 		( new DraftPreview( $service, $renderer ) )->register();
 		( new SliderController( $service ) )->register();
 		( new FontController( $catalog, $installer, $library, $offline ) )->register();
+		$jobs = new WpFontJobs( $installer, new CatalogUpdater( $catalog, $installer ), $font_repo, $current_offline );
+		$jobs->register();
+		( new FontManagementController( $catalog, $installer, $jobs, $current_offline ) )->register();
 		if ( is_admin() ) {
 			( new AdminPage( $font_repo, SWS_URL, SWS_DIR, SWS_VERSION, $offline ) )->register();
 		}

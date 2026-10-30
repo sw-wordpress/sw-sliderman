@@ -21,14 +21,16 @@ use Closure;
  */
 final class DownloadPolicy {
 
-	public const PURPOSE_CSS     = 'css';
-	public const PURPOSE_FONT    = 'font';
-	public const PURPOSE_LICENSE = 'license';
+	public const PURPOSE_CSS      = 'css';
+	public const PURPOSE_FONT     = 'font';
+	public const PURPOSE_LICENSE  = 'license';
+	public const PURPOSE_METADATA = 'metadata';
 
 	private const RULES = array(
-		self::PURPOSE_CSS     => array( 'fonts.googleapis.com', '~\A/css2\z~', true ),
-		self::PURPOSE_FONT    => array( 'fonts.gstatic.com', '~\A/s/[a-z0-9]+/v\d+/[A-Za-z0-9_-]+\.woff2\z~', false ),
-		self::PURPOSE_LICENSE => array( 'raw.githubusercontent.com', '~\A/google/fonts/main/(?:ofl|ufl|apache)/[a-z0-9]+/(?:OFL|UFL|LICENSE)\.txt\z~', false ),
+		self::PURPOSE_METADATA => array( 'raw.githubusercontent.com', '~\A/google/fonts/main/(?:ofl|ufl|apache)/[a-z0-9]+/METADATA\.pb\z~', false ),
+		self::PURPOSE_CSS      => array( 'fonts.googleapis.com', '~\A/css2\z~', true ),
+		self::PURPOSE_FONT     => array( 'fonts.gstatic.com', '~\A/s/[a-z0-9]+/v\d+/[A-Za-z0-9_-]+\.woff2\z~', false ),
+		self::PURPOSE_LICENSE  => array( 'raw.githubusercontent.com', '~\A/google/fonts/main/(?:ofl|ufl|apache)/[a-z0-9]+/(?:OFL|UFL|LICENSE)\.txt\z~', false ),
 	);
 
 	/**

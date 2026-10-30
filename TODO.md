@@ -144,42 +144,44 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 
 ### Katalog und Installationsablauf
 
-- [ ] M2.01 Provider-Interface und in M0 bestätigten Adapter produktiv umsetzen.
-- [ ] M2.02 Versionierten lokalen Familien-/Variantenkatalog mit Lizenzzuordnung ausliefern.
-- [ ] M2.03 Suche, Filter nach installierten Familien, Variantenwahl und Installationsstatus bauen.
-- [ ] M2.04 Nicht installierte Fonts in Systemschrift darstellen; keine Browser-Vorschauen von Google einbinden.
-- [ ] M2.05 Katalogupdate und Installation ausschließlich als explizite Verwaltungsaktionen anbieten.
-- [ ] M2.06 Offline-Modus und validierten manuellen WOFF2-Import mit Lizenzangaben ergänzen.
-- [ ] M2.07 Statische Gewichte/Stile und passende Subsets einschließlich Latin/Latin Extended unterstützen.
+- [x] M2.01 Provider-Interface und in M0 bestätigten Adapter produktiv umsetzen.
+- [x] M2.02 Versionierten lokalen Familien-/Variantenkatalog mit Lizenzzuordnung ausliefern.
+- [x] M2.03 Suche, Filter nach installierten Familien, Variantenwahl und Installationsstatus bauen.
+- [x] M2.04 Nicht installierte Fonts in Systemschrift darstellen; keine Browser-Vorschauen von Google einbinden.
+- [x] M2.05 Katalogupdate und Installation ausschließlich als explizite Verwaltungsaktionen anbieten.
+- [x] M2.06 Offline-Modus und validierten manuellen WOFF2-Import mit Lizenzangaben ergänzen.
+- [x] M2.07 Statische Gewichte/Stile und passende Subsets einschließlich Latin/Latin Extended unterstützen.
 
 ### Sicherer Download und Dateien
 
-- [ ] M2.08 Providererzeugte HTTPS-URLs, Host-/Pfad-Allowlist und Redirect-Prüfung implementieren.
-- [ ] M2.09 Private/Loopback/Link-local/Metadatenziele, unsichere Protokolle und frei eingegebene Remote-URLs ablehnen.
-- [ ] M2.10 HTTP-Zeit-/Größenlimits, WOFF2-Signaturprüfung, Hashes und gleichzeitige Installationen absichern.
-- [ ] M2.11 Externes CSS nur eingeschränkt parsen; lokale @font-face-Regeln selbst erzeugen.
-- [ ] M2.12 Unicode-Ranges und Varianten korrekt erhalten; keine zufällige Fontvariante installieren.
-- [ ] M2.13 Temporär schreiben, atomar aktivieren und Teilinstallationen sauber bereinigen.
-- [ ] M2.14 Registry mit Dateireferenzen, Quellstand und Lizenztext implementieren.
-- [ ] M2.15 Origin-Prüfung für lokale Font-URLs und Diagnose bei Offload-/CDN-Umschreibung ergänzen.
+- [x] M2.08 Providererzeugte HTTPS-URLs, Host-/Pfad-Allowlist und Redirect-Prüfung implementieren.
+- [x] M2.09 Private/Loopback/Link-local/Metadatenziele, unsichere Protokolle und frei eingegebene Remote-URLs ablehnen.
+- [x] M2.10 HTTP-Zeit-/Größenlimits, WOFF2-Signaturprüfung, Hashes und gleichzeitige Installationen absichern.
+- [x] M2.11 Externes CSS nur eingeschränkt parsen; lokale @font-face-Regeln selbst erzeugen.
+- [x] M2.12 Unicode-Ranges und Varianten korrekt erhalten; keine zufällige Fontvariante installieren.
+- [x] M2.13 Temporär schreiben, atomar aktivieren und Teilinstallationen sauber bereinigen.
+- [x] M2.14 Registry mit Dateireferenzen, Quellstand und Lizenztext implementieren.
+- [x] M2.15 Origin-Prüfung für lokale Font-URLs und Diagnose bei Offload-/CDN-Umschreibung ergänzen.
 
 ### Verwendung und Lebenszyklus
 
-- [ ] M2.16 Typografieauswahl nur mit tatsächlich verfügbaren Varianten verbinden; fehlende Gewichte anzeigen.
-- [ ] M2.17 Lokales Fontladen vor Editor-Textmessung koordinieren; Timeout und Fallback umsetzen.
-- [ ] M2.18 font-display, deduplizierte Styles und sparsame Preloads implementieren.
-- [ ] M2.19 Gepinnte Installationsversionen, ausdrückliches Update und Referenzprüfung vor Löschen umsetzen.
+- [x] M2.16 Typografieauswahl nur mit tatsächlich verfügbaren Varianten verbinden; fehlende Gewichte anzeigen.
+- [x] M2.17 Lokales Fontladen vor Editor-Textmessung koordinieren; Timeout und Fallback umsetzen.
+- [x] M2.18 font-display, deduplizierte Styles und sparsame Preloads implementieren.
+- [x] M2.19 Gepinnte Installationsversionen, ausdrückliches Update und Referenzprüfung vor Löschen umsetzen.
 - [ ] M2.20 Revisionen und Vorlagen bei Font-Referenzzählung berücksichtigen.
-- [ ] M2.21 Relative Pfade bei Domain-/Uploadbasiswechsel korrekt auflösen.
-- [ ] M2.22 Fehlende Datei diagnostizieren; keine externe Ersatzquelle automatisch aktivieren.
+- [x] M2.21 Relative Pfade bei Domain-/Uploadbasiswechsel korrekt auflösen.
+- [x] M2.22 Fehlende Datei diagnostizieren; keine externe Ersatzquelle automatisch aktivieren.
 
 ### Verifikation
 
 - [ ] M2.23 ÄÖÜäöüß, €, kursive Schrift, mehrere Gewichte und gemischte Zeichensätze prüfen.
-- [ ] M2.24 Netzwerkfehler, fehlerhaftes CSS, HTML statt WOFF2, zu große Dateien und parallele Jobs prüfen.
-- [ ] M2.25 SSRF-/Redirect-Fälle und fehlende Lizenzzuordnung negativ testen.
-- [ ] M2.26 Browser-Requests für Editor und Frontend aufzeichnen: keine fremden Font-Origins, Imports oder Preconnects.
+- [x] M2.24 Netzwerkfehler, fehlerhaftes CSS, HTML statt WOFF2, zu große Dateien und parallele Jobs prüfen.
+- [x] M2.25 SSRF-/Redirect-Fälle und fehlende Lizenzzuordnung negativ testen.
+- [x] M2.26 Browser-Requests für Editor und Frontend aufzeichnen: keine fremden Font-Origins, Imports oder Preconnects.
 - [ ] M2.27 Mit gesperrtem Servernetz bestehende Slider bearbeiten und ausgeben; Neuinstallation kontrolliert fehlschlagen lassen.
+
+**Stand 31.10.2026:** Implementierung und automatisierte Prüfung siehe [Fonttests](docs/font-testing.md). Offen bleiben M2.23 (visuelle Abnahme), M2.27 (vollständig gesperrtes Servernetz) und der Vorlagenteil von M2.20 bis M5; Revisionen/Autosaves sind berücksichtigt und getestet. Browserprüfung M2.26 verwendet isolierte Antworten ohne Änderungen an der Entwicklungsdatenbank.
 
 **Abnahmekriterium:** Google-Font-Auswahl, Installation, lokale Vorschau und Ausgabe funktionieren nachweisbar. Keine externe Fontverbindung wird durch Besucher oder Editorbrowser ausgelöst.
 

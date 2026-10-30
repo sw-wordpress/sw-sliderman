@@ -72,44 +72,47 @@ final class WpSliderRepository implements SliderRepository {
 	}
 
 	public function create( string $title, string $document_json ): int {
-		return SliderWriteScope::run(
-			function () use ( $title, $document_json ): int {
-				$this->require_transactions();
-				if ( false === $this->db->query( 'START TRANSACTION' ) ) {
-					throw new StorageFailure( 'Could not start transaction.' );
+		return ResourceGuard::run(
+			$this->db,
+			fn (): int => SliderWriteScope::run(
+				function () use ( $title, $document_json ): int {
+					$this->require_transactions();
+					if ( false === $this->db->query( 'START TRANSACTION' ) ) {
+						throw new StorageFailure( 'Could not start transaction.' );
+					}
+					$id = 0;
+					try {
+						$result = wp_insert_post(
+							wp_slash(
+								array(
+									'post_type'    => PostTypes::SLIDER,
+									'post_status'  => 'publish',
+									'post_title'   => $title,
+									'post_content' => $document_json,
+								)
+							),
+							true
+						);
+						if ( is_wp_error( $result ) ) {
+							throw new StorageFailure( $result->get_error_message() );
+						}
+						$id = $result;
+						if ( false === add_post_meta( $id, self::VERSION_KEY, '1', true ) ) {
+							throw new StorageFailure( 'Could not initialize version.' );
+						}
+						if ( false === $this->db->query( 'COMMIT' ) ) {
+							throw new StorageFailure( 'Could not commit transaction.' );
+						}
+						return $id;
+					} catch ( Throwable $error ) {
+						$this->db->query( 'ROLLBACK' );
+						if ( $id > 0 ) {
+							clean_post_cache( $id );
+						}
+						throw $error;
+					}
 				}
-				$id = 0;
-				try {
-					$result = wp_insert_post(
-						wp_slash(
-							array(
-								'post_type'    => PostTypes::SLIDER,
-								'post_status'  => 'publish',
-								'post_title'   => $title,
-								'post_content' => $document_json,
-							)
-						),
-						true
-					);
-					if ( is_wp_error( $result ) ) {
-						throw new StorageFailure( $result->get_error_message() );
-					}
-					$id = $result;
-					if ( false === add_post_meta( $id, self::VERSION_KEY, '1', true ) ) {
-						throw new StorageFailure( 'Could not initialize version.' );
-					}
-					if ( false === $this->db->query( 'COMMIT' ) ) {
-						throw new StorageFailure( 'Could not commit transaction.' );
-					}
-					return $id;
-				} catch ( Throwable $error ) {
-					$this->db->query( 'ROLLBACK' );
-					if ( $id > 0 ) {
-						clean_post_cache( $id );
-					}
-					throw $error;
-				}
-			}
+			)
 		);
 	}
 
@@ -192,28 +195,21 @@ final class WpSliderRepository implements SliderRepository {
 	}
 
 	public function all_documents(): iterable {
-		$ids = get_posts(
-			array(
-				'post_type'      => PostTypes::SLIDER,
-				'post_status'    => array( 'publish', 'trash' ),
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-			)
-		);
+		// Called under ResourceGuard for deletion: bypass caches populated before a competing save.
+		$ids = $this->db->get_col( $this->db->prepare( 'SELECT ID FROM %i WHERE post_type=%s', $this->db->posts, PostTypes::SLIDER ) );
 		foreach ( $ids as $id ) {
-			$post = get_post( $id );
-			if ( ! $post instanceof WP_Post ) {
-				continue;
+			$json = $this->db->get_var( $this->db->prepare( 'SELECT post_content FROM %i WHERE ID=%d', $this->db->posts, $id ) );
+			if ( is_string( $json ) ) {
+				yield $json;
 			}
-			yield $post->post_content;
-			$published = $this->published( $id );
-			if ( null !== $published ) {
-				yield $published->document_json;
+			$raw = $this->db->get_var( $this->db->prepare( 'SELECT meta_value FROM %i WHERE post_id=%d AND meta_key=%s', $this->db->postmeta, $id, self::PUBLISHED_KEY ) );
+			if ( is_string( $raw ) ) {
+				$snapshot = json_decode( $raw, true );
+				yield is_array( $snapshot ) && is_string( $snapshot['document'] ?? null ) ? $snapshot['document'] : '{invalid snapshot';
 			}
-			foreach ( wp_get_post_revisions( $id ) as $revision ) {
-				if ( $revision instanceof WP_Post ) {
-					yield $revision->post_content;
-				}
+			$revisions = $this->db->get_col( $this->db->prepare( "SELECT post_content FROM %i WHERE post_parent=%d AND post_type='revision'", $this->db->posts, $id ) );
+			foreach ( $revisions as $revision ) {
+				yield (string) $revision;
 			}
 		}
 	}
@@ -248,7 +244,8 @@ final class WpSliderRepository implements SliderRepository {
 				require_once ABSPATH . 'wp-admin/includes/post.php';
 				$source = get_post( $id, ARRAY_A );
 				if ( ! is_array( $source ) ) {
-					throw new SliderNotFound( 'Slider not found.' ); }
+					throw new SliderNotFound( 'Slider not found.' );
+				}
 				$source['post_ID']      = $id;
 				$source['post_title']   = $title;
 				$source['post_content'] = $document_json;
@@ -286,14 +283,6 @@ final class WpSliderRepository implements SliderRepository {
 	}
 
 
-	private function published( int $id ): ?PublishedSnapshot {
-		$raw = get_post_meta( $id, self::PUBLISHED_KEY, true );
-		if ( ! is_string( $raw ) || '' === $raw ) {
-			return null;
-		}
-		return PublishedSnapshot::from_array( json_decode( $raw, true ) );
-	}
-
 	/** Version read directly from the database, bypassing a possibly stale object cache. */
 	private function current_version( int $id ): int {
 		$value = $this->db->get_var(
@@ -325,6 +314,10 @@ final class WpSliderRepository implements SliderRepository {
 	 * @throws RepositoryBusy When the lock cannot be acquired.
 	 */
 	private function locked( int $id, callable $operation ): int {
+		return ResourceGuard::run( $this->db, fn (): int => $this->locked_slider( $id, $operation ) );
+	}
+	/** @param callable(): int $operation Serialized action. */
+	private function locked_slider( int $id, callable $operation ): int {
 		$name     = 'sws_slider_' . get_current_blog_id() . '_' . $id . '_' . substr( md5( $this->db->prefix ), 0, 8 );
 		$acquired = $this->db->get_var( $this->db->prepare( 'SELECT GET_LOCK(%s, %d)', $name, self::LOCK_TIMEOUT ) );
 		if ( '1' !== (string) $acquired ) {

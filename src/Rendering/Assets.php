@@ -31,6 +31,8 @@ final class Assets {
 
 	/** @var array<string, true> Style handles already printed or enqueued. */
 	private array $used = array();
+	/** @var list<array<string,mixed>> One conservative start-slide font preload. */
+	private array $font_preloads = array();
 
 	public function __construct(
 		private readonly SliderRepository $sliders,
@@ -45,6 +47,7 @@ final class Assets {
 		add_action( 'wp_enqueue_scripts', array( $this, 'register_runtime' ), 5 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'register_runtime' ), 5 );
 		add_action( 'wp', array( $this, 'prepare_queried_post' ) );
+		add_filter( 'wp_preload_resources', array( $this, 'preloads' ) );
 	}
 
 	public function register_runtime(): void {
@@ -60,6 +63,13 @@ final class Assets {
 				'strategy'  => 'defer',
 			)
 		);
+	}
+
+	/**
+	 * @param list<array<string,mixed>> $resources WordPress preload list.
+	 * @return list<array<string,mixed>> */
+	public function preloads( array $resources ): array {
+		return array_merge( $resources, $this->font_preloads );
 	}
 
 	private function asset_version( string $relative ): string {
@@ -96,6 +106,7 @@ final class Assets {
 	 * Ensures every asset of a slider is loaded.
 	 *
 	 * @param array<string, mixed> $document Published document.
+	 *
 	 * @return string Style markup to print before the slider when `<head>` was already sent, else ''.
 	 */
 	public function use_slider( PublishedSnapshot $published, array $document, string $scope ): string {
@@ -112,6 +123,7 @@ final class Assets {
 	 * Enqueues runtime, slider and font styles; returns the style handles not yet used.
 	 *
 	 * @param array<string, mixed> $document Published document.
+	 *
 	 * @return list<string>
 	 */
 	private function enqueue( PublishedSnapshot $published, array $document, string $scope ): array {
@@ -136,19 +148,72 @@ final class Assets {
 		}
 		$handles[] = $handle;
 
-		foreach ( $published->font_installations as $installation_id ) {
-			$font_handle = 'sws-font-' . $installation_id;
-			if ( ! wp_style_is( $font_handle, 'registered' ) ) {
-				$installation = $this->fonts->find( $installation_id );
-				$url          = null === $installation ? null : UploadPaths::url( $installation['stylesheet'] );
-				if ( null === $url ) {
-					// Missing font: text stays readable in the system font; never an external fallback.
-					continue;
+		$references = array_column( $document['fontRefs'], null, 'id' );
+		$used_refs  = array();
+		$first_ref  = null;
+		foreach ( $document['slides'] as $slide ) {
+			if ( ! $slide['enabled'] ) {
+				continue;
+			}
+			foreach ( $slide['layers'] as $layer ) {
+				if ( null !== $layer['style']['fontRef'] && 'image' !== $layer['type'] ) {
+					$used_refs[ $layer['style']['fontRef'] ] = true;
 				}
-				// Installation directories are content-addressed and immutable.
-				wp_register_style( $font_handle, $url, array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
+			}
+			if ( null === $first_ref ) {
+				foreach ( $slide['layers'] as $layer ) {
+					if ( 'image' !== $layer['type'] && $layer['layout']['visible'] && null !== $layer['style']['fontRef'] ) {
+						$first_ref = $layer['style']['fontRef'];
+						break;
+					}
+				}
+			}
+			// Only the first enabled slide is eligible for preload.
+			if ( null === $first_ref ) {
+				$first_ref = '';
+			}
+		}
+		foreach ( array_keys( $used_refs ) as $id ) {
+			$ref          = $references[ $id ] ?? null;
+			$installation = null === $ref ? null : $this->fonts->find( $ref['installationId'] );
+			if ( null === $ref || null === $installation || null === UploadPaths::local_font_url( $installation['stylesheet'] ) ) {
+				continue;
+			}
+			$variants    = array_values( array_filter( $installation['variants'], static fn ( array $variant ): bool => $variant['weight'] === $ref['weight'] && $variant['style'] === $ref['style'] ) );
+			$font_handle = 'sws-font-' . $installation['id'] . '-' . $ref['weight'] . '-' . $ref['style'];
+			if ( ! wp_style_is( $font_handle, 'registered' ) ) {
+				$css = \SW\Slider\Fonts\LocalFontCss::build(
+					'sws-' . $installation['id'],
+					$variants,
+					static function ( string $file ) use ( $installation ): ?string {
+						$path = UploadPaths::path( $installation['directory'] . '/' . $file );
+						return null !== $path && is_readable( $path ) ? UploadPaths::local_font_url( $installation['directory'] . '/' . $file ) : null;
+					}
+				);
+				wp_register_style( $font_handle, false, array(), $this->version );
+				wp_add_inline_style( $font_handle, $css );
 			}
 			$handles[] = $font_handle;
+			if ( $id === $first_ref && array() === $this->font_preloads ) {
+				foreach ( $variants as $variant ) {
+					foreach ( $variant['files'] as $file ) {
+						if ( 'latin' !== $file['subset'] ) {
+							continue;
+						}
+						$url  = UploadPaths::local_font_url( $installation['directory'] . '/' . $file['file'] );
+						$path = UploadPaths::path( $installation['directory'] . '/' . $file['file'] );
+						if ( null !== $url && null !== $path && is_readable( $path ) ) {
+							$this->font_preloads[] = array(
+								'href'        => $url,
+								'as'          => 'font',
+								'type'        => 'font/woff2',
+								'crossorigin' => 'anonymous',
+							);
+							break 2;
+						}
+					}
+				}
+			}
 		}
 
 		$new = array();

@@ -12,6 +12,7 @@
         <include>
             <directory suffix=".php">../../src</directory>
             <file>../../sw-sliderman.php</file>
+            <file>../../uninstall.php</file>
         </include>
     </coverage>
 </phpunit>

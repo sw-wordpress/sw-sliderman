@@ -43,7 +43,7 @@ final class UploadsFontStorage implements FontStorage {
 			throw new FontError( 'sws_font_storage', 'Unexpected file name.' );
 		}
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- own temporary directory below uploads.
-		if ( false === file_put_contents( $temp . '/' . $name, $bytes, LOCK_EX ) ) {
+		if ( strlen( $bytes ) !== file_put_contents( $temp . '/' . $name, $bytes, LOCK_EX ) ) {
 			throw new FontError( 'sws_font_storage', 'Cannot write a font file.' );
 		}
 	}
@@ -54,6 +54,27 @@ final class UploadsFontStorage implements FontStorage {
 			throw new FontError( 'sws_font_storage', 'Unexpected directory.' );
 		}
 		if ( file_exists( $target ) ) {
+			if ( is_link( $target ) || ! is_dir( $target ) ) {
+				throw new FontError( 'sws_font_storage' );
+			}
+			$entries = scandir( $temp );
+			if ( false === $entries ) {
+				throw new FontError( 'sws_font_storage' );
+			}
+			$names = array_diff( $entries, array( '.', '..' ) );
+			// Repair an identical content-addressed installation from a complete staging directory.
+			// Each replacement is atomic and restores exactly the expected immutable bytes.
+			foreach ( $names as $name ) {
+				if ( ! preg_match( '/\A(?:[a-f0-9]{64}\.woff2|font\.css|LICENSE\.txt)\z/', $name ) || is_link( $temp . '/' . $name ) || is_link( $target . '/' . $name ) ) {
+					throw new FontError( 'sws_font_storage' );
+				}
+			}
+			foreach ( $names as $name ) {
+                // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- atomic replacement of verified, immutable installation bytes.
+				if ( ! rename( $temp . '/' . $name, $target . '/' . $name ) ) {
+					throw new FontError( 'sws_font_storage' );
+				}
+			}
 			return false;
 		}
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- atomic activation within one directory.
@@ -81,9 +102,23 @@ final class UploadsFontStorage implements FontStorage {
 		return null !== $target && is_file( $target . '/font.css' );
 	}
 
+	public function read_file( string $relative_dir, string $name, int $max_bytes ): ?string {
+		if ( 1 !== preg_match( '/\A(?:[a-f0-9]{64}\.woff2|font\.css|LICENSE\.txt)\z/', $name ) ) {
+			return null;
+		}
+		$path = UploadPaths::path( $relative_dir . '/' . $name );
+		if ( null === $path || ! is_file( $path ) || is_link( $path ) || is_link( dirname( $path ) ) || ! is_readable( $path ) || filesize( $path ) > $max_bytes ) {
+			return null;
+		}
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- bounded own local resource.
+		$bytes = file_get_contents( $path );
+		return is_string( $bytes ) && strlen( $bytes ) <= $max_bytes ? $bytes : null;
+	}
+
 	public function verify_file( string $relative_dir, string $name, string $sha256 ): bool {
 		if ( 1 !== preg_match( '/^[a-zA-Z0-9._-]+$/D', $name ) || str_contains( $name, '..' ) ) {
-			return false; }
+			return false;
+		}
 		$path = UploadPaths::path( $relative_dir . '/' . $name );
 		return null !== $path && is_readable( $path ) && is_file( $path ) && hash_equals( $sha256, (string) hash_file( 'sha256', $path ) );
 	}

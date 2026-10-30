@@ -79,7 +79,7 @@ final class AdminPage {
 		wp_enqueue_media();
 		wp_enqueue_style( Assets::RUNTIME );
 		foreach ( $this->fonts->all() as $installation ) {
-			$url = UploadPaths::url( $installation['stylesheet'] );
+			$url = UploadPaths::local_font_url( $installation['stylesheet'] );
 			if ( null !== $url ) {
 				// Installation directories are content-addressed and immutable.
 				wp_enqueue_style( 'sws-font-' . $installation['id'], $url, array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion

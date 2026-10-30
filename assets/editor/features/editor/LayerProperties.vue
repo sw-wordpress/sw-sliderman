@@ -23,7 +23,7 @@ import OverrideState from '@editor/components/fields/OverrideState.vue';
 
 const props = defineProps<{ layer: Layer }>();
 const editor = useEditorStore();
-const { installations } = useInstalledFonts();
+const { available: installations } = useInstalledFonts();
 
 const resolved = computed(() => {
   const doc = editor.document;
@@ -64,7 +64,7 @@ const fontOptions = computed<FontOption[]>(() => [
   { label: __('System font'), value: 'system', font: null },
   ...installations.value.flatMap((installation) =>
     installation.variants.map((variant) => ({
-      label: `${installation.family} ${variant.weight}${variant.style === 'italic' ? ' ' + __('italic') : ''}`,
+      label: `${installation.family} ${variant.weight}${variant.style === 'italic' ? ' ' + __('italic') : ''} · ${installation.id.slice(-6)}`,
       value: `${installation.id}|${variant.weight}|${variant.style}`,
       font: { installationId: installation.id, weight: variant.weight, style: variant.style },
     })),

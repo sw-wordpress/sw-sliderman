@@ -37,6 +37,7 @@ final class MemoryFontStorage implements FontStorage {
 
 	public function activate( string $temp, string $relative_dir ): bool {
 		if ( isset( $this->active[ $relative_dir ] ) ) {
+			$this->active[ $relative_dir ] = $this->temp[ $temp ];
 			return false;
 		}
 		$this->active[ $relative_dir ] = $this->temp[ $temp ];
@@ -55,6 +56,11 @@ final class MemoryFontStorage implements FontStorage {
 	public function exists( string $relative_dir ): bool {
 		return isset( $this->active[ $relative_dir ] );
 	}
+	public function read_file( string $relative_dir, string $name, int $max_bytes ): ?string {
+		$bytes = $this->active[ $relative_dir ][ $name ] ?? null;
+		return is_string( $bytes ) && strlen( $bytes ) <= $max_bytes ? $bytes : null;
+	}
+
 	public function verify_file( string $relative_dir, string $name, string $sha256 ): bool {
 		$bytes = $this->active[ $relative_dir ][ $name ] ?? null;
 		return is_string( $bytes ) && hash_equals( $sha256, hash( 'sha256', $bytes ) );

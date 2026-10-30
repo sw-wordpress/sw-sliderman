@@ -47,6 +47,7 @@ $sws_coverage->setAttribute( 'generated', (string) time() );
 $sws_project = $sws_coverage->appendChild( $sws_document->createElement( 'project' ) );
 $sws_project->setAttribute( 'timestamp', (string) time() );
 $sws_executed = 0;
+$sws_total    = 0;
 ksort( $sws_files );
 foreach ( $sws_files as $sws_name => $sws_lines ) {
 	$sws_file = $sws_project->appendChild( $sws_document->createElement( 'file' ) );
@@ -60,6 +61,7 @@ foreach ( $sws_files as $sws_name => $sws_lines ) {
 		}
 		if ( 'stmt' === ( $sws_attributes['type'] ?? '' ) ) {
 			++$sws_statements;
+			++$sws_total;
 			if ( (int) $sws_attributes['count'] > 0 ) {
 				++$sws_covered;
 				++$sws_executed;
@@ -77,3 +79,9 @@ if ( false === $sws_document->save( $sws_root . 'coverage/clover.xml' ) ) {
 	throw new RuntimeException( 'Could not write merged coverage.' );
 }
 printf( "Merged %d files, %d executed statement lines into coverage/clover.xml\n", count( $sws_files ), $sws_executed ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CLI output.
+
+$sws_percentage = 100 * $sws_executed / $sws_total;
+printf( "PHP line coverage: %.2f%% (%d/%d)\n", $sws_percentage, $sws_executed, $sws_total ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CLI numeric metrics.
+if ( $sws_executed * 100 <= $sws_total * 80 ) {
+	throw new RuntimeException( 'PHP line coverage must exceed 80%.' );
+}

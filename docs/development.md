@@ -17,7 +17,7 @@ Node 18.18 is enough locally (versions pinned like sw-backupit); CI uses Node 22
 
 ## Contract fixtures
 
-`tests/fixtures/documents/valid/*.json`, `documents/invalid.json` (patch cases with exact expected issues), `css/basic.json` (golden layout/CSS, regenerate with `php bin/contract-fixtures.php` and review the diff), `schedule/basic.json`, `fonts/*.css` (recorded CSS2 API responses; no font files are checked in).
+`tests/fixtures/documents/valid/*.json`, `documents/invalid.json` (patch cases with exact expected issues), `css/basic.json` (golden layout/CSS, regenerate with `php bin/contract-fixtures.php` and review the diff), `schedule/basic.json`, `fonts/*.css` (recorded CSS2 API responses); static Lato WOFF2 fixtures include their OFL license.
 
 ## Admin CSS isolation
 
@@ -31,3 +31,9 @@ As in sw-backupit: the app mounts in `#sw-sliderman-app` with `.sws-root`; Quasa
 The repository owns InnoDB transaction boundaries and requires named-lock support. Do not call it from a caller-owned transaction. The plugin uses no external database executable at runtime; `bin/test-db.sh` is development tooling only. When a temporary test database exits with its command session, start it and run the suite in the same shell invocation. Use a separate `SWS_TEST_DB_DIR` and `SWS_TEST_DB_PORT` when another private instance is already using the defaults.
 
 The local M1 browser check opened an existing slider, loaded the revisions dialog and opened its saved-draft preview; it made no slider changes. The preview returned private/no-store and noindex headers, ran the native runtime and denied an anonymous request using the same URL. Duplication/restoration effects are exercised against the isolated integration database, not the development site's sliders.
+
+M2 local-font browser/acceptance checks: [font-testing.md](font-testing.md).
+
+## Coverage
+
+`npm run coverage` misst alle produktiven TS-/Vue-Dateien und erzwingt mehr als 80 % Zeilenabdeckung. PHP: `composer coverage`, danach WordPress-PHPUnit mit `--coverage-clover coverage/wordpress.xml` (vom Projektroot); `php tests/coverage/merge.php coverage/unit.xml coverage/wordpress.xml` vereinigt beide Berichte und erzwingt ebenfalls > 80 %. PHP benötigt PCOV oder Xdebug, CI verwendet Xdebug. Kein produktiver Bereich ist ausgenommen. SonarQube erhält PHP-Clover und JS-LCOV aus CI-Artefakten.

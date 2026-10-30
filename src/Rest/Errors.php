@@ -75,7 +75,18 @@ final class Errors {
 	}
 
 	private static function font( FontError $error ): WP_Error {
-		$map                  = array(
+		$map = array(
+			'sws_font_invalid_file'         => array( 422, __( 'The file is not a supported static WOFF2 font.', 'sw-sliderman' ) ),
+			'sws_font_registry'             => array( 500, __( 'The font installation could not be stored. Existing installations were not changed.', 'sw-sliderman' ) ),
+			'sws_font_storage'              => array( 500, __( 'The local font files could not be written or verified.', 'sw-sliderman' ) ),
+			'sws_font_reference_unknown'    => array( 409, __( 'Font use could not be checked because stored slider data is damaged or unsupported.', 'sw-sliderman' ) ),
+			'sws_font_catalog_invalid'      => array( 502, __( 'The catalog response could not be verified. The previous catalog remains active.', 'sw-sliderman' ) ),
+			'sws_font_job_forbidden'        => array( 403, __( 'Font management permission is no longer available.', 'sw-sliderman' ) ),
+			'sws_font_job_not_found'        => array( 404, __( 'The font job does not exist.', 'sw-sliderman' ) ),
+			'sws_font_job_limit'            => array( 429, __( 'Too many font jobs are active. Wait for a job to finish.', 'sw-sliderman' ) ),
+			'sws_font_job_timeout'          => array( 504, __( 'The font job exceeded its time limit. Existing installations remain available.', 'sw-sliderman' ) ),
+			'sws_font_job_schedule'         => array( 500, __( 'The font job could not be scheduled.', 'sw-sliderman' ) ),
+
 			'sws_font_invalid_request'      => array( 400, __( 'The font selection is invalid.', 'sw-sliderman' ) ),
 			'sws_font_unknown_family'       => array( 404, __( 'The font family is not in the local catalog.', 'sw-sliderman' ) ),
 			'sws_font_not_found'            => array( 404, __( 'The font installation does not exist.', 'sw-sliderman' ) ),

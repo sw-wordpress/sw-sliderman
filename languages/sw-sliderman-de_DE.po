@@ -146,49 +146,93 @@ msgid "An unexpected error occurred."
 msgstr "Ein unerwarteter Fehler ist aufgetreten."
 
 #: src/Rest/Errors.php:79
-#: src/Rest/FontController.php:125
+msgid "The file is not a supported static WOFF2 font."
+msgstr "Die Datei ist keine unterstützte statische WOFF2-Schrift."
+
+#: src/Rest/Errors.php:80
+msgid "The font installation could not be stored. Existing installations were not changed."
+msgstr "Die Schriftinstallation konnte nicht gespeichert werden. Bestehende Installationen wurden nicht geändert."
+
+#: src/Rest/Errors.php:81
+msgid "The local font files could not be written or verified."
+msgstr "Die lokalen Schriftdateien konnten nicht geschrieben oder geprüft werden."
+
+#: src/Rest/Errors.php:82
+msgid "Font use could not be checked because stored slider data is damaged or unsupported."
+msgstr "Die Schriftverwendung konnte wegen beschädigter oder nicht unterstützter Slider-Daten nicht geprüft werden."
+
+#: src/Rest/Errors.php:83
+msgid "The catalog response could not be verified. The previous catalog remains active."
+msgstr "Die Katalogantwort konnte nicht geprüft werden. Der bisherige Katalog bleibt aktiv."
+
+#: src/Rest/Errors.php:84
+msgid "Font management permission is no longer available."
+msgstr "Die Berechtigung zur Schriftverwaltung ist nicht mehr vorhanden."
+
+#: src/Rest/Errors.php:85
+msgid "The font job does not exist."
+msgstr "Der Schriftauftrag existiert nicht."
+
+#: src/Rest/Errors.php:86
+msgid "Too many font jobs are active. Wait for a job to finish."
+msgstr "Zu viele Schriftaufträge sind aktiv. Den Abschluss eines Auftrags abwarten."
+
+#: src/Rest/Errors.php:87
+msgid "The font job exceeded its time limit. Existing installations remain available."
+msgstr "Der Schriftauftrag hat sein Zeitlimit überschritten. Bestehende Installationen bleiben verfügbar."
+
+#: src/Rest/Errors.php:88
+msgid "The font job could not be scheduled."
+msgstr "Der Schriftauftrag konnte nicht eingeplant werden."
+
+#: src/Rest/Errors.php:90
+#: src/Rest/FontController.php:129
 msgid "The font selection is invalid."
 msgstr "Die Schriftauswahl ist ungültig."
 
-#: src/Rest/Errors.php:80
+#: src/Rest/Errors.php:91
 msgid "The font family is not in the local catalog."
 msgstr "Die Schriftfamilie ist nicht im lokalen Katalog enthalten."
 
-#: src/Rest/Errors.php:81
+#: src/Rest/Errors.php:92
 msgid "The font installation does not exist."
 msgstr "Die Schriftinstallation existiert nicht."
 
-#: src/Rest/Errors.php:82
+#: src/Rest/Errors.php:93
 msgid "A selected style or weight is not available for this family."
 msgstr "Ein gewählter Schnitt ist für diese Familie nicht verfügbar."
 
-#: src/Rest/Errors.php:83
+#: src/Rest/Errors.php:94
 msgid "A selected character set is not available for this family."
 msgstr "Ein gewählter Zeichensatz ist für diese Familie nicht verfügbar."
 
-#: src/Rest/Errors.php:84
+#: src/Rest/Errors.php:95
 msgid "This family is only available as a variable font, which is not supported yet."
 msgstr "Diese Familie ist nur als variable Schrift verfügbar; das wird noch nicht unterstützt."
 
-#: src/Rest/Errors.php:85
+#: src/Rest/Errors.php:96
 msgid "Font downloads are disabled (offline mode)."
 msgstr "Font-Downloads sind deaktiviert (Offline-Modus)."
 
-#: src/Rest/Errors.php:86
+#: src/Rest/Errors.php:97
 msgid "This family is already being installed."
 msgstr "Diese Familie wird bereits installiert."
 
-#: src/Rest/Errors.php:87
+#: src/Rest/Errors.php:98
 msgid "The font is still used by a slider, a revision or a published version."
 msgstr "Die Schrift wird noch von einem Slider, einer Revision oder einem veröffentlichten Stand verwendet."
 
-#: src/Rest/Errors.php:88
+#: src/Rest/Errors.php:99
 msgid "The license of this family could not be verified."
 msgstr "Die Lizenz dieser Familie konnte nicht geprüft werden."
 
-#: src/Rest/Errors.php:90
+#: src/Rest/Errors.php:101
 msgid "The font could not be downloaded or verified. Existing installations were not changed."
 msgstr "Die Schrift konnte nicht heruntergeladen oder geprüft werden. Bestehende Installationen wurden nicht verändert."
+
+#: src/Rest/FontManagementController.php:95
+msgid "The font file is too large."
+msgstr "Die Schriftdatei ist zu groß."
 
 #: src/Rest/JsonBody.php:29
 msgid "The slider is too large."

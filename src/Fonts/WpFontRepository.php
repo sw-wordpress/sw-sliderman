@@ -53,27 +53,54 @@ final class WpFontRepository implements FontRepository {
 	}
 
 	public function save( array $installation ): void {
-		$id = wp_insert_post(
-			wp_slash(
-				array(
-					'post_type'   => PostTypes::FONT,
-					'post_status' => 'publish',
-					'post_title'  => $installation['family'],
-				)
-			),
-			true
-		);
-		if ( is_wp_error( $id ) ) {
-			throw new FontError( 'sws_font_registry', $id->get_error_message() );
+		global $wpdb;
+		if ( null !== $this->find( $installation['id'] ) ) {
+			return;
 		}
-		update_post_meta( $id, self::ID_KEY, $installation['id'] );
-		update_post_meta( $id, self::MANIFEST_KEY, wp_slash( (string) wp_json_encode( $installation, JSON_UNESCAPED_SLASHES ) ) );
+		$count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN (%s,%s) AND ENGINE='InnoDB'", $wpdb->posts, $wpdb->postmeta ) );
+		if ( '2' !== (string) $count ) {
+			throw new FontError( 'sws_font_registry' );
+		}
+		if ( false === $wpdb->query( 'START TRANSACTION' ) ) {
+			throw new FontError( 'sws_font_registry' );
+		}
+		$id = 0;
+		try {
+			$result = wp_insert_post(
+				wp_slash(
+					array(
+						'post_type'   => PostTypes::FONT,
+						'post_status' => 'publish',
+						'post_title'  => $installation['family'],
+					)
+				),
+				true
+			);
+			if ( is_wp_error( $result ) ) {
+				throw new FontError( 'sws_font_registry' );
+			}
+			$id = $result;
+			if ( false === add_post_meta( $id, self::ID_KEY, $installation['id'], true ) || false === add_post_meta( $id, self::MANIFEST_KEY, wp_slash( (string) wp_json_encode( $installation, JSON_UNESCAPED_SLASHES ) ), true ) ) {
+				throw new FontError( 'sws_font_registry' );
+			}
+			if ( false === $wpdb->query( 'COMMIT' ) ) {
+				throw new FontError( 'sws_font_registry' );
+			}
+		} catch ( \Throwable $error ) {
+			$wpdb->query( 'ROLLBACK' );
+			if ( $id > 0 ) {
+				clean_post_cache( $id );
+			}
+			throw $error;
+		}
 	}
 
 	public function delete( string $installation_id ): void {
 		$post = $this->post( $installation_id );
 		if ( null !== $post ) {
-			wp_delete_post( $post->ID, true );
+			if ( ! wp_delete_post( $post->ID, true ) ) {
+				throw new FontError( 'sws_font_registry' );
+			}
 		}
 	}
 
@@ -113,11 +140,29 @@ final class WpFontRepository implements FontRepository {
 		return add_option( $option, $value, '', false );
 	}
 
-	public function release_lock( string $key, string $token ): void {
+	public function renew_lock( string $key, string $token, int $ttl_seconds ): bool {
+		global $wpdb;
 		$option  = 'sws_lock_' . md5( $key );
-		$current = (string) get_option( $option, '' );
-		if ( str_starts_with( $current, $token . '|' ) ) {
-			delete_option( $option );
+		$current = $wpdb->get_var( $wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name=%s', $wpdb->options, $option ) );
+		if ( ! is_string( $current ) || ! str_starts_with( $current, $token . '|' ) || (int) ( explode( '|', $current )[1] ?? 0 ) <= time() ) {
+			return false;
+		}
+		$value = $token . '|' . ( time() + $ttl_seconds );
+		if ( $current === $value ) {
+			return true;
+		}
+		$updated = $wpdb->query( $wpdb->prepare( 'UPDATE %i SET option_value=%s WHERE option_name=%s AND option_value=%s', $wpdb->options, $value, $option, $current ) );
+		wp_cache_delete( $option, 'options' );
+		return 1 === $updated;
+	}
+	public function release_lock( string $key, string $token ): void {
+		global $wpdb;
+		$option  = 'sws_lock_' . md5( $key );
+		$current = $wpdb->get_var( $wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name=%s', $wpdb->options, $option ) );
+		if ( is_string( $current ) && str_starts_with( $current, $token . '|' ) ) {
+			$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE option_name=%s AND option_value=%s', $wpdb->options, $option, $current ) );
+			wp_cache_delete( $option, 'options' );
+			wp_cache_delete( 'notoptions', 'options' );
 		}
 	}
 

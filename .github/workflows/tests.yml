@@ -116,7 +116,12 @@ jobs:
         cache: npm
         cache-dependency-path: package-lock.json
     - run: npm ci
-    - run: npm run lint && npm run typecheck && npm test && npm run build:only && npm run i18n:check
+    - run: npm run lint && npm run typecheck && npm run coverage && npm run build:only && npm run i18n:check
+    - uses: actions/upload-artifact@v4
+      with:
+        name: js-coverage
+        path: coverage/js/lcov.info
+        if-no-files-found: error
   sonarqube:
     name: SonarQube Cloud
     needs:
@@ -136,6 +141,10 @@ jobs:
       with:
         name: php-coverage
         path: coverage
+    - uses: actions/download-artifact@v4
+      with:
+        name: js-coverage
+        path: coverage/js
     - name: Check SonarQube configuration
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

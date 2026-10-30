@@ -10,6 +10,7 @@ import { useEditorStore } from '@editor/stores/editor';
 import { __, sprintf } from '@editor/i18n';
 import { formatNumber } from '@editor/utils/format';
 import LayerContent from './LayerContent.vue';
+import { useInstalledFonts } from '@editor/composables/useInstalledFonts';
 
 /**
  * The canvas renders the same markup classes and the same CSS declarations (shared/css.ts) as the
@@ -19,6 +20,28 @@ import LayerContent from './LayerContent.vue';
 const editor = useEditorStore();
 const scroller = ref<HTMLElement | null>(null);
 const stageEl = ref<HTMLElement | null>(null);
+const { readyFor } = useInstalledFonts();
+const fontsReady = ref(true);
+const fontFallback = ref(false);
+let fontWait = new AbortController();
+watch(
+  () =>
+    editor.document?.fontRefs
+      .map((ref) => `${ref.installationId}|${ref.weight}|${ref.style}`)
+      .join(','),
+  async () => {
+    fontWait.abort();
+    fontWait = new AbortController();
+    const signal = fontWait.signal;
+    fontsReady.value = false;
+    const ok = await readyFor(editor.document?.fontRefs ?? [], signal);
+    if (!signal.aborted) {
+      fontFallback.value = !ok;
+      fontsReady.value = true;
+    }
+  },
+  { immediate: true },
+);
 const available = ref(800);
 const availableHeight = ref(500);
 const snapToGrid = ref(false);
@@ -39,6 +62,7 @@ onMounted(() => {
   observer.observe(scroller.value);
 });
 onBeforeUnmount(() => {
+  fontWait.abort();
   observer?.disconnect();
   cancelPreview();
   endPointer();
@@ -104,7 +128,7 @@ let pointer: PointerState | null = null;
 const guides = ref<{ x: number | null; y: number | null }>({ x: null, y: null });
 
 function startPointer(event: PointerEvent, layer: Layer, mode: PointerState['mode']): void {
-  if (event.button !== 0) return;
+  if (event.button !== 0 || !fontsReady.value) return;
   event.stopPropagation();
   if (mode === 'move' && !editor.selectedLayerIds.includes(layer.id)) {
     editor.selectLayer(layer.id, event.shiftKey);
@@ -246,7 +270,10 @@ watch(
     const slide = editor.slide;
     if (!slide || !stageEl.value || window.matchMedia('(prefers-reduced-motion: reduce)').matches)
       return;
-    await prepareImages(scroller.value ?? stageEl.value, signal);
+    await Promise.all([
+      prepareImages(scroller.value ?? stageEl.value, signal),
+      readyFor(editor.document?.fontRefs ?? [], signal),
+    ]);
     if (signal.aborted || !stageEl.value) return;
     for (const layer of scheduleSlide(slide).layers) {
       const el = stageEl.value.querySelector<HTMLElement>(
@@ -273,7 +300,13 @@ const deviceLabel = computed(
 </script>
 
 <template>
-  <section class="sws-canvas" :aria-label="__('Canvas')">
+  <section class="sws-canvas" :aria-label="__('Canvas')" :aria-busy="!fontsReady">
+    <p v-if="!fontsReady" class="sws-canvas__hint" role="status">
+      {{ __('Loading local fonts …') }}
+    </p>
+    <p v-else-if="fontFallback" class="sws-canvas__hint" role="status">
+      {{ __('Some local fonts could not be loaded. The system font is used.') }}
+    </p>
     <div class="sws-canvas__bar">
       <span class="sws-num">
         {{

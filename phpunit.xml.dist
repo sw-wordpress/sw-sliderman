@@ -14,9 +14,9 @@
     </testsuites>
     <source>
         <include>
-            <directory>src/Domain</directory>
-            <directory>src/Fonts</directory>
-            <file>src/Rendering/StyleSerializer.php</file>
+            <directory>src</directory>
+            <file>sw-sliderman.php</file>
+            <file>uninstall.php</file>
         </include>
     </source>
 </phpunit>

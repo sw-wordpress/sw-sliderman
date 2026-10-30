@@ -100,15 +100,19 @@ final class FontController {
 		return new WP_REST_Response(
 			array(
 				'catalogVersion' => $this->catalog->version(),
-				'offline'        => $this->offline,
+				'offline'        => (bool) get_option( \SW\Slider\Plugin::OFFLINE_OPTION, $this->offline ),
 				'families'       => $families,
 			)
 		);
 	}
 
-	public function installations(): WP_REST_Response {
-		$referenced = $this->library->referenced_ids();
-		$items      = array();
+	public function installations(): WP_REST_Response|WP_Error {
+		try {
+			$referenced = $this->library->referenced_ids();
+		} catch ( Throwable $error ) {
+			return Errors::from( $error );
+		}
+		$items = array();
 		foreach ( $this->library->installations() as $installation ) {
 			$items[] = $this->present( $installation, isset( $referenced[ $installation['id'] ] ) );
 		}
@@ -152,11 +156,11 @@ final class FontController {
 	 */
 	private function present( array $installation, bool $in_use ): array {
 		return array(
-			'id'            => $installation['id'],
-			'familyId'      => $installation['familyId'],
-			'family'        => $installation['family'],
-			'category'      => $installation['category'],
-			'variants'      => array_map(
+			'id'             => $installation['id'],
+			'familyId'       => $installation['familyId'],
+			'family'         => $installation['family'],
+			'category'       => $installation['category'],
+			'variants'       => array_map(
 				static fn ( array $variant ): array => array(
 					'weight'  => $variant['weight'],
 					'style'   => $variant['style'],
@@ -164,12 +168,13 @@ final class FontController {
 				),
 				$installation['variants']
 			),
-			'stylesheetUrl' => UploadPaths::url( $installation['stylesheet'] ),
-			'licenseId'     => $installation['license']['id'],
-			'licenseUrl'    => UploadPaths::url( $installation['license']['file'] ),
-			'installedGmt'  => $installation['installedGmt'],
-			'filesPresent'  => $this->library->files_present( $installation ),
-			'inUse'         => $in_use,
+			'stylesheetUrl'  => UploadPaths::local_font_url( $installation['stylesheet'] ),
+			'licenseId'      => $installation['license']['id'],
+			'licenseUrl'     => UploadPaths::local_font_url( $installation['license']['file'] ),
+			'installedGmt'   => $installation['installedGmt'],
+			'filesPresent'   => $this->library->files_present( $installation ),
+			'originMismatch' => null === UploadPaths::local_font_url( $installation['stylesheet'] ),
+			'inUse'          => $in_use,
 		);
 	}
 }

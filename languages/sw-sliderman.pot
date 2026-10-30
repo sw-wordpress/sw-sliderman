@@ -150,48 +150,92 @@ msgid "An unexpected error occurred."
 msgstr ""
 
 #: src/Rest/Errors.php:79
-#: src/Rest/FontController.php:125
-msgid "The font selection is invalid."
+msgid "The file is not a supported static WOFF2 font."
 msgstr ""
 
 #: src/Rest/Errors.php:80
-msgid "The font family is not in the local catalog."
+msgid "The font installation could not be stored. Existing installations were not changed."
 msgstr ""
 
 #: src/Rest/Errors.php:81
-msgid "The font installation does not exist."
+msgid "The local font files could not be written or verified."
 msgstr ""
 
 #: src/Rest/Errors.php:82
-msgid "A selected style or weight is not available for this family."
+msgid "Font use could not be checked because stored slider data is damaged or unsupported."
 msgstr ""
 
 #: src/Rest/Errors.php:83
-msgid "A selected character set is not available for this family."
+msgid "The catalog response could not be verified. The previous catalog remains active."
 msgstr ""
 
 #: src/Rest/Errors.php:84
-msgid "This family is only available as a variable font, which is not supported yet."
+msgid "Font management permission is no longer available."
 msgstr ""
 
 #: src/Rest/Errors.php:85
-msgid "Font downloads are disabled (offline mode)."
+msgid "The font job does not exist."
 msgstr ""
 
 #: src/Rest/Errors.php:86
-msgid "This family is already being installed."
+msgid "Too many font jobs are active. Wait for a job to finish."
 msgstr ""
 
 #: src/Rest/Errors.php:87
-msgid "The font is still used by a slider, a revision or a published version."
+msgid "The font job exceeded its time limit. Existing installations remain available."
 msgstr ""
 
 #: src/Rest/Errors.php:88
-msgid "The license of this family could not be verified."
+msgid "The font job could not be scheduled."
 msgstr ""
 
 #: src/Rest/Errors.php:90
+#: src/Rest/FontController.php:129
+msgid "The font selection is invalid."
+msgstr ""
+
+#: src/Rest/Errors.php:91
+msgid "The font family is not in the local catalog."
+msgstr ""
+
+#: src/Rest/Errors.php:92
+msgid "The font installation does not exist."
+msgstr ""
+
+#: src/Rest/Errors.php:93
+msgid "A selected style or weight is not available for this family."
+msgstr ""
+
+#: src/Rest/Errors.php:94
+msgid "A selected character set is not available for this family."
+msgstr ""
+
+#: src/Rest/Errors.php:95
+msgid "This family is only available as a variable font, which is not supported yet."
+msgstr ""
+
+#: src/Rest/Errors.php:96
+msgid "Font downloads are disabled (offline mode)."
+msgstr ""
+
+#: src/Rest/Errors.php:97
+msgid "This family is already being installed."
+msgstr ""
+
+#: src/Rest/Errors.php:98
+msgid "The font is still used by a slider, a revision or a published version."
+msgstr ""
+
+#: src/Rest/Errors.php:99
+msgid "The license of this family could not be verified."
+msgstr ""
+
+#: src/Rest/Errors.php:101
 msgid "The font could not be downloaded or verified. Existing installations were not changed."
+msgstr ""
+
+#: src/Rest/FontManagementController.php:95
+msgid "The font file is too large."
 msgstr ""
 
 #: src/Rest/JsonBody.php:29

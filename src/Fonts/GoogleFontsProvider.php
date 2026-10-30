@@ -19,7 +19,7 @@ namespace SW\Slider\Fonts;
  *
  * @phpstan-import-type Family from FontCatalog
  */
-final class GoogleFontsProvider {
+final class GoogleFontsProvider implements FontProvider {
 
 	/** A current browser user agent; the CSS2 API selects the WOFF2 format by user agent. */
 	public const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
@@ -117,7 +117,7 @@ final class GoogleFontsProvider {
 	 */
 	public function download_font( string $url ): string {
 		$bytes = $this->fetch( $url, DownloadPolicy::PURPOSE_FONT, Woff2::MAX_BYTES );
-		if ( ! Woff2::is_valid( $bytes ) ) {
+		if ( ! Woff2::is_static( $bytes ) ) {
 			throw new FontError( 'sws_font_invalid_file' );
 		}
 		return $bytes;
@@ -130,10 +130,15 @@ final class GoogleFontsProvider {
 	 */
 	public function download_license( string $license_path ): string {
 		$text = $this->fetch( 'https://raw.githubusercontent.com/google/fonts/main/' . $license_path, DownloadPolicy::PURPOSE_LICENSE, self::LICENSE_MAX_BYTES );
-		if ( ! mb_check_encoding( $text, 'UTF-8' ) || 1 !== preg_match( '/licen[cs]e/i', $text ) ) {
+		if ( 1 !== preg_match( '//u', $text ) || 1 !== preg_match( '/licen[cs]e/i', $text ) ) {
 			throw new FontError( 'sws_font_license_missing' );
 		}
 		return $text;
+	}
+
+	public function metadata( string $license_path ): string {
+		$path = dirname( $license_path ) . '/METADATA.pb';
+		return $this->fetch( 'https://raw.githubusercontent.com/google/fonts/main/' . $path, DownloadPolicy::PURPOSE_METADATA, self::CSS_MAX_BYTES );
 	}
 
 	/**

@@ -21,7 +21,7 @@ final class UploadPaths {
 	private const RELATIVE_PATTERN = '#^(?:artifacts|fonts)/[a-z0-9][a-z0-9._-]{0,120}(?:/[a-z0-9][a-z0-9._-]{0,120}){0,2}$#D';
 
 	public static function is_valid_relative( string $relative ): bool {
-		return 1 === preg_match( self::RELATIVE_PATTERN, $relative ) && ! str_contains( $relative, '..' );
+		return ! str_contains( $relative, '..' ) && ( 1 === preg_match( self::RELATIVE_PATTERN, $relative ) || 1 === preg_match( '#^fonts/[a-f0-9]{24}/LICENSE\.txt$#D', $relative ) );
 	}
 
 	/** Absolute base directory without trailing slash. */
@@ -42,6 +42,21 @@ final class UploadPaths {
 
 	public static function url( string $relative ): ?string {
 		return self::is_valid_relative( $relative ) ? self::base_url() . '/' . $relative : null;
+	}
+
+	/** Fonts must stay on both the public website and editor origin, even with upload offloading. */
+	public static function local_font_url( string $relative ): ?string {
+		$url = str_starts_with( $relative, 'fonts/' ) ? self::url( $relative ) : null;
+		return null !== $url && self::same_origin( $url, home_url( '/' ) ) && self::same_origin( $url, admin_url( '/' ) ) ? $url : null;
+	}
+	public static function same_origin( string $a, string $b ): bool {
+		$first  = wp_parse_url( $a );
+		$second = wp_parse_url( $b );
+		if ( ! is_array( $first ) || ! is_array( $second ) ) {
+			return false;
+		}
+		$origin = static fn ( array $url ): array => array( strtolower( $url['scheme'] ?? '' ), strtolower( $url['host'] ?? '' ), $url['port'] ?? ( 'https' === ( $url['scheme'] ?? '' ) ? 443 : 80 ) );
+		return $origin( $first ) === $origin( $second );
 	}
 
 	/** Creates a directory below the root (including the root's index.php marker). */

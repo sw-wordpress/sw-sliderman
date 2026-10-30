@@ -42,7 +42,8 @@ final class FakeHttp implements HttpClient {
 
 	/** Structurally valid WOFF2 container (not a usable font; no third-party font data). */
 	public static function woff2( string $seed ): string {
-		$body = 'wOF2' . "\x00\x01\x00\x00" . 'LLLL' . str_repeat( $seed . '-', 40 );
+		$compressed = str_repeat( $seed . '-', 40 );
+		$body       = 'wOF2' . "\x00\x01\x00\x00" . pack( 'NnnNN', 0, 2, 0, 72, strlen( $compressed ) ) . str_repeat( "\0", 24 ) . "\x00\x01\x01\x01" . $compressed;
 		return substr_replace( $body, pack( 'N', strlen( $body ) ), 8, 4 );
 	}
 }

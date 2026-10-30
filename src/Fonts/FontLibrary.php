@@ -28,7 +28,8 @@ final class FontLibrary {
 	public function __construct(
 		private readonly FontRepository $repository,
 		private readonly FontStorage $storage,
-		private readonly Closure $documents
+		private readonly Closure $documents,
+		private readonly ?Closure $exclusive = null
 	) {
 	}
 
@@ -45,7 +46,7 @@ final class FontLibrary {
 	 * @param Installation $installation Installation manifest.
 	 */
 	public function files_present( array $installation ): bool {
-		return $this->storage->exists( $installation['directory'] );
+		return FontIntegrity::complete( $this->storage, $installation );
 	}
 
 	/**
@@ -59,9 +60,12 @@ final class FontLibrary {
 			try {
 				$document = CanonicalJson::decode_assoc( $json );
 			} catch ( JsonException ) {
-				continue;
+				throw new FontError( 'sws_font_reference_unknown' );
 			}
-			foreach ( is_array( $document['fontRefs'] ?? null ) ? $document['fontRefs'] : array() as $ref ) {
+			if ( ( $document['schemaVersion'] ?? null ) !== 1 || ! is_array( $document['fontRefs'] ?? null ) ) {
+				throw new FontError( 'sws_font_reference_unknown' );
+			}
+			foreach ( $document['fontRefs'] as $ref ) {
 				if ( is_array( $ref ) && is_string( $ref['installationId'] ?? null ) ) {
 					$ids[ $ref['installationId'] ] = true;
 				}
@@ -76,6 +80,16 @@ final class FontLibrary {
 	 * @throws FontError When the installation is unknown or still referenced.
 	 */
 	public function uninstall( string $installation_id ): void {
+		$operation = function () use ( $installation_id ): void {
+			$this->uninstall_locked( $installation_id );
+		};
+		if ( null !== $this->exclusive ) {
+			( $this->exclusive )( $operation );
+		} else {
+			$operation();
+		}
+	}
+	private function uninstall_locked( string $installation_id ): void {
 		$installation = $this->repository->find( $installation_id );
 		if ( null === $installation ) {
 			throw new FontError( 'sws_font_not_found' );
@@ -83,7 +97,15 @@ final class FontLibrary {
 		if ( isset( $this->referenced_ids()[ $installation_id ] ) ) {
 			throw new FontError( 'sws_font_in_use' );
 		}
-		$this->repository->delete( $installation_id );
-		$this->storage->remove( $installation['directory'] );
+		$token = $this->repository->acquire_lock( 'install_' . $installation['familyId'], 300 );
+		if ( null === $token ) {
+			throw new FontError( 'sws_font_install_running' );
+		}
+		try {
+			$this->repository->delete( $installation_id );
+			$this->storage->remove( $installation['directory'] );
+		} finally {
+			$this->repository->release_lock( 'install_' . $installation['familyId'], $token );
+		}
 	}
 }

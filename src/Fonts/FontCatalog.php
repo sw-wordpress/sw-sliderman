@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace SW\Slider\Fonts;
 
+use Closure;
+
 /**
  * Read-only access to the versioned catalog file `fonts/catalog.json` (built by
  * bin/build-font-catalog.php from official Google Fonts metadata). The catalog contains
@@ -25,7 +27,7 @@ final class FontCatalog {
 	 */
 	private ?array $data = null;
 
-	public function __construct( private readonly string $file ) {
+	public function __construct( private readonly string $file, private readonly ?Closure $updated_file = null ) {
 	}
 
 	/**
@@ -33,7 +35,9 @@ final class FontCatalog {
 	 */
 	private function data(): array {
 		if ( null === $this->data ) {
-			$raw        = is_readable( $this->file ) ? (string) file_get_contents( $this->file ) : ''; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local bundled file.
+			$updated    = null === $this->updated_file ? null : ( $this->updated_file )();
+			$file       = is_string( $updated ) && is_readable( $updated ) ? $updated : $this->file;
+			$raw        = is_readable( $file ) ? (string) file_get_contents( $file ) : ''; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local bundled file.
 			$decoded    = json_decode( $raw, true );
 			$this->data = is_array( $decoded ) && isset( $decoded['families'] ) && is_array( $decoded['families'] )
 				? array(

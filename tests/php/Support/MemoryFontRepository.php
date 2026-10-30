@@ -47,6 +47,10 @@ final class MemoryFontRepository implements FontRepository {
 		return 'token';
 	}
 
+	public function renew_lock( string $key, string $token, int $ttl_seconds ): bool {
+		return ( $this->locks[ $key ] ?? null ) === $token;
+	}
+
 	public function release_lock( string $key, string $token ): void {
 		if ( ( $this->locks[ $key ] ?? null ) === $token ) {
 			unset( $this->locks[ $key ] );

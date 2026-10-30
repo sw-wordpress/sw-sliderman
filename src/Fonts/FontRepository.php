@@ -42,6 +42,8 @@ interface FontRepository {
 	 */
 	public function acquire_lock( string $key, int $ttl_seconds ): ?string;
 
+	public function renew_lock( string $key, string $token, int $ttl_seconds ): bool;
+
 	/** Releases the lock only if `$token` still owns it. */
 	public function release_lock( string $key, string $token ): void;
 }
