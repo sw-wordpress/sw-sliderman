@@ -15,6 +15,19 @@ Read `PLAN.md` (product spec), `CODE-STYLE.md` (binding rules) and `TODO.md` (st
 2. Never run destructive operations on the real WordPress database; tests use the private MariaDB from `bin/test-db.sh`.
 3. `tests/e2e/editor.mjs` runs the full flow against the local dev site (activates the plugin, creates and removes `E2E Hero*` sliders, installs Lato).
 4. M0 practical checks (TODO M0.10–M0.14) are Stefan's; never mark them done.
+5. After each implementation, include a concise German checklist of what Stefan can/should test as a user. Give concrete steps and the expected result for each relevant feature; distinguish recommended acceptance checks from optional checks. Report automated checks separately and never treat them as Stefan's practical acceptance.
 
 ## Translations
 Every user-facing string change updates German too: PHP catalog `languages/src/php-de_DE.json`, editor catalog `languages/src/editor-de_DE.json`, then `bin/i18n.sh update` (needs WP-CLI) and `bin/i18n.sh check`. German texts are worded neutrally (no du/Sie) because `de_DE_formal` falls back to `de_DE`.
+
+## Dokumentation
+
+- Verfasse Dokumentation möglichst knapp und ohne Wiederholungen, um Tokens zu sparen. Beschränke sie auf nötige Entscheidungen, Sicherheitsdetails und Testhinweise; verlinke vorhandene Dokumentation statt Inhalte zu duplizieren.
+
+## Tests und Coverage
+
+- Jede funktionale Codeänderung (neue Funktionen, Fehlerbehebungen und Refactorings) muss durch passende automatisierte Tests abgedeckt sein; Tests im selben Arbeitsschritt ergänzen oder anpassen.
+- Pflicht ist eine Zeilenabdeckung von **> 80 %** des produktiven Codes je Plugin; genau 80 % reichen nicht. PHP und JavaScript/TypeScript, soweit vorhanden, jeweils prüfen. Bestehende strengere Coverage-Grenzen bleiben verbindlich.
+- Vor Abschluss relevante Tests und Coverage-Prüfungen ausführen und Ergebnisse nennen. Fehlende Coverage-Infrastruktur ergänzen; fehlende Messwerte gelten nicht als erfüllte Vorgabe. Keine produktiven Dateien ausschließen oder Grenzen senken, um die Vorgabe zu umgehen.
+
+Vorhanden: PHPUnit-/WordPress-Coverage und SonarQube; siehe `composer.json`, `tests/coverage/merge.php` und `sonar-project.properties`. Vitest ist ebenfalls eingerichtet.
