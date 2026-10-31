@@ -1,5 +1,7 @@
 # Development
 
+Status: M0 accepted; M1 foundation and persistence implemented; evidence and remaining milestones in [TODO.md](../TODO.md). The editor uses Vue 3 + Quasar (no Quasar CLI) in the design of sw-backupit; the frontend runtime has no dependencies.
+
 | Area | Tooling | Command |
 | --- | --- | --- |
 | PHP style | PHPCS + WordPressCS 3 + PHPCompatibilityWP (`phpcs.xml.dist`) | `composer cs` / `composer cs:fix` |
@@ -37,3 +39,7 @@ M2 local-font browser/acceptance checks: [font-testing.md](font-testing.md).
 ## Coverage
 
 `npm run coverage` misst alle produktiven TS-/Vue-Dateien und erzwingt mehr als 80 % Zeilenabdeckung. PHP: `composer coverage`, danach WordPress-PHPUnit mit `--coverage-clover coverage/wordpress.xml` (vom Projektroot); `php tests/coverage/merge.php coverage/unit.xml coverage/wordpress.xml` vereinigt beide Berichte und erzwingt ebenfalls > 80 %. PHP benötigt PCOV oder Xdebug, CI verwendet Xdebug. Kein produktiver Bereich ist ausgenommen. SonarQube erhält PHP-Clover und JS-LCOV aus CI-Artefakten.
+
+## CI
+
+`.github/workflows/tests.yml`: PHP checks with coverage, WordPress tests on MariaDB (matrix WordPress 6.6/latest), frontend checks and SonarQube Cloud (secret `SONAR_TOKEN`, variable `SONAR_ORGANIZATION`). `.github/workflows/main.yml`: release ZIP on version tags.
