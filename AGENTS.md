@@ -4,7 +4,7 @@ Read `PLAN.md` (product spec), `CODE-STYLE.md` (binding rules) and `TODO.md` (st
 
 ## Architecture rules
 - One PHP style for everything: WordPress coding standards, PSR-4 PascalCase class files (CODE-STYLE 2.1), snake_case methods, `declare(strict_types=1)`.
-- `src/Domain` is WordPress-free (validator, layout resolver, schedule, canonical JSON). `src/Application` holds use cases and ports, `src/Infrastructure`, `src/Fonts` (adapters), `src/Rest`, `src/Admin`, `src/Rendering` are the WordPress edges. `src/Plugin.php` is the only composition root.
+- `src/Domain` is WordPress-free (validator, layout resolver, schedule, canonical JSON). `src/Application` holds use cases and ports, `src/Infrastructure`, `src/Fonts` (adapters), `src/Rest`, `src/Admin`, `src/Rendering`, `src/Integration` (theme adapters, e.g. The7) are the WordPress edges. `src/Plugin.php` is the only composition root.
 - `assets/shared` is pure TypeScript (no DOM, Vue, network). `assets/runtime` never imports editor libraries (ESLint + `bin/check-bundles.mjs`). `assets/editor` uses the shared resolver/CSS/schedule; no second layout logic.
 - Every document rule exists twice (TS + PHP) and is tested against `tests/fixtures` by Vitest and PHPUnit. Change the fixture first, then both implementations.
 - Writes go through `SliderService`; drafts are serialized per slider (`GET_LOCK`, ADR 0001) and need `expectedVersion`. Publishing never touches the live snapshot before the new artifact is complete.

@@ -17,6 +17,7 @@ use SW\Slider\Fonts\DownloadPolicy;
 use SW\Slider\Fonts\FontCatalog;
 use SW\Slider\Fonts\CatalogUpdater;
 use SW\Slider\Infrastructure\WpFontJobs;
+use SW\Slider\Integration\The7;
 use SW\Slider\Infrastructure\UploadPaths;
 use SW\Slider\Rest\FontManagementController;
 use SW\Slider\Fonts\FontFaceParser;
@@ -90,6 +91,7 @@ final class Plugin {
 		$assets->register();
 		$renderer = new SliderRenderer( $sliders, $assets );
 		( new Shortcode( $renderer ) )->register();
+		( new The7( $sliders, $renderer ) )->register();
 		( new DraftPreview( $service, $renderer ) )->register();
 		( new SliderController( $service ) )->register();
 		( new FontController( $catalog, $installer, $library, $offline ) )->register();

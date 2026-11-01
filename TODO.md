@@ -254,6 +254,7 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 - [ ] M4.14 Instanzkennungen, mehrere Slider und wiederholte Einbindung desselben Sliders prüfen.
 - [ ] M4.15 Veröffentlichte Artefakte cachen, bei Rendererwechsel erneuern und alte Referenzen sicher bereinigen.
 - [ ] M4.16 Responsive Bilder, reservierte Höhe und Lazy Loading späterer Slides ergänzen.
+- [x] M4.24 The7-Theme: Modus „SW SliderMan“ in den Seitenoptionen „Page Header → Slideshow“; Ausgabe über `presscore_do_header_slideshow` und den gemeinsamen Renderer (`src/Integration/The7.php`). Nachweis: `tests/wp/tests/The7IntegrationTest.php`, Browserprüfung der Metabox auf der Dev-Site. Praktische Frontend-Abnahme durch Stefan offen.
 
 ### Zugänglichkeit
 

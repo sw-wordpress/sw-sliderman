@@ -1,8 +1,10 @@
 {
   "%1$d of %2$d": "%1$d von %2$d",
+  "%s (not published)": "%s (nicht veröffentlicht)",
   "A selected character set is not available for this family.": "Ein gewählter Zeichensatz ist für diese Familie nicht verfügbar.",
   "A selected style or weight is not available for this family.": "Ein gewählter Schnitt ist für diese Familie nicht verfügbar.",
   "An unexpected error occurred.": "Ein unerwarteter Fehler ist aufgetreten.",
+  "Choose slider": "Slider auswählen",
   "Font downloads are disabled (offline mode).": "Font-Downloads sind deaktiviert (Offline-Modus).",
   "Font management permission is no longer available.": "Die Berechtigung zur Schriftverwaltung ist nicht mehr vorhanden.",
   "Font use could not be checked because stored slider data is damaged or unsupported.": "Die Schriftverwendung konnte wegen beschädigter oder nicht unterstützter Slider-Daten nicht geprüft werden.",
@@ -22,6 +24,7 @@
   "Slider not found.": "Slider nicht gefunden.",
   "Sliderman": "Sliderman",
   "Sliders": "Slider",
+  "Slideshow": "Slideshow",
   "The SW Sliderman editor has not been built. Install the release package or run \"npm run build\".": "Der SW-Sliderman-Editor wurde nicht gebaut. Das Release-Paket installieren oder „npm run build“ ausführen.",
   "The catalog response could not be verified. The previous catalog remains active.": "Die Katalogantwort konnte nicht geprüft werden. Der bisherige Katalog bleibt aktiv.",
   "The changes could not be stored. The last published version was not changed.": "Die Änderungen konnten nicht gespeichert werden. Die letzte veröffentlichte Version wurde nicht verändert.",
@@ -58,5 +61,6 @@
   "You do not have permission to access this page.": "Keine Berechtigung für diese Seite.",
   "carousel": "Karussell",
   "slide": "Slide",
-  "sw-wordpress": "sw-wordpress"
+  "sw-wordpress": "sw-wordpress",
+  "– Select slider –": "– Slider auswählen –"
 }

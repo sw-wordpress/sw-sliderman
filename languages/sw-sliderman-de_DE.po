@@ -64,6 +64,24 @@ msgstr "Installierte Schriften"
 msgid "Installed font"
 msgstr "Installierte Schrift"
 
+#: src/Integration/The7.php:67
+msgid "Slideshow"
+msgstr "Slideshow"
+
+#: src/Integration/The7.php:124
+msgid "Choose slider"
+msgstr "Slider auswählen"
+
+#: src/Integration/The7.php:136
+msgid "– Select slider –"
+msgstr "– Slider auswählen –"
+
+#. translators: %s: slider title
+#: src/Integration/The7.php:141
+#, php-format
+msgid "%s (not published)"
+msgstr "%s (nicht veröffentlicht)"
+
 #: src/Rendering/SliderRenderer.php:53
 msgid "Slider not found."
 msgstr "Slider nicht gefunden."
