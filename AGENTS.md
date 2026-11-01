@@ -9,7 +9,7 @@ Read `PLAN.md` (product spec), `CODE-STYLE.md` (binding rules) and `TODO.md` (st
 - Every document rule exists twice (TS + PHP) and is tested against `tests/fixtures` by Vitest and PHPUnit. Change the fixture first, then both implementations.
 - Writes go through `SliderService`; drafts are serialized per slider (`GET_LOCK`, ADR 0001) and need `expectedVersion`. Publishing never touches the live snapshot before the new artifact is complete.
 - Fonts: browsers load only local files; only `FontInstaller` talks to the provider, every URL passes `DownloadPolicy` (ADR 0002). Never add a remote font fallback.
-- PHPStan level 8 covers all production PHP (`src`, main file, `uninstall.php`) with no baseline, `ignoreErrors` or `@phpstan-ignore`.
+- PHPStan level 8 covers all production PHP (`src`, main file, `uninstall.php`) with no baseline, `ignoreErrors` or `@phpstan-ignore`. `bin/` (build and dev scripts, never shipped) is deliberately outside the scope.
 
 ## Workflow
 1. Adjust fixtures/contract → implement → `composer check`, `npm run lint && npm run typecheck && npm test && npm run build`, `bin/i18n.sh check`, WordPress tests (`bin/test-db.sh start && composer test:wp`) → docs → `TODO.md` (tick only proven items) → small coherent commit.
