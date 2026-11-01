@@ -595,7 +595,13 @@ final class SliderRestTest extends WP_UnitTestCase {
 			$process = proc_open( array( PHP_BINARY, dirname( __DIR__ ) . '/workers/save.php', (string) $this->admin, (string) $detail['id'], $title ), array( array( 'pipe', 'r' ), array( 'pipe', 'w' ), array( 'pipe', 'w' ) ), $pipes );
 			$this->assertIsResource( $process );
 			stream_set_timeout( $pipes[1], 20 );
-			$this->assertSame( "ready\n", fgets( $pipes[1] ) );
+			$ready = fgets( $pipes[1] );
+			if ( "ready\n" !== $ready ) {
+				// Show what the worker printed instead (a WordPress error page, PHP errors) to make CI failures diagnosable.
+				stream_set_blocking( $pipes[1], false );
+				stream_set_blocking( $pipes[2], false );
+				$this->fail( substr( wp_strip_all_tags( (string) $ready . stream_get_contents( $pipes[1] ) . stream_get_contents( $pipes[2] ) ), 0, 1500 ) );
+			}
 			$processes[] = array( $process, $pipes );
 		}
 		foreach ( $processes as $entry ) {
