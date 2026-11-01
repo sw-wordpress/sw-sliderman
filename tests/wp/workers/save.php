@@ -16,6 +16,9 @@ define( 'WP_INSTALLING', true );
 // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- WordPress bootstrap constant.
 define( 'WP_USE_THEMES', false );
 require ABSPATH . 'wp-settings.php';
+// Same dependency set as tests/wp/bootstrap.php (CI installs only tests/wp/vendor, not the plugin's own vendor).
+// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- plugin constant used by the test environment.
+define( 'SWS_AUTOLOADER', dirname( __DIR__ ) . '/vendor/autoload.php' );
 require dirname( __DIR__, 3 ) . '/sw-sliderman.php';
 ( new \SW\Slider\Infrastructure\PostTypes() )->register_post_types();
 wp_set_current_user( (int) $argv[1] );
