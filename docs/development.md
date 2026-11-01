@@ -43,3 +43,11 @@ M2 local-font browser/acceptance checks: [font-testing.md](font-testing.md).
 ## CI
 
 `.github/workflows/tests.yml`: PHP checks with coverage, WordPress tests on MariaDB (matrix WordPress 6.6/latest), frontend checks and SonarQube Cloud (secret `SONAR_TOKEN`, variable `SONAR_ORGANIZATION`). `.github/workflows/main.yml`: release ZIP on version tags.
+
+## Dependency security
+
+- `tests.yml` gates PRs and pushes: `composer audit --locked --no-dev` (skipped while no runtime packages are shipped) and `npm audit --omit=dev --audit-level=high`; each runs once, not per matrix cell.
+- `security-audit.yml` audits daily and keeps one open `security-audit` issue. `dependabot.yml` groups updates (npm, Composer, GitHub Actions); `tests/wp` is not covered.
+- SonarQube is skipped for Dependabot PRs (no secrets). Enable Dependabot alerts and security updates in the repository settings.
+- PHPStan level 8 (`composer stan`) covers all shipped PHP with no baseline or ignores; constants live in `tests/php/phpstan-constants.php`, `SWS_MIN_PHP`/`PHP_VERSION` are `dynamicConstantNames`. `bin/*.php` is dev tooling and not analysed.
+- Node 22 is used in CI; dev-tooling `npm audit` findings are tracked separately.

@@ -6,4 +6,7 @@ parameters:
         - uninstall.php
     bootstrapFiles:
         - tests/php/phpstan-constants.php
+    dynamicConstantNames:
+        - SWS_MIN_PHP
+        - PHP_VERSION
     tmpDir: .phpstan.cache

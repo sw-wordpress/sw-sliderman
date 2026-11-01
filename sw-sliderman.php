@@ -22,7 +22,6 @@ define( 'SWS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SWS_URL', plugin_dir_url( __FILE__ ) );
 define( 'SWS_MIN_PHP', '8.2' );
 
-// @phpstan-ignore if.alwaysFalse (runtime guard for older hosts; static analysis runs on PHP 8.2+)
 if ( version_compare( PHP_VERSION, SWS_MIN_PHP, '<' ) ) {
 	add_action(
 		'admin_notices',
