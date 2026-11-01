@@ -1,8 +1,13 @@
 # SW Sliderman
 
 [![Release](https://img.shields.io/github/v/release/sw-wordpress/sw-sliderman?sort=semver)](https://github.com/sw-wordpress/sw-sliderman/releases)
+[![CI](https://github.com/sw-wordpress/sw-sliderman/actions/workflows/tests.yml/badge.svg)](https://github.com/sw-wordpress/sw-sliderman/actions/workflows/tests.yml)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=sw-wordpress_sw-sliderman&metric=coverage)](https://sonarcloud.io/summary/overall?id=sw-wordpress_sw-sliderman)
 [![SonarQube Issues](https://sonarcloud.io/api/project_badges/measure?project=sw-wordpress_sw-sliderman&metric=vulnerabilities)](https://sonarcloud.io/project/issues?id=sw-wordpress_sw-sliderman&impactSoftwareQualities=SECURITY&resolved=false)
+![PHPStan level 8](https://img.shields.io/badge/phpstan%20level-8%20of%209-brightgreen?style=flat-square&logo=php)
+![PHP 8.2+](https://img.shields.io/badge/PHP-8.2%2B-777bb4?style=flat-square&logo=php&logoColor=white)
+![WordPress 6.6+](https://img.shields.io/badge/WordPress-6.6%2B-21759b?style=flat-square&logo=wordpress&logoColor=white)
+[![License GPL-2.0-or-later](https://img.shields.io/badge/License-GPL--2.0--or--later-blue?style=flat-square)](https://www.gnu.org/licenses/gpl-2.0.html)
 
 Responsive layer [slider](https://en.wikipedia.org/wiki/Slider_(computing)) for WordPress with a visual editor
 and locally hosted [Google Fonts](https://en.wikipedia.org/wiki/Google_Fonts).
