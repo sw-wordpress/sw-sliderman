@@ -3,7 +3,19 @@ import { resolveLayerLayout, resolveLayerStyle } from '@shared/layout';
 import { validateDocument } from '@shared/validate';
 import type { Layer, SliderDocument } from '@shared/types';
 import { History } from '@editor/document/history';
-import { createLayer, findLayer, layerBox, produce, resetOverride, setLayerBox, setLayoutValue, setStyleValue } from '@editor/document/ops';
+import {
+  alignBoxes,
+  boundsOf,
+  distributeBoxes,
+  createLayer,
+  findLayer,
+  layerBox,
+  produce,
+  resetOverride,
+  setLayerBox,
+  setLayoutValue,
+  setStyleValue,
+} from '@editor/document/ops';
 import { fixture } from './fixtures';
 
 function basic(): SliderDocument {
@@ -28,8 +40,12 @@ describe('history', () => {
     const history = new History();
     const start = basic();
     history.beginGesture(start);
-    const step1 = produce(start, (d) => setLayoutValue(must(findLayer(d, 'headline')), 'desktop', 'x', 110));
-    const step2 = produce(step1, (d) => setLayoutValue(must(findLayer(d, 'headline')), 'desktop', 'x', 120));
+    const step1 = produce(start, (d) =>
+      setLayoutValue(must(findLayer(d, 'headline')), 'desktop', 'x', 110),
+    );
+    const step2 = produce(step1, (d) =>
+      setLayoutValue(must(findLayer(d, 'headline')), 'desktop', 'x', 120),
+    );
     history.endGesture(step2);
     expect(history.undo(step2)).toBe(start);
     expect(history.canUndo).toBe(false);
@@ -78,7 +94,9 @@ describe('responsive editing', () => {
     expect(resolveLayerStyle(cta, 'desktop').fontSize).toBe(20);
     expect(cta.style.color).toBe('#ff0000');
     expect(cta.overrides.tablet?.style).toEqual({ fontSize: 30 });
-    const reset = produce(doc, (d) => resetOverride(must(findLayer(d, 'cta')), 'tablet', 'style', 'fontSize'));
+    const reset = produce(doc, (d) =>
+      resetOverride(must(findLayer(d, 'cta')), 'tablet', 'style', 'fontSize'),
+    );
     expect(layer(reset, 'cta').overrides.tablet).toBeUndefined();
     expect(validateDocument(reset).ok).toBe(true);
   });
@@ -88,7 +106,14 @@ describe('responsive editing', () => {
     const stage = doc.breakpoints.mobile;
     const before = layerBox(layer(doc, 'cta'), 'mobile', stage.stageWidth, stage.stageHeight);
     const moved = produce(doc, (d) =>
-      setLayerBox(must(findLayer(d, 'cta')), 'mobile', stage.stageWidth, stage.stageHeight, { ...before, left: before.left + 10, top: before.top - 20 }, { position: true, size: false }),
+      setLayerBox(
+        must(findLayer(d, 'cta')),
+        'mobile',
+        stage.stageWidth,
+        stage.stageHeight,
+        { ...before, left: before.left + 10, top: before.top - 20 },
+        { position: true, size: false },
+      ),
     );
     const cta = layer(moved, 'cta');
     const after = layerBox(cta, 'mobile', stage.stageWidth, stage.stageHeight);
@@ -102,10 +127,44 @@ describe('responsive editing', () => {
 
   it('new layers are valid document parts', () => {
     const doc = produce(basic(), (d) => {
-      for (const type of ['text', 'image', 'button'] as const) {
+      for (const type of ['text', 'image', 'button', 'shape'] as const) {
         must(d.slides[0]).layers.push(structuredClone(createLayer(type, 1440, 600, type)) as never);
       }
     });
     expect(validateDocument(doc).ok).toBe(true);
+  });
+});
+
+describe('align and distribute', () => {
+  const boxes = [
+    { left: 10, top: 0, width: 20, height: 10 },
+    { left: 50, top: 20, width: 40, height: 30 },
+    { left: 200, top: 5, width: 10, height: 10 },
+  ];
+  it('computes bounds and aligns to edges and centres of a frame', () => {
+    const frame = boundsOf(boxes);
+    expect(frame).toEqual({ left: 10, top: 0, width: 200, height: 50 });
+    expect(alignBoxes(boxes, 'left', frame).map((b) => b.left)).toEqual([10, 10, 10]);
+    expect(alignBoxes(boxes, 'right', frame).map((b) => b.left)).toEqual([190, 170, 200]);
+    expect(alignBoxes(boxes, 'center', frame).map((b) => b.left)).toEqual([100, 90, 105]);
+    expect(alignBoxes(boxes, 'top', frame).map((b) => b.top)).toEqual([0, 0, 0]);
+    expect(alignBoxes(boxes, 'bottom', frame).map((b) => b.top)).toEqual([40, 20, 40]);
+    expect(alignBoxes(boxes, 'middle', frame).map((b) => b.top)).toEqual([20, 10, 20]);
+  });
+  it('distributes equal gaps, keeps the outer boxes and the input order', () => {
+    const result = distributeBoxes(
+      [boxes[2] as never, boxes[0] as never, boxes[1] as never],
+      'horizontal',
+    );
+    expect(result.map((b) => b.left)).toEqual([200, 10, 95]);
+    const a = must(result[1]);
+    const b = must(result[2]);
+    const c = must(result[0]);
+    const gapA = b.left - (a.left + a.width);
+    const gapB = c.left - (b.left + b.width);
+    expect(gapA).toBeCloseTo(gapB);
+    const vertical = distributeBoxes(boxes, 'vertical');
+    expect(vertical[0]?.top).toBe(0);
+    expect(distributeBoxes(boxes.slice(0, 2), 'vertical')).toEqual(boxes.slice(0, 2));
   });
 });

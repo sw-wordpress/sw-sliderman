@@ -2,9 +2,15 @@
 import { computed } from 'vue';
 import { useEditorStore } from '@editor/stores/editor';
 import { __, sprintf } from '@editor/i18n';
+import { getConfig } from '@editor/config';
+import { useTabGuard } from '@editor/composables/useTabGuard';
 import { describeIssue } from './issues';
 
 const editor = useEditorStore();
+const { otherTabs } = useTabGuard(
+  computed(() => (editor.sliderId > 0 ? editor.sliderId : null)),
+  getConfig().siteId,
+);
 const visibleIssues = computed(() => editor.issues.slice(0, 5));
 
 function download(): void {
@@ -19,6 +25,14 @@ function download(): void {
 </script>
 
 <template>
+  <div v-if="otherTabs > 0" class="sws-notice sws-notice--info" role="status">
+    <q-icon name="r_tab" size="22px" aria-hidden="true" />
+    <div>
+      <strong>{{ __('This slider is also open in another browser tab.') }}</strong>
+      <p>{{ __('Saving in both tabs can cause conflicts. Work in one tab at a time.') }}</p>
+    </div>
+  </div>
+
   <div v-if="editor.saveState === 'conflict'" class="sws-notice sws-notice--danger" role="alert">
     <q-icon name="r_sync_problem" size="22px" aria-hidden="true" />
     <div>

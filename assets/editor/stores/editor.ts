@@ -1,4 +1,4 @@
-import { computed, ref, shallowRef, watch } from 'vue';
+import { computed, ref, shallowRef, toRaw, watch } from 'vue';
 import { defineStore } from 'pinia';
 import type {
   BreakpointName,
@@ -11,6 +11,9 @@ import type {
 } from '@shared/types';
 import { collectIssues, type ValidationIssue } from '@shared/validate';
 import { LIMITS } from '@shared/limits';
+import { diagnose, type Diagnostic } from '@shared/diagnostics';
+import { resolveStage } from '@shared/layout';
+import { PREVIEW_MAX, PREVIEW_MIN } from '@editor/utils/preview';
 import { sliders } from '@editor/api';
 import { ApiError } from '@editor/api/client';
 import { issuesOf, type MediaInfo, type SliderDetail } from '@editor/api/sliders';
@@ -19,6 +22,11 @@ import { __, sprintf } from '@editor/i18n';
 import { History } from '@editor/document/history';
 import { Recovery, type RecoveryEntry } from '@editor/document/recovery';
 import {
+  alignBoxes,
+  boundsOf,
+  distributeBoxes,
+  type AlignMode,
+  type Box,
   cloneLayer,
   cloneSlide,
   createLayer,
@@ -98,6 +106,9 @@ export const useEditorStore = defineStore('editor', () => {
     selectedLayers.value.length === 1 ? (selectedLayers.value[0] ?? null) : null,
   );
   const stage = computed(() => document.value?.breakpoints[device.value] ?? null);
+  const diagnostics = computed<Diagnostic[]>(() =>
+    document.value ? diagnose(document.value) : [],
+  );
   const canUndo = computed(() => historyTick.value >= 0 && history.canUndo);
   const canRedo = computed(() => historyTick.value >= 0 && history.canRedo);
   const dirty = computed(() => saveState.value !== 'saved');
@@ -304,6 +315,22 @@ export const useEditorStore = defineStore('editor', () => {
     apply(produce(document.value, recipe), !history.inGesture);
   }
 
+  /** Shows the slider as a container of `width` px would: picks the breakpoint and zooms to it. */
+  function setPreviewWidth(width: number): void {
+    const doc = document.value;
+    if (!doc || !Number.isFinite(width)) return;
+    const clamped = Math.min(PREVIEW_MAX, Math.max(PREVIEW_MIN, Math.round(width)));
+    const active = resolveStage(doc.breakpoints, clamped);
+    device.value = active.breakpoint;
+    zoom.value = clamped / active.stageWidth;
+  }
+  /** Jumps to the slide, layer and screen size a diagnostic refers to. */
+  function focusDiagnostic(item: Diagnostic): void {
+    selectedSlideId.value = item.slideId;
+    selectedLayerIds.value = [item.layerId];
+    device.value = item.breakpoint;
+  }
+
   // ---------- selection ----------
   function selectSlide(id: string): void {
     selectedSlideId.value = id;
@@ -379,6 +406,7 @@ export const useEditorStore = defineStore('editor', () => {
       text: __('Text'),
       image: __('Image'),
       button: __('Button'),
+      shape: __('Shape'),
     };
     const desktop = doc.breakpoints.desktop;
     const layer = createLayer(type, desktop.stageWidth, desktop.stageHeight, names[type]);
@@ -406,6 +434,66 @@ export const useEditorStore = defineStore('editor', () => {
       });
     });
     selectedLayerIds.value = copies.map((c) => c.id);
+  }
+  /** Aligns the selection to its bounds (several layers) or to the stage (one layer). */
+  function alignSelected(mode: AlignMode): void {
+    const current = stage.value;
+    const layers = selectedLayers.value.filter((layer) => !layer.locked);
+    if (!current || layers.length === 0) return;
+    const boxes = layers.map((l) =>
+      layerBox(l, device.value, current.stageWidth, current.stageHeight),
+    );
+    const frame =
+      layers.length === 1
+        ? { left: 0, top: 0, width: current.stageWidth, height: current.stageHeight }
+        : boundsOf(boxes);
+    applyBoxes(layers, alignBoxes(boxes, mode, frame));
+  }
+  function distributeSelected(axis: 'horizontal' | 'vertical'): void {
+    const current = stage.value;
+    const layers = selectedLayers.value.filter((layer) => !layer.locked);
+    if (!current || layers.length < 3) return;
+    const boxes = layers.map((l) =>
+      layerBox(l, device.value, current.stageWidth, current.stageHeight),
+    );
+    applyBoxes(layers, distributeBoxes(boxes, axis));
+  }
+  function applyBoxes(layers: Layer[], boxes: Box[]): void {
+    beginGesture();
+    layers.forEach((layer, i) => {
+      const box = boxes[i];
+      if (box) moveLayerBox(layer.id, box, { position: true, size: false });
+    });
+    endGesture();
+  }
+
+  // ---------- clipboard (document-internal, survives slide changes) ----------
+  const clipboard = shallowRef<Layer[]>([]);
+  function copyLayers(): void {
+    if (selectedLayers.value.length > 0)
+      clipboard.value = structuredClone(toRaw(selectedLayers.value));
+  }
+  function cutLayers(): void {
+    copyLayers();
+    removeLayers();
+  }
+  /** Pastes into the current slide with fresh IDs, offset so the copies are visible. */
+  function pasteLayers(): void {
+    const current = slide.value;
+    if (!current || clipboard.value.length === 0) return;
+    if (current.layers.length + clipboard.value.length > LIMITS.layersPerSlide) return;
+    const copies = clipboard.value.map((layer) => {
+      const copy = cloneLayer(layer, layer.name);
+      return { ...copy, layout: { ...copy.layout, x: copy.layout.x + 20, y: copy.layout.y + 20 } };
+    });
+    edit((draft) => {
+      const target = findSlide(draft, current.id);
+      copies.forEach((copy) => target?.layers.push(mutable(copy)));
+    });
+    selectedLayerIds.value = copies.map((c) => c.id);
+  }
+  function selectAllLayers(): void {
+    selectedLayerIds.value = (slide.value?.layers ?? []).filter((l) => !l.locked).map((l) => l.id);
   }
   function removeLayers(ids: string[] = selectedLayerIds.value): void {
     if (ids.length === 0) return;
@@ -457,6 +545,17 @@ export const useEditorStore = defineStore('editor', () => {
         ? ensureFontRef(draft, font.installationId, font.weight, font.style)
         : null;
       pruneFontRefs(draft);
+    });
+  }
+  /** Rotation of the edited screen size in degrees (drag gesture); normalised to -180..180. */
+  function rotateLayer(id: string, degrees: number): void {
+    if (!Number.isFinite(degrees)) return;
+    let value = ((((degrees + 180) % 360) + 360) % 360) - 180;
+    if (value === -180) value = 180;
+    const rounded = Math.round(value * 10) / 10;
+    gestureEdit((draft) => {
+      const layer = findLayer(draft, id);
+      if (layer && !layer.locked) setLayoutValue(layer, device.value, 'rotation', rounded);
     });
   }
   /** Drag/resize/keyboard move in stage pixels of the current device. */
@@ -585,6 +684,17 @@ export const useEditorStore = defineStore('editor', () => {
     updateSlide,
     addLayer,
     duplicateLayers,
+    alignSelected,
+    rotateLayer,
+    diagnostics,
+    setPreviewWidth,
+    focusDiagnostic,
+    distributeSelected,
+    clipboard,
+    copyLayers,
+    cutLayers,
+    pasteLayers,
+    selectAllLayers,
     removeLayers,
     moveLayer,
     updateLayer,

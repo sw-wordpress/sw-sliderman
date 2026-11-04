@@ -211,13 +211,21 @@ final class SliderService {
 	/**
 	 * @return array{items: list<StoredSlider>, total: int}
 	 */
-	public function list_sliders( int $page, int $per_page, string $search ): array {
-		return $this->repository->list_sliders( $page, $per_page, $search );
+	public function list_sliders( int $page, int $per_page, string $search, bool $trashed = false ): array {
+		return $this->repository->list_sliders( $page, $per_page, $search, $trashed );
 	}
 
 	public function trash( int $id ): void {
 		$this->get( $id );
 		$this->repository->trash( $id );
+	}
+
+	public function restore( int $id ): void {
+		$this->repository->restore( $id );
+	}
+
+	public function delete_permanently( int $id ): void {
+		$this->repository->delete_permanently( $id );
 	}
 
 	private function document_id( string $document_json ): string {

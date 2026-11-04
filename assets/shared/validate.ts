@@ -5,6 +5,8 @@ import {
   EASINGS,
   OVERRIDABLE_STYLE_KEYS,
   SCHEMA_VERSION,
+  LAYER_TYPES,
+  SHAPE_KINDS,
   TEXT_TAGS,
   type SliderDocument,
 } from './types';
@@ -318,8 +320,23 @@ const STYLE_RULES: Record<string, (ctx: Context, obj: Json, path: string) => voi
   opacity: (ctx, obj, path) => num(ctx, obj, 'opacity', path, 0, 1),
 };
 
+/** Style keys added after the first v1 documents: accepted when absent (defaults in css.ts). */
+const OPTIONAL_STYLE_RULES: Record<string, (ctx: Context, obj: Json, path: string) => void> = {
+  borderWidth: (ctx, obj, path) => num(ctx, obj, 'borderWidth', path, 0, LIMITS.borderWidthMax),
+  borderColor: (ctx, obj, path) => color(ctx, obj, 'borderColor', path, false),
+  shadowX: (ctx, obj, path) =>
+    num(ctx, obj, 'shadowX', path, -LIMITS.shadowOffsetMax, LIMITS.shadowOffsetMax),
+  shadowY: (ctx, obj, path) =>
+    num(ctx, obj, 'shadowY', path, -LIMITS.shadowOffsetMax, LIMITS.shadowOffsetMax),
+  shadowBlur: (ctx, obj, path) => num(ctx, obj, 'shadowBlur', path, 0, LIMITS.shadowBlurMax),
+  shadowColor: (ctx, obj, path) => color(ctx, obj, 'shadowColor', path, true),
+  shadowOpacity: (ctx, obj, path) => num(ctx, obj, 'shadowOpacity', path, 0, 1),
+};
+
 const LAYOUT_KEY_LIST = Object.keys(LAYOUT_RULES);
 const STYLE_KEY_LIST = Object.keys(STYLE_RULES);
+const OPTIONAL_STYLE_KEY_LIST = Object.keys(OPTIONAL_STYLE_RULES);
+const BUTTON_STATE_KEYS = ['hoverBackgroundColor', 'hoverColor', 'focusOutlineColor'];
 
 function applyRules(
   ctx: Context,
@@ -401,18 +418,70 @@ function validateOverrides(ctx: Context, value: unknown, path: string): void {
   }
 }
 
+/** Rich text: paragraphs of runs; at least one paragraph, bounded counts and total characters. */
+function validateRich(ctx: Context, value: unknown, path: string): void {
+  if (!Array.isArray(value)) {
+    ctx.add(path, 'type');
+    return;
+  }
+  if (value.length < 1 || value.length > LIMITS.richParagraphs) ctx.add(path, 'count');
+  let characters = 0;
+  value.forEach((paragraph, index) => {
+    const at = `${path}/${index}`;
+    const entry = object(ctx, paragraph, at, ['runs']);
+    if (!entry) return;
+    const runs = list(ctx, entry, 'runs', at, 0, LIMITS.richRunsPerParagraph);
+    runs.forEach((run, runIndex) => {
+      const runAt = `${at}/runs/${runIndex}`;
+      const item = object(ctx, run, runAt, ['text'], ['bold', 'italic', 'link']);
+      if (!item) return;
+      str(ctx, item, 'text', runAt, 1, LIMITS.textLength);
+      if (typeof item.text === 'string') characters += charLength(item.text);
+      bool(ctx, item, 'bold', runAt);
+      bool(ctx, item, 'italic', runAt);
+      if (!present(item, 'link')) return;
+      const linkAt = `${runAt}/link`;
+      const link = object(ctx, item.link, linkAt, ['url'], ['newTab']);
+      if (!link) return;
+      str(ctx, link, 'url', linkAt, 1, LIMITS.urlLength);
+      if (typeof link.url === 'string' && link.url !== '' && !LINK_PATTERN.test(link.url))
+        ctx.add(`${linkAt}/url`, 'url');
+      bool(ctx, link, 'newTab', linkAt);
+    });
+  });
+  if (characters > LIMITS.textLength) ctx.add(path, 'length');
+}
+
 function validateContent(ctx: Context, type: unknown, value: unknown, path: string): void {
   switch (type) {
     case 'text': {
-      const content = object(ctx, value, path, ['text', 'tag']);
+      const content = object(ctx, value, path, ['text', 'tag'], ['rich']);
       if (!content) return;
       str(ctx, content, 'text', path, 0, LIMITS.textLength);
       enumeration(ctx, content, 'tag', path, TEXT_TAGS);
+      if (present(content, 'rich')) validateRich(ctx, content.rich, `${path}/rich`);
       return;
     }
     case 'image': {
-      const content = object(ctx, value, path, ['attachmentId', 'alt', 'decorative', 'fit']);
+      const content = object(
+        ctx,
+        value,
+        path,
+        ['attachmentId', 'alt', 'decorative', 'fit'],
+        ['linkUrl', 'linkNewTab', 'focalX', 'focalY'],
+      );
       if (!content) return;
+      num(ctx, content, 'focalX', path, 0, 100);
+      num(ctx, content, 'focalY', path, 0, 100);
+      str(ctx, content, 'linkUrl', path, 0, LIMITS.urlLength);
+      if (
+        typeof content.linkUrl === 'string' &&
+        content.linkUrl !== '' &&
+        !LINK_PATTERN.test(content.linkUrl)
+      ) {
+        ctx.add(`${path}/linkUrl`, 'url');
+      }
+      bool(ctx, content, 'linkNewTab', path);
       attachment(ctx, content, 'attachmentId', path);
       str(ctx, content, 'alt', path, 0, LIMITS.altLength);
       bool(ctx, content, 'decorative', path);
@@ -420,8 +489,9 @@ function validateContent(ctx: Context, type: unknown, value: unknown, path: stri
       return;
     }
     case 'button': {
-      const content = object(ctx, value, path, ['label', 'url', 'newTab']);
+      const content = object(ctx, value, path, ['label', 'url', 'newTab'], BUTTON_STATE_KEYS);
       if (!content) return;
+      for (const key of BUTTON_STATE_KEYS) color(ctx, content, key, path, false);
       str(ctx, content, 'label', path, 1, LIMITS.buttonLabelLength);
       str(ctx, content, 'url', path, 1, LIMITS.urlLength);
       if (
@@ -432,6 +502,12 @@ function validateContent(ctx: Context, type: unknown, value: unknown, path: stri
         ctx.add(`${path}/url`, 'url');
       }
       bool(ctx, content, 'newTab', path);
+      return;
+    }
+    case 'shape': {
+      const content = object(ctx, value, path, ['kind']);
+      if (!content) return;
+      enumeration(ctx, content, 'kind', path, SHAPE_KINDS);
       return;
     }
     default:
@@ -454,7 +530,7 @@ function validateLayer(ctx: Context, value: unknown, path: string, fontRefs: Set
   ]);
   if (!layer) return;
   id(ctx, layer, 'id', path, true);
-  enumeration(ctx, layer, 'type', path, ['text', 'image', 'button']);
+  enumeration(ctx, layer, 'type', path, LAYER_TYPES);
   str(ctx, layer, 'name', path, 0, LIMITS.nameLength);
   bool(ctx, layer, 'locked', path);
   if (present(layer, 'content')) validateContent(ctx, layer.type, layer.content, `${path}/content`);
@@ -463,9 +539,16 @@ function validateLayer(ctx: Context, value: unknown, path: string, fontRefs: Set
     if (layout) applyRules(ctx, layout, `${path}/layout`, LAYOUT_RULES);
   }
   if (present(layer, 'style')) {
-    const style = object(ctx, layer.style, `${path}/style`, STYLE_KEY_LIST);
+    const style = object(
+      ctx,
+      layer.style,
+      `${path}/style`,
+      STYLE_KEY_LIST,
+      OPTIONAL_STYLE_KEY_LIST,
+    );
     if (style) {
       applyRules(ctx, style, `${path}/style`, STYLE_RULES);
+      applyRules(ctx, style, `${path}/style`, OPTIONAL_STYLE_RULES);
       if (
         typeof style.fontRef === 'string' &&
         ID_PATTERN.test(style.fontRef) &&
@@ -496,8 +579,18 @@ function validateSlide(ctx: Context, value: unknown, path: string, fontRefs: Set
   num(ctx, slide, 'durationMs', path, LIMITS.slideDurationMinMs, LIMITS.slideDurationMaxMs, true);
   if (present(slide, 'background')) {
     const at = `${path}/background`;
-    const background = object(ctx, slide.background, at, ['color', 'attachmentId', 'fit']);
+    const background = object(
+      ctx,
+      slide.background,
+      at,
+      ['color', 'attachmentId', 'fit'],
+      ['overlayColor', 'overlayOpacity', 'focalX', 'focalY'],
+    );
     if (background) {
+      color(ctx, background, 'overlayColor', at, true);
+      num(ctx, background, 'overlayOpacity', at, 0, 1);
+      num(ctx, background, 'focalX', at, 0, 100);
+      num(ctx, background, 'focalY', at, 0, 100);
       color(ctx, background, 'color', at, true);
       attachment(ctx, background, 'attachmentId', at);
       enumeration(ctx, background, 'fit', at, ['cover', 'contain']);

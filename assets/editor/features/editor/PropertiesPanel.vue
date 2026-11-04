@@ -4,6 +4,7 @@ import { useEditorStore } from '@editor/stores/editor';
 import { __, sprintf } from '@editor/i18n';
 import LayerProperties from './LayerProperties.vue';
 import SlideProperties from './SlideProperties.vue';
+import AlignTools from './AlignTools.vue';
 
 const editor = useEditorStore();
 const tab = ref('slide');
@@ -32,6 +33,7 @@ watch(
     </q-tabs>
     <div class="sws-properties__body">
       <template v-if="tab === 'layer'">
+        <AlignTools v-if="editor.selectedLayers.length > 0" class="sws-properties__align" />
         <LayerProperties
           v-if="editor.selectedLayer"
           :key="editor.selectedLayer.id"
@@ -98,6 +100,9 @@ watch(
   flex-direction: column;
   gap: 8px;
   font-size: 13px;
+}
+.sws-properties__align {
+  margin-bottom: 10px;
 }
 .sws-properties__empty {
   color: var(--sws-muted);
