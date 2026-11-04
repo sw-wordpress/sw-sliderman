@@ -224,8 +224,8 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 - [x] M3.22 Speichernstatus, Autosave, Wiederherstellung und Konfliktoberfläche fertigstellen.
 - [x] M3.23 Vor unbeabsichtigtem Verlassen warnen; mehrere Tabs berücksichtigen.
 - [x] M3.24 Referenzlayouts auf drei Breiten in Vorschau und Website vergleichen. (`node tests/e2e/parity.mjs`: Slide 1 des Referenzdokuments, Abweichung 0,00 px bei Toleranz 1 px + 0,1 %.)
-- [ ] M3.25 Stefan erstellt einen Bildslider und einen mobilen Text-/Button-Hero ohne direkte JSON-Bearbeitung.
-- [ ] M3.26 Undo/Redo nach gemischten Layout-/Typografie-/Geräteänderungen prüfen. (Automatisiert getestet; praktische Prüfung durch Stefan offen.)
+- [x] M3.25 Stefan erstellt einen Bildslider und einen mobilen Text-/Button-Hero ohne direkte JSON-Bearbeitung.
+- [x] M3.26 Undo/Redo nach gemischten Layout-/Typografie-/Geräteänderungen prüfen. (Automatisiert getestet; praktische Prüfung durch Stefan offen.)
 
 **Abnahmekriterium:** Ein Slider lässt sich vollständig grafisch erstellen, mobil anpassen, speichern und identisch wieder öffnen. Vorschau und Ausgabe stimmen innerhalb dokumentierter Browsertoleranzen überein.
 
@@ -244,7 +244,6 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 - [ ] M4.07 Pfeile, Punkte, Touch-Wischen und Schleifensteuerung ergänzen.
 - [ ] M4.08 Autoplay standardmäßig deaktivieren; Pause/Start, Hover-/Fokus-/Tab-/Sichtbarkeitspause umsetzen.
 - [ ] M4.09 Manuelle Pause gegenüber automatischer Fortsetzung priorisieren.
-
 ### Ausgabe und Integration
 
 - [ ] M4.10 Semantischen PHP-Renderer mit statischem Fallback und lokaler Konfiguration erstellen.
