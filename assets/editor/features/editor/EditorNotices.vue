@@ -40,7 +40,9 @@ function download(): void {
       <p>
         {{
           sprintf(
-            __('Your version is based on revision %1$d, the server has revision %2$d. Nothing was overwritten.'),
+            __(
+              'Your version is based on revision %1$d, the server has revision %2$d. Nothing was overwritten.',
+            ),
             editor.serverVersion,
             editor.conflictVersion ?? 0,
           )
@@ -49,7 +51,14 @@ function download(): void {
     </div>
     <div class="sws-notice__actions">
       <q-btn outline no-caps icon="r_download" :label="__('Export my changes')" @click="download" />
-      <q-btn unelevated no-caps color="negative" icon="r_refresh" :label="__('Discard and reload')" @click="editor.reloadFromServer()" />
+      <q-btn
+        unelevated
+        no-caps
+        color="negative"
+        icon="r_refresh"
+        :label="__('Discard and reload')"
+        @click="editor.reloadFromServer()"
+      />
     </div>
   </div>
 
@@ -61,11 +70,21 @@ function download(): void {
     </div>
     <div class="sws-notice__actions">
       <q-btn flat no-caps :label="__('Discard')" @click="editor.discardRecovered()" />
-      <q-btn unelevated no-caps color="primary" :label="__('Restore')" @click="editor.restoreRecovered()" />
+      <q-btn
+        unelevated
+        no-caps
+        color="primary"
+        :label="__('Restore')"
+        @click="editor.restoreRecovered()"
+      />
     </div>
   </div>
 
-  <div v-if="editor.saveState === 'error' && editor.saveError" class="sws-notice sws-notice--danger" role="alert">
+  <div
+    v-if="editor.saveState === 'error' && editor.saveError"
+    class="sws-notice sws-notice--danger"
+    role="alert"
+  >
     <q-icon name="r_cloud_off" size="22px" aria-hidden="true" />
     <div>
       <strong>{{ __('Saving failed.') }}</strong>
@@ -81,7 +100,9 @@ function download(): void {
     <div>
       <strong>{{ __('Some values are not valid and prevent saving or publishing:') }}</strong>
       <ul>
-        <li v-for="issue in visibleIssues" :key="issue.path + issue.code">{{ describeIssue(issue, editor.document) }}</li>
+        <li v-for="issue in visibleIssues" :key="issue.path + issue.code">
+          {{ describeIssue(issue, editor.document) }}
+        </li>
       </ul>
     </div>
   </div>

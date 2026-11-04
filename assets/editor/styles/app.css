@@ -350,7 +350,7 @@ body.q-body--prevent-scroll {
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
-  border-radius: 10px;
+  border-radius: 4px;
 }
 .sws-root .q-btn--standard.bg-primary,
 .sws-root .q-btn.sws-btn-gradient {
@@ -360,7 +360,7 @@ body.q-body--prevent-scroll {
   color: #fff !important;
 }
 .sws-root .q-field--outlined .q-field__control {
-  border-radius: 10px;
+  border-radius: 4px;
 }
 .sws-root .q-field--outlined .q-field__control:before {
   border-color: var(--sws-border);

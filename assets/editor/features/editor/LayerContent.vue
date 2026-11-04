@@ -45,7 +45,9 @@ const image = computed(() => {
       v-if="image"
       class="sws-image"
       :class="`sws-fit-${layer.content.fit}`"
-      :style="{ objectPosition: focalPosition(layer.content.focalX, layer.content.focalY) ?? undefined }"
+      :style="{
+        objectPosition: focalPosition(layer.content.focalX, layer.content.focalY) ?? undefined,
+      }"
       :src="image"
       :alt="layer.content.alt"
       draggable="false"
