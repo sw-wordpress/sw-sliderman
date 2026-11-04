@@ -105,7 +105,7 @@ final class WpFontRepository implements FontRepository {
 	}
 
 	public function acquire_lock( string $key, int $ttl_seconds ): ?string {
-		$option = 'sws_lock_' . md5( $key );
+		$option = 'sws_lock_' . hash( 'sha256', $key );
 		$token  = wp_generate_password( 20, false );
 		$value  = $token . '|' . ( time() + $ttl_seconds );
 		if ( $this->insert_lock( $option, $value ) ) {
@@ -142,7 +142,7 @@ final class WpFontRepository implements FontRepository {
 
 	public function renew_lock( string $key, string $token, int $ttl_seconds ): bool {
 		global $wpdb;
-		$option  = 'sws_lock_' . md5( $key );
+		$option  = 'sws_lock_' . hash( 'sha256', $key );
 		$current = $wpdb->get_var( $wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name=%s', $wpdb->options, $option ) );
 		if ( ! is_string( $current ) || ! str_starts_with( $current, $token . '|' ) || (int) ( explode( '|', $current )[1] ?? 0 ) <= time() ) {
 			return false;
@@ -157,7 +157,7 @@ final class WpFontRepository implements FontRepository {
 	}
 	public function release_lock( string $key, string $token ): void {
 		global $wpdb;
-		$option  = 'sws_lock_' . md5( $key );
+		$option  = 'sws_lock_' . hash( 'sha256', $key );
 		$current = $wpdb->get_var( $wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name=%s', $wpdb->options, $option ) );
 		if ( is_string( $current ) && str_starts_with( $current, $token . '|' ) ) {
 			$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE option_name=%s AND option_value=%s', $wpdb->options, $option, $current ) );

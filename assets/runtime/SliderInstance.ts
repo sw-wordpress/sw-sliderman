@@ -67,7 +67,13 @@ export class SliderInstance {
     this.bindSwipe();
     this.updateNavigation();
     this.updateToggle();
-    void this.start();
+  }
+
+  /** Creates the instance and starts the first-slide sequence (async work stays out of the constructor). */
+  static create(root: HTMLElement, config: RuntimeConfig): SliderInstance {
+    const instance = new SliderInstance(root, config);
+    void instance.start();
+    return instance;
   }
 
   private listen<K extends string>(

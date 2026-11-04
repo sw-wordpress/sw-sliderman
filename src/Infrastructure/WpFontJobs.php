@@ -224,7 +224,7 @@ final class WpFontJobs {
 	/**
 	 * @param array<string,mixed> $payload Identity. */
 	private function target( string $kind, array $payload ): string {
-		return 'sws_font_pending_' . md5( $kind . ':' . ( $payload['familyId'] ?? '' ) );
+		return 'sws_font_pending_' . hash( 'sha256', $kind . ':' . ( $payload['familyId'] ?? '' ) );
 	}
 	private function delete_exact( string $key, string $value ): void {
 		global $wpdb;

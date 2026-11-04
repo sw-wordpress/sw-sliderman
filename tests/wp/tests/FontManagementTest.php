@@ -204,7 +204,7 @@ final class FontManagementTest extends WP_UnitTestCase {
 	public function test_old_lock_owner_cannot_release_or_renew_a_new_lease(): void {
 		global $wpdb;
 		$old = $this->repo->acquire_lock( 'lease-test', 300 );
-		$key = 'sws_lock_' . md5( 'lease-test' );
+		$key = 'sws_lock_' . hash( 'sha256', 'lease-test' );
 		$wpdb->update( $wpdb->options, array( 'option_value' => $old . '|1' ), array( 'option_name' => $key ) );
 		wp_cache_delete( $key, 'options' );
 		$new = $this->repo->acquire_lock( 'lease-test', 300 );

@@ -73,7 +73,7 @@ describe('runtime', () => {
 
   it('navigates with exactly one visible, non-inert slide', () => {
     const root = markup(3, false);
-    new SliderInstance(root, config(false));
+    SliderInstance.create(root, config(false));
     (root.querySelector('.sws-next') as HTMLButtonElement).click();
     (root.querySelector('.sws-next') as HTMLButtonElement).click();
     const slides = Array.from(root.querySelectorAll<HTMLElement>('.sws-slide'));
@@ -87,7 +87,7 @@ describe('runtime', () => {
 
   it('autoplay advances, but a user pause is never resumed automatically', async () => {
     const root = markup(3, true);
-    new SliderInstance(root, config(true));
+    SliderInstance.create(root, config(true));
     await vi.advanceTimersByTimeAsync(1300); // font wait
     await vi.advanceTimersByTimeAsync(3000);
     expect(active(root)).toBe(1);
@@ -101,7 +101,7 @@ describe('runtime', () => {
 
   it('autoplay pauses while focus is inside and does not announce', async () => {
     const root = markup(3, true);
-    new SliderInstance(root, config(true));
+    SliderInstance.create(root, config(true));
     await vi.advanceTimersByTimeAsync(1300);
     root.dispatchEvent(new FocusEvent('focusin'));
     await vi.advanceTimersByTimeAsync(10000);
@@ -115,7 +115,7 @@ describe('runtime', () => {
   it('reduced motion disables autoplay and hides the toggle', async () => {
     reduced = true;
     const root = markup(3, true);
-    new SliderInstance(root, config(true));
+    SliderInstance.create(root, config(true));
     await vi.advanceTimersByTimeAsync(20000);
     expect(active(root)).toBe(0);
     expect((root.querySelector('.sws-toggle') as HTMLButtonElement).hidden).toBe(true);
@@ -123,13 +123,13 @@ describe('runtime', () => {
 
   it('without loop the navigation stops at the ends', () => {
     const root = markup(3, false);
-    new SliderInstance(root, config(false, false));
+    SliderInstance.create(root, config(false, false));
     expect((root.querySelector('.sws-prev') as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('destroy removes listeners and timers', async () => {
     const root = markup(3, true);
-    const instance = new SliderInstance(root, config(true));
+    const instance = SliderInstance.create(root, config(true));
     instance.destroy();
     await vi.advanceTimersByTimeAsync(20000);
     (root.querySelector('.sws-next') as HTMLButtonElement).click();
@@ -142,7 +142,7 @@ describe('runtime', () => {
     image.src = '/slow.jpg';
     image.loading = 'lazy';
     root.querySelectorAll('.sws-slide')[1]?.append(image);
-    const instance = new SliderInstance(root, config(true));
+    const instance = SliderInstance.create(root, config(true));
     await vi.advanceTimersByTimeAsync(0);
     instance.goTo(1, false);
     expect(image.loading).toBe('eager');
@@ -166,7 +166,7 @@ describe('runtime', () => {
       const image = document.createElement('img');
       image.src = '/missing.jpg';
       root.querySelectorAll('.sws-slide')[1]?.append(image);
-      const instance = new SliderInstance(root, config(false));
+      const instance = SliderInstance.create(root, config(false));
       instance.goTo(1, true);
       if (mode === 'error') image.dispatchEvent(new Event('error'));
       await vi.advanceTimersByTimeAsync(mode === 'timeout' ? 1200 : 0);
@@ -180,7 +180,7 @@ describe('runtime', () => {
     const image = document.createElement('img');
     image.src = '/slow.jpg';
     root.querySelectorAll('.sws-slide')[1]?.append(image);
-    const instance = new SliderInstance(root, config(false));
+    const instance = SliderInstance.create(root, config(false));
     instance.goTo(1, true);
     instance.goTo(0, true);
     image.dispatchEvent(new Event('load'));
@@ -195,7 +195,7 @@ describe('runtime', () => {
     const image = document.createElement('img');
     image.src = '/slow.jpg';
     root.querySelector('.sws-slide')?.append(image);
-    const instance = new SliderInstance(root, config(true));
+    const instance = SliderInstance.create(root, config(true));
     root.dispatchEvent(new Event('mouseleave')); // must not start an early timer while loading
     await vi.advanceTimersByTimeAsync(1000);
     image.dispatchEvent(new Event('load'));
@@ -258,7 +258,7 @@ describe('runtime', () => {
         ],
       })),
     };
-    const instance = new SliderInstance(root, options);
+    const instance = SliderInstance.create(root, options);
     instance.goTo(1, true);
     expect(animations[0]?.pause).toHaveBeenCalledOnce();
     expect(animations[0]?.play).not.toHaveBeenCalled();
@@ -282,7 +282,7 @@ describe('runtime', () => {
         }) as unknown as Animation,
     );
     const base = config(true);
-    const instance = new SliderInstance(root, {
+    const instance = SliderInstance.create(root, {
       ...base,
       slides: base.slides.map((slide) => ({
         ...slide,

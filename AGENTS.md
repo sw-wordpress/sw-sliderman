@@ -31,3 +31,14 @@ Every user-facing string change updates German too: PHP catalog `languages/src/p
 - Vor Abschluss relevante Tests und Coverage-Prüfungen ausführen und Ergebnisse nennen. Fehlende Coverage-Infrastruktur ergänzen; fehlende Messwerte gelten nicht als erfüllte Vorgabe. Keine produktiven Dateien ausschließen oder Grenzen senken, um die Vorgabe zu umgehen.
 
 Vorhanden: PHPUnit-/WordPress-Coverage und SonarQube; siehe `composer.json`, `tests/coverage/merge.php` und `sonar-project.properties`. Vitest ist ebenfalls eingerichtet.
+
+## Statische Ressourcen und Cache-Busting
+- Eingebundene CSS- und JavaScript-Dateien immer mit der aktuellen Plugin-Version als Versionsparameter versehen, um veraltete Browser-Caches nach Updates zu vermeiden.
+- In WordPress bevorzugt wp_enqueue_script() und wp_enqueue_style() mit der zentral definierten Plugin-Version verwenden.
+- Keine fest codierten Versionsnummern, Zeitstempel oder zufälligen Cache-Busting-Parameter nutzen.
+- Auch dynamisch eingebundene Assets und weitere statische Ressourcen berücksichtigen.
+
+## Unsicherheit und Entscheidungen
+- Bei unklaren Anforderungen, Architektur- oder Sicherheitsentscheidungen **nachfragen statt Annahmen treffen**.
+- Zuvor Code, Tests und Dokumentation prüfen. Bei mehreren sinnvollen Lösungen Alternativen mit Empfehlung nennen.
+- Kleine, risikoarme Details eigenständig entscheiden. Keine spekulativen Fixes oder unbeabsichtigten Verhaltensänderungen.
