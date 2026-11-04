@@ -75,3 +75,44 @@
 .sws-props :deep(.q-field__label) {
   font-size: 12px;
 }
+.sws-image-pick {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sws-image-pick__thumb {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border: 1px solid var(--sws-border);
+  border-radius: 4px;
+  background: var(--sws-surface, transparent);
+}
+.sws-props__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sws-primary-text);
+  text-decoration: none;
+}
+.sws-props__link:hover {
+  text-decoration: underline;
+}
+.sws-props__box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--sws-border);
+  border-left: 3px solid var(--sws-primary);
+  border-radius: var(--sws-radius-sm);
+  background: var(--sws-surface-2);
+}
+.sws-props__box-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sws-muted);
+}

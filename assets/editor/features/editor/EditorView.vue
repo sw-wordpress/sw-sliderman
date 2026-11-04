@@ -46,6 +46,18 @@ function onKeydown(event: KeyboardEvent): void {
   } else if (mod && key === 'd' && editor.selectedLayers.length > 0) {
     event.preventDefault();
     editor.duplicateLayers();
+  } else if (mod && key === 'a') {
+    event.preventDefault();
+    editor.selectAllLayers();
+  } else if (mod && key === 'c' && editor.selectedLayers.length > 0) {
+    event.preventDefault();
+    editor.copyLayers();
+  } else if (mod && key === 'x' && editor.selectedLayers.length > 0) {
+    event.preventDefault();
+    editor.cutLayers();
+  } else if (mod && key === 'v' && editor.clipboard.length > 0) {
+    event.preventDefault();
+    editor.pasteLayers();
   } else if (
     (event.key === 'Delete' || event.key === 'Backspace') &&
     editor.selectedLayers.length > 0

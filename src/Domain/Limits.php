@@ -31,6 +31,8 @@ final class Limits {
 	public const NAME_LENGTH               = 80;
 	public const LABEL_LENGTH              = 120;
 	public const TEXT_LENGTH               = 5000;
+	public const RICH_PARAGRAPHS           = 50;
+	public const RICH_RUNS_PER_PARAGRAPH   = 100;
 	public const ALT_LENGTH                = 300;
 	public const BUTTON_LABEL_LENGTH       = 200;
 	public const URL_LENGTH                = 2000;
@@ -58,5 +60,8 @@ final class Limits {
 	public const LETTER_SPACING_MAX        = 100;
 	public const PADDING_MAX               = 400;
 	public const RADIUS_MAX                = 2000;
+	public const BORDER_WIDTH_MAX          = 20;
+	public const SHADOW_OFFSET_MAX         = 200;
+	public const SHADOW_BLUR_MAX           = 100;
 	public const ROTATION_MAX              = 360;
 }

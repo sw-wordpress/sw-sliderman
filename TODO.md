@@ -191,41 +191,41 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 
 ### Verwaltung und Arbeitsfläche
 
-- [ ] M3.01 Slider-Liste mit Suche, Status, Duplizieren, Papierkorb und Einbindecode erstellen.
-- [ ] M3.02 Slide-Liste mit Reihenfolge, Hinzufügen, Löschen und Duplizieren umsetzen.
-- [ ] M3.03 Ebenenbaum mit Namen, Reihenfolge, Sperre und Sichtbarkeit bereitstellen.
-- [ ] M3.04 Auswahl, Mehrfachauswahl, Drag, Resize, Rotation und numerische Eingabe implementieren.
-- [ ] M3.05 Raster, Einrasten, Ausrichten und Verteilen ergänzen.
-- [ ] M3.06 Zoom und Arbeitsflächenverschiebung korrekt von Dokumentkoordinaten trennen.
-- [ ] M3.07 Undo/Redo als nachvollziehbare Aktionen, Kopieren/Einfügen und Tastaturkürzel implementieren.
-- [ ] M3.08 Eingabefokus, Textbearbeitung und Tastaturaktionen konfliktfrei behandeln.
+- [x] M3.01 Slider-Liste mit Suche, Status, Duplizieren, Papierkorb (Ansicht, Wiederherstellen, endgültig löschen) und Einbindecode erstellen.
+- [x] M3.02 Slide-Liste mit Reihenfolge, Hinzufügen, Löschen und Duplizieren umsetzen.
+- [x] M3.03 Ebenenbaum mit Namen, Reihenfolge, Sperre und Sichtbarkeit bereitstellen.
+- [x] M3.04 Auswahl, Mehrfachauswahl, Drag, Resize, Rotation und numerische Eingabe implementieren.
+- [x] M3.05 Raster, Einrasten, Ausrichten und Verteilen ergänzen.
+- [x] M3.06 Zoom und Arbeitsflächenverschiebung korrekt von Dokumentkoordinaten trennen.
+- [x] M3.07 Undo/Redo als nachvollziehbare Aktionen, Kopieren/Einfügen und Tastaturkürzel implementieren.
+- [x] M3.08 Eingabefokus, Textbearbeitung und Tastaturaktionen konfliktfrei behandeln.
 
 ### Inhalte und Stile
 
-- [ ] M3.09 Textlayer mit begrenztem Rich Text und explizitem semantischem Tag erstellen.
-- [ ] M3.10 Bildlayer über Mediathek mit Alt-Text/dekorativ, Ausschnitt und Link erstellen.
-- [ ] M3.11 Buttonlayer mit erlaubten URLs, Linkziel und Fokus-/Hover-Stil erstellen.
-- [ ] M3.12 Rechteck/Kreis mit Rahmen, Farbe und Radius erstellen.
-- [ ] M3.13 Hintergründe, Überlagerungen, Schatten, Innenabstände und Deckkraft ergänzen.
-- [ ] M3.14 Lokale Fontverwaltung in Typografiepanel integrieren.
+- [x] M3.09 Textlayer mit begrenztem Rich Text und explizitem semantischem Tag erstellen.
+- [x] M3.10 Bildlayer über Mediathek mit Alt-Text/dekorativ, Ausschnitt und Link erstellen.
+- [x] M3.11 Buttonlayer mit erlaubten URLs, Linkziel und Fokus-/Hover-Stil erstellen.
+- [x] M3.12 Rechteck/Kreis mit Rahmen, Farbe und Radius erstellen.
+- [x] M3.13 Hintergründe, Überlagerungen, Schatten, Innenabstände und Deckkraft ergänzen.
+- [x] M3.14 Lokale Fontverwaltung in Typografiepanel integrieren.
 
 ### Responsive Regeln
 
-- [ ] M3.15 Gemeinsamen containerbasierten Layoutresolver implementieren.
-- [ ] M3.16 Bühnenauflösung und proportionale Skalierung mit Ankern konsistent umsetzen.
-- [ ] M3.17 Desktop/Tablet/Mobil-Overrides feldweise vererben und sichtbar kennzeichnen.
-- [ ] M3.18 Reset einzelner Overrides und Sichtbarkeit je Bereich anbieten.
-- [ ] M3.19 Frei einstellbare Vorschaubreite mit aktivem Bereich und gerenderter Schriftgröße anzeigen.
-- [ ] M3.20 Überläufe, zu kleine mobile Schrift und ungültige Breakpoints diagnostizieren.
-- [ ] M3.21 Containergrößenänderung ohne Sprünge oder Endlosschleifen verarbeiten.
+- [x] M3.15 Gemeinsamen containerbasierten Layoutresolver implementieren.
+- [x] M3.16 Bühnenauflösung und proportionale Skalierung mit Ankern konsistent umsetzen.
+- [x] M3.17 Desktop/Tablet/Mobil-Overrides feldweise vererben und sichtbar kennzeichnen.
+- [x] M3.18 Reset einzelner Overrides und Sichtbarkeit je Bereich anbieten.
+- [x] M3.19 Frei einstellbare Vorschaubreite mit aktivem Bereich und gerenderter Schriftgröße anzeigen.
+- [x] M3.20 Überläufe, zu kleine mobile Schrift und ungültige Breakpoints diagnostizieren.
+- [x] M3.21 Containergrößenänderung ohne Sprünge oder Endlosschleifen verarbeiten.
 
 ### Speicherung und Abnahme
 
-- [ ] M3.22 Speichernstatus, Autosave, Wiederherstellung und Konfliktoberfläche fertigstellen.
-- [ ] M3.23 Vor unbeabsichtigtem Verlassen warnen; mehrere Tabs berücksichtigen.
-- [ ] M3.24 Referenzlayouts auf drei Breiten in Vorschau und Website vergleichen.
+- [x] M3.22 Speichernstatus, Autosave, Wiederherstellung und Konfliktoberfläche fertigstellen.
+- [x] M3.23 Vor unbeabsichtigtem Verlassen warnen; mehrere Tabs berücksichtigen.
+- [x] M3.24 Referenzlayouts auf drei Breiten in Vorschau und Website vergleichen. (`node tests/e2e/parity.mjs`: Slide 1 des Referenzdokuments, Abweichung 0,00 px bei Toleranz 1 px + 0,1 %.)
 - [ ] M3.25 Stefan erstellt einen Bildslider und einen mobilen Text-/Button-Hero ohne direkte JSON-Bearbeitung.
-- [ ] M3.26 Undo/Redo nach gemischten Layout-/Typografie-/Geräteänderungen prüfen.
+- [ ] M3.26 Undo/Redo nach gemischten Layout-/Typografie-/Geräteänderungen prüfen. (Automatisiert getestet; praktische Prüfung durch Stefan offen.)
 
 **Abnahmekriterium:** Ein Slider lässt sich vollständig grafisch erstellen, mobil anpassen, speichern und identisch wieder öffnen. Vorschau und Ausgabe stimmen innerhalb dokumentierter Browsertoleranzen überein.
 

@@ -56,6 +56,13 @@ final class StyleSerializer {
 		return $fallback;
 	}
 
+	/** `#rrggbb` and alpha as rgba(); invalid colours fall back to black. */
+	private static function rgba( string $hex, float $alpha ): string {
+		$hex   = self::color( $hex, '#000000' );
+		$value = (int) hexdec( substr( $hex, 1 ) );
+		return 'rgba(' . ( ( $value >> 16 ) & 255 ) . ',' . ( ( $value >> 8 ) & 255 ) . ',' . ( $value & 255 ) . ',' . self::format_number( $alpha ) . ')';
+	}
+
 	/**
 	 * Font declarations for a style.
 	 *
@@ -80,9 +87,10 @@ final class StyleSerializer {
 	 *
 	 * @param array{id: string, layout: array<string, mixed>, style: array<string, mixed>, box: array{left: float, top: float, width: float, height: float}} $layer Resolved layer.
 	 * @param array<string, array<string, mixed>>                                                                                                            $font_refs Font references by ID.
+	 * @param string|null                                                                                                                                    $shape_kind `circle` forces a fully rounded box.
 	 * @return array{box: list<array{0: string, 1: string}>, body: list<array{0: string, 1: string}>}
 	 */
-	public static function layer_declarations( array $layer, float $stage_width, float $stage_height, array $font_refs ): array {
+	public static function layer_declarations( array $layer, float $stage_width, float $stage_height, array $font_refs, ?string $shape_kind = null ): array {
 		$box    = $layer['box'];
 		$layout = $layer['layout'];
 		$style  = $layer['style'];
@@ -102,11 +110,23 @@ final class StyleSerializer {
 				array( 'color', self::color( $style['color'], '#000000' ) ),
 				array( 'text-align', $align ),
 				array( 'background-color', null === $style['backgroundColor'] ? 'transparent' : self::color( $style['backgroundColor'], 'transparent' ) ),
-				array( 'border-radius', self::cqw( (float) $style['borderRadius'], $stage_width ) ),
+				array( 'border-radius', 'circle' === $shape_kind ? '50%' : self::cqw( (float) $style['borderRadius'], $stage_width ) ),
 				array( 'padding', self::cqw( (float) $style['paddingY'], $stage_width ) . ' ' . self::cqw( (float) $style['paddingX'], $stage_width ) ),
 				array( 'opacity', self::format_number( (float) $style['opacity'] ) ),
 			)
 		);
+
+		// Optional style fields: declarations appear only when they differ from "none" (css.ts).
+		$border_width = (float) ( $style['borderWidth'] ?? 0 );
+		if ( $border_width > 0 ) {
+			$body[] = array( 'border', self::cqw( $border_width, $stage_width ) . ' solid ' . self::color( $style['borderColor'] ?? '#000000', '#000000' ) );
+		}
+		if ( is_string( $style['shadowColor'] ?? null ) ) {
+			$body[] = array(
+				'box-shadow',
+				self::cqw( (float) ( $style['shadowX'] ?? 0 ), $stage_width ) . ' ' . self::cqw( (float) ( $style['shadowY'] ?? 0 ), $stage_width ) . ' ' . self::cqw( (float) ( $style['shadowBlur'] ?? 0 ), $stage_width ) . ' ' . self::rgba( $style['shadowColor'], (float) ( $style['shadowOpacity'] ?? 0.25 ) ),
+			);
+		}
 
 		return array(
 			'box'  => array(
@@ -121,6 +141,33 @@ final class StyleSerializer {
 	}
 
 	/**
+	 * Hover and keyboard-focus rules of a button layer (mirrors buttonStateCss() in css.ts).
+	 *
+	 * @param string               $selector Scoped layer selector (`.sws-s-<scope> .sws-l-<id>`).
+	 * @param array<string, mixed> $content  Validated button content.
+	 */
+	public static function button_state_css( string $selector, array $content ): string {
+		$css   = '';
+		$hover = array();
+		foreach ( array(
+			'hoverBackgroundColor' => 'background-color',
+			'hoverColor'           => 'color',
+		) as $key => $property ) {
+			if ( isset( $content[ $key ] ) && is_string( $content[ $key ] ) && '' !== $content[ $key ] ) {
+				$hover[] = array( $property, self::color( $content[ $key ], '#000000' ) );
+			}
+		}
+		if ( array() !== $hover ) {
+			$css .= $selector . ' .sws-layer__body:hover{' . self::serialize( $hover ) . '}';
+			$css .= $selector . ' .sws-button:hover{filter:none;}';
+		}
+		if ( isset( $content['focusOutlineColor'] ) && is_string( $content['focusOutlineColor'] ) && '' !== $content['focusOutlineColor'] ) {
+			$css .= $selector . ' .sws-button:focus-visible{outline:3px solid ' . self::color( $content['focusOutlineColor'], '#000000' ) . ';outline-offset:3px;}';
+		}
+		return $css;
+	}
+
+	/**
 	 * Serializes declarations as `prop:value;` pairs.
 	 *
 	 * @param list<array{0: string, 1: string}> $declarations Declarations.
@@ -131,6 +178,48 @@ final class StyleSerializer {
 			$out .= $declaration[0] . ':' . $declaration[1] . ';';
 		}
 		return $out;
+	}
+
+	/** `object-position` value for a focal point in percent; null while it is the default centre. */
+	private static function focal_position( mixed $focal_x, mixed $focal_y ): ?string {
+		$x = is_int( $focal_x ) || is_float( $focal_x ) ? (float) $focal_x : 50.0;
+		$y = is_int( $focal_y ) || is_float( $focal_y ) ? (float) $focal_y : 50.0;
+		if ( 50.0 === $x && 50.0 === $y ) {
+			return null;
+		}
+		return self::format_number( $x ) . '% ' . self::format_number( $y ) . '%';
+	}
+
+	/**
+	 * Overlay and focal point of a slide background. `$selector` is `.sws-s-<scope> .sws-sl-<id>`;
+	 * the overlay sits between the background image and the stage. Mirrors slideBackgroundCss().
+	 *
+	 * @param array<string, mixed> $background Validated slide background.
+	 */
+	public static function slide_background_css( string $selector, array $background ): string {
+		$css     = '';
+		$overlay = $background['overlayColor'] ?? null;
+		if ( is_string( $overlay ) && 1 === preg_match( DocumentValidator::COLOR_PATTERN, $overlay ) ) {
+			$opacity = $background['overlayOpacity'] ?? 0.4;
+			$alpha   = is_int( $opacity ) || is_float( $opacity ) ? (float) $opacity : 0.4;
+			$css    .= $selector . '::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background-color:' . self::rgba( $overlay, $alpha ) . ';}';
+			$css    .= $selector . ' .sws-stage{z-index:2;}';
+		}
+		$position = self::focal_position( $background['focalX'] ?? null, $background['focalY'] ?? null );
+		if ( null !== $position ) {
+			$css .= $selector . ' .sws-slide__bg{object-position:' . $position . ';}';
+		}
+		return $css;
+	}
+
+	/**
+	 * Focal point of an image layer (`$selector` is `.sws-s-<scope> .sws-l-<id>`). Mirrors imageFocalCss().
+	 *
+	 * @param array<string, mixed> $content Validated image content.
+	 */
+	public static function image_focal_css( string $selector, array $content ): string {
+		$position = self::focal_position( $content['focalX'] ?? null, $content['focalY'] ?? null );
+		return null === $position ? '' : $selector . ' .sws-image{object-position:' . $position . ';}';
 	}
 
 	/**
@@ -159,6 +248,9 @@ final class StyleSerializer {
 			if ( null !== $color && 1 === preg_match( DocumentValidator::ID_PATTERN, (string) $slide['id'] ) ) {
 				$css .= $root . ' .sws-sl-' . $slide['id'] . '{background-color:' . self::color( $color, 'transparent' ) . ';}';
 			}
+			if ( 1 === preg_match( DocumentValidator::ID_PATTERN, (string) $slide['id'] ) ) {
+				$css .= self::slide_background_css( $root . ' .sws-sl-' . $slide['id'], $slide['background'] );
+			}
 		}
 
 		$tablet_min  = (int) $breakpoints['tablet']['minWidth'];
@@ -168,6 +260,18 @@ final class StyleSerializer {
 			'tablet'  => '@container sws (min-width: ' . $tablet_min . 'px) and (max-width: ' . self::format_number( $desktop_min - 0.02 ) . 'px)',
 			'mobile'  => '@container sws (max-width: ' . self::format_number( $tablet_min - 0.02 ) . 'px)',
 		);
+
+		// Hover/focus colours are not breakpoint-specific: one set of rules per button layer.
+		foreach ( $document['slides'] as $slide ) {
+			foreach ( $slide['layers'] as $layer ) {
+				if ( 'button' === $layer['type'] && 1 === preg_match( DocumentValidator::ID_PATTERN, (string) $layer['id'] ) ) {
+					$css .= self::button_state_css( $root . ' .sws-l-' . $layer['id'], $layer['content'] );
+				}
+				if ( 'image' === $layer['type'] && 1 === preg_match( DocumentValidator::ID_PATTERN, (string) $layer['id'] ) ) {
+					$css .= self::image_focal_css( $root . ' .sws-l-' . $layer['id'], $layer['content'] );
+				}
+			}
+		}
 
 		foreach ( LayoutResolver::BREAKPOINTS as $name ) {
 			$stage_width  = (float) $breakpoints[ $name ]['stageWidth'];
@@ -179,7 +283,8 @@ final class StyleSerializer {
 						continue;
 					}
 					$resolved     = LayoutResolver::resolve_layer( $layer, $name, $breakpoints );
-					$declarations = self::layer_declarations( $resolved, $stage_width, $stage_height, $font_refs );
+					$shape_kind   = 'shape' === $layer['type'] && is_string( $layer['content']['kind'] ?? null ) ? $layer['content']['kind'] : null;
+					$declarations = self::layer_declarations( $resolved, $stage_width, $stage_height, $font_refs, $shape_kind );
 					$selector     = $root . ' .sws-l-' . $layer['id'];
 					$rules       .= $selector . '{' . self::serialize( $declarations['box'] ) . '}';
 					$rules       .= $selector . ' .sws-layer__body{' . self::serialize( $declarations['body'] ) . '}';

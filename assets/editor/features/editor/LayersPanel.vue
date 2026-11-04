@@ -10,7 +10,12 @@ const editor = useEditorStore();
 
 /** Top-most layer first (the document stores bottom-to-top render order). */
 const layers = computed<Layer[]>(() => [...(editor.slide?.layers ?? [])].reverse());
-const icons: Record<LayerType, string> = { text: 'r_title', image: 'r_image', button: 'r_smart_button' };
+const icons: Record<LayerType, string> = {
+  text: 'r_title',
+  image: 'r_image',
+  button: 'r_smart_button',
+  shape: 'r_category',
+};
 
 function visible(layer: Layer): boolean {
   return resolveLayerLayout(layer, editor.device).visible;
@@ -44,15 +49,32 @@ function select(event: MouseEvent, layer: Layer): void {
               <q-item-section avatar><q-icon name="r_smart_button" /></q-item-section>
               <q-item-section>{{ __('Button') }}</q-item-section>
             </q-item>
+            <q-item clickable @click="editor.addLayer('shape')">
+              <q-item-section avatar><q-icon name="r_category" /></q-item-section>
+              <q-item-section>{{ __('Shape') }}</q-item-section>
+            </q-item>
           </q-list>
         </q-menu>
       </q-btn>
     </template>
-    <p v-if="layers.length === 0" class="sws-panel__empty">{{ __('No layers yet. Add text, an image or a button.') }}</p>
+    <p v-if="layers.length === 0" class="sws-panel__empty">
+      {{ __('No layers yet. Add text, an image, a button or a shape.') }}
+    </p>
     <ol v-else class="sws-items">
       <li v-for="(layer, index) in layers" :key="layer.id">
-        <div class="sws-item" :class="{ 'sws-item--active': editor.selectedLayerIds.includes(layer.id), 'sws-item--off': !visible(layer) }">
-          <button type="button" class="sws-item__main" :aria-pressed="editor.selectedLayerIds.includes(layer.id)" @click="select($event, layer)">
+        <div
+          class="sws-item"
+          :class="{
+            'sws-item--active': editor.selectedLayerIds.includes(layer.id),
+            'sws-item--off': !visible(layer),
+          }"
+        >
+          <button
+            type="button"
+            class="sws-item__main"
+            :aria-pressed="editor.selectedLayerIds.includes(layer.id)"
+            @click="select($event, layer)"
+          >
             <q-icon :name="icons[layer.type]" size="18px" aria-hidden="true" />
             <span class="sws-item__name sws-truncate">{{ layer.name || __('Unnamed layer') }}</span>
           </button>
@@ -62,7 +84,14 @@ function select(event: MouseEvent, layer: Layer): void {
             round
             size="sm"
             :icon="visible(layer) ? 'r_visibility' : 'r_visibility_off'"
-            :aria-label="sprintf(visible(layer) ? __('Hide “%s” on this screen size') : __('Show “%s” on this screen size'), layer.name)"
+            :aria-label="
+              sprintf(
+                visible(layer)
+                  ? __('Hide “%s” on this screen size')
+                  : __('Show “%s” on this screen size'),
+                layer.name,
+              )
+            "
             :aria-pressed="!visible(layer)"
             @click="toggleVisible(layer)"
           />
@@ -76,16 +105,33 @@ function select(event: MouseEvent, layer: Layer): void {
             :aria-pressed="layer.locked"
             @click="editor.updateLayer(layer.id, (l) => (l.locked = !l.locked))"
           />
-          <q-btn flat dense round size="sm" icon="r_more_vert" :aria-label="sprintf(__('Actions for “%s”'), layer.name)">
+          <q-btn
+            flat
+            dense
+            round
+            size="sm"
+            icon="r_more_vert"
+            :aria-label="sprintf(__('Actions for “%s”'), layer.name)"
+          >
             <q-menu auto-close>
               <q-list dense style="min-width: 180px">
                 <q-item clickable :disable="index === 0" @click="editor.moveLayer(layer.id, 1)">
                   <q-item-section>{{ __('Bring forward') }}</q-item-section>
                 </q-item>
-                <q-item clickable :disable="index === layers.length - 1" @click="editor.moveLayer(layer.id, -1)">
+                <q-item
+                  clickable
+                  :disable="index === layers.length - 1"
+                  @click="editor.moveLayer(layer.id, -1)"
+                >
                   <q-item-section>{{ __('Send backward') }}</q-item-section>
                 </q-item>
-                <q-item clickable @click="editor.selectLayer(layer.id); editor.duplicateLayers()">
+                <q-item
+                  clickable
+                  @click="
+                    editor.selectLayer(layer.id);
+                    editor.duplicateLayers();
+                  "
+                >
                   <q-item-section>{{ __('Duplicate') }}</q-item-section>
                 </q-item>
                 <q-item clickable @click="editor.removeLayers([layer.id])">

@@ -134,6 +134,12 @@ describe('font and slider HTTP contracts', () => {
     fetcher.mockImplementation(async () => response({ version: 2, publishedGmt: 'now' }));
     await sliders.restore(7, 4, 1);
     await sliders.trash(7);
+    await sliders.untrash(7);
+    await sliders.purge(7);
+    fetcher.mockImplementation(async () => response([]));
+    expect(await sliders.list('', 1, true)).toEqual([]);
+    expect(String(fetcher.mock.calls.at(-1)?.[0])).toContain('trashed=true');
+    fetcher.mockImplementation(async () => response({ version: 2, publishedGmt: 'now' }));
     expect((await sliders.publish(7, 2)).version).toBe(2);
   });
   it('refreshes nonce headers, normalizes errors and rejects malformed JSON', async () => {

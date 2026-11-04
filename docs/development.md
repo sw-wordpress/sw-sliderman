@@ -13,6 +13,7 @@ Status: M0 accepted; M1 foundation and persistence implemented; evidence and rem
 | Build | Vite 6: editor (ES module), runtime (IIFE) | `npm run build` |
 | Bundle guard | runtime budget, import boundary, no remote fonts, scoped admin CSS | `node bin/check-bundles.mjs` (part of the build) |
 | E2E | Playwright against the local site | `node tests/e2e/editor.mjs` |
+| Preview/Website-Vergleich (M3.24) | Playwright, Referenzdokument auf drei Breiten (1180/820/375 px); Toleranz 1 px + 0,1 % der Containerbreite, Schrift 0,6 px; legt `E2E Parity*`-Slider an und entfernt sie | `node tests/e2e/parity.mjs` |
 | Runtime regressions | Playwright with intercepted fixtures, no WordPress writes (after build) | `node tests/e2e/runtime-regressions.mjs` |
 
 Node 18.18 is enough locally (versions pinned like sw-backupit); CI uses Node 22.

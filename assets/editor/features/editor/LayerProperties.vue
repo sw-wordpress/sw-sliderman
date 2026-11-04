@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { LIMITS } from '@shared/limits';
 import { overflowsStage, resolveLayer } from '@shared/layout';
 import {
@@ -11,6 +12,7 @@ import {
   type Layer,
   type LayerLayout,
   type LayerStyle,
+  type ShapeKind,
 } from '@shared/types';
 import { LINK_PATTERN } from '@shared/validate';
 import { useEditorStore } from '@editor/stores/editor';
@@ -18,12 +20,25 @@ import { useInstalledFonts } from '@editor/composables/useInstalledFonts';
 import { pickImage, previewOf } from '@editor/composables/useMediaPicker';
 import { __, sprintf } from '@editor/i18n';
 import { formatNumber } from '@editor/utils/format';
+import { mutable } from '@editor/document/ops';
+import { richPlainText } from '@shared/richtext';
+import type { RichParagraph } from '@shared/types';
 import NumberField from '@editor/components/fields/NumberField.vue';
+import PercentSlider from '@editor/components/fields/PercentSlider.vue';
 import OverrideState from '@editor/components/fields/OverrideState.vue';
+import FocalPointField from '@editor/components/fields/FocalPointField.vue';
 
 const props = defineProps<{ layer: Layer }>();
 const editor = useEditorStore();
-const { available: installations } = useInstalledFonts();
+const { available: installations, refresh: refreshFonts } = useInstalledFonts();
+const router = useRouter();
+// The font manager opens in its own tab so the editor state stays; new fonts appear on return.
+const fontsHref = computed(() => router.resolve('/fonts').href);
+function refreshOnFocus(): void {
+  void refreshFonts().catch((error: unknown) => console.error(error));
+}
+onMounted(() => window.addEventListener('focus', refreshOnFocus));
+onBeforeUnmount(() => window.removeEventListener('focus', refreshOnFocus));
 
 const resolved = computed(() => {
   const doc = editor.document;
@@ -86,6 +101,11 @@ function setFont(value: string): void {
 }
 
 // ---------- content ----------
+const imageThumb = computed(() => {
+  const id = props.layer.type === 'image' ? props.layer.content.attachmentId : null;
+  return id === null ? null : (editor.media[id]?.url ?? null);
+});
+
 async function chooseImage(): Promise<void> {
   const attachment = await pickImage();
   if (!attachment || props.layer.type !== 'image') return;
@@ -103,6 +123,99 @@ function setButton<K extends keyof ButtonContent>(key: K, value: ButtonContent[K
   editor.updateLayer(props.layer.id, (layer) => {
     if (layer.type === 'button')
       Object.assign(layer.content, { [key]: key === 'url' ? String(value).trim() : value });
+  });
+}
+type ButtonStateKey = 'hoverBackgroundColor' | 'hoverColor' | 'focusOutlineColor';
+/** Sets one optional state colour; `null` removes it again (= the layer's normal look). */
+function setButtonState(key: ButtonStateKey, value: string | null): void {
+  editor.updateLayer(props.layer.id, (layer) => {
+    if (layer.type !== 'button') return;
+    if (value === null) delete layer.content[key];
+    else layer.content[key] = value;
+  });
+}
+const buttonStates = computed<Array<{ key: ButtonStateKey; label: string; fallback: string }>>(
+  () => [
+    {
+      key: 'hoverBackgroundColor',
+      label: __('Background on hover'),
+      fallback: props.layer.style.backgroundColor ?? '#000000',
+    },
+    { key: 'hoverColor', label: __('Text on hover'), fallback: props.layer.style.color },
+    { key: 'focusOutlineColor', label: __('Focus outline'), fallback: props.layer.style.color },
+  ],
+);
+
+const shapeKind = computed(() => (props.layer.type === 'shape' ? props.layer.content.kind : null));
+const shapeKinds = computed<Array<{ value: ShapeKind; label: string; icon: string }>>(() => [
+  { value: 'rectangle', label: __('Rectangle'), icon: 'r_crop_square' },
+  { value: 'circle', label: __('Circle'), icon: 'r_circle' },
+]);
+function setShapeKind(kind: ShapeKind): void {
+  editor.updateLayer(props.layer.id, (layer) => {
+    if (layer.type === 'shape') layer.content.kind = kind;
+  });
+}
+const imageLink = computed(() => {
+  const content = props.layer.type === 'image' ? props.layer.content : null;
+  return { url: content?.linkUrl ?? '', newTab: content?.linkNewTab ?? false };
+});
+const imageLinkValid = computed(
+  () => !imageLink.value.url || LINK_PATTERN.test(imageLink.value.url),
+);
+function setImageLink(key: 'linkUrl' | 'linkNewTab', value: string | boolean): void {
+  editor.updateLayer(props.layer.id, (layer) => {
+    if (layer.type !== 'image') return;
+    if (key === 'linkUrl') layer.content.linkUrl = String(value).trim();
+    else layer.content.linkNewTab = value === true;
+  });
+}
+// The link box is opened by a checkbox; a stored link keeps it open. Unchecking removes the link.
+const linkOpen = ref(imageLink.value.url !== '');
+function toggleImageLink(on: boolean): void {
+  linkOpen.value = on;
+  if (on) return;
+  editor.updateLayer(props.layer.id, (layer) => {
+    if (layer.type !== 'image') return;
+    layer.content.linkUrl = '';
+    layer.content.linkNewTab = false;
+  });
+}
+/** Sensible first look: a soft, slightly lowered shadow instead of an invisible 0/0/0 one. */
+function toggleShadow(on: boolean): void {
+  editor.updateLayer(props.layer.id, (layer) => {
+    if (!on) {
+      layer.style.shadowColor = null;
+      return;
+    }
+    layer.style.shadowColor = layer.style.shadowColor ?? '#000000';
+    if (!layer.style.shadowX && !layer.style.shadowY && !layer.style.shadowBlur) {
+      layer.style.shadowX = 0;
+      layer.style.shadowY = 4;
+      layer.style.shadowBlur = 12;
+      layer.style.shadowOpacity = 0.25;
+    }
+  });
+}
+// The rich text editor and its library load only when a text layer is edited.
+const RichTextEditor = defineAsyncComponent(() => import('./RichTextEditor.vue'));
+/** Stores the structured text and its plain-text mirror in one undo step. */
+function commitRich(rich: RichParagraph[]): void {
+  editor.updateLayer(props.layer.id, (layer) => {
+    if (layer.type !== 'text') return;
+    layer.content.rich = mutable(rich);
+    layer.content.text = richPlainText(rich);
+  });
+}
+const imageUrl = computed(() => {
+  const id = props.layer.type === 'image' ? props.layer.content.attachmentId : null;
+  return id === null ? null : (editor.media[id]?.url ?? null);
+});
+function setImageFocal(point: { x: number; y: number }): void {
+  editor.updateLayer(props.layer.id, (layer) => {
+    if (layer.type !== 'image') return;
+    layer.content.focalX = point.x;
+    layer.content.focalY = point.y;
   });
 }
 const urlValid = computed(() => button.value === null || LINK_PATTERN.test(button.value.url));
@@ -187,20 +300,11 @@ const anchorY = [
     <section class="sws-props__section">
       <h3>{{ __('Content') }}</h3>
       <template v-if="layer.type === 'text'">
-        <q-input
-          :model-value="layer.content.text"
-          type="textarea"
-          autogrow
-          outlined
-          dense
-          :label="__('Text')"
-          :maxlength="LIMITS.textLength"
-          @change="
-            (v: string) =>
-              editor.updateLayer(layer.id, (l) => {
-                if (l.type === 'text') l.content.text = String(v);
-              })
-          "
+        <RichTextEditor
+          :key="layer.id"
+          :rich="layer.content.rich"
+          :text="layer.content.text"
+          @commit="commitRich"
         />
         <q-select
           :model-value="layer.content.tag"
@@ -219,13 +323,23 @@ const anchorY = [
         />
       </template>
       <template v-else-if="layer.type === 'image'">
-        <q-btn
-          outline
-          no-caps
-          icon="r_photo_library"
-          :label="layer.content.attachmentId ? __('Replace image') : __('Choose image')"
-          @click="chooseImage"
-        />
+        <div class="sws-image-pick">
+          <img
+            v-if="imageThumb"
+            class="sws-image-pick__thumb"
+            :src="imageThumb"
+            alt=""
+            width="64"
+            height="64"
+          />
+          <q-btn
+            outline
+            no-caps
+            icon="r_photo_library"
+            :label="layer.content.attachmentId ? __('Replace image') : __('Choose image')"
+            @click="chooseImage"
+          />
+        </div>
         <q-toggle
           :model-value="layer.content.decorative"
           :label="__('Decorative (no alternative text)')"
@@ -266,6 +380,35 @@ const anchorY = [
               })
           "
         />
+        <FocalPointField
+          v-if="layer.type === 'image' && imageUrl"
+          :src="imageUrl"
+          :x="layer.content.focalX ?? 50"
+          :y="layer.content.focalY ?? 50"
+          @commit="setImageFocal"
+        />
+        <q-checkbox
+          :model-value="linkOpen"
+          :label="__('Open link')"
+          @update:model-value="toggleImageLink"
+        />
+        <div v-if="linkOpen" class="sws-props__box">
+          <q-input
+            :model-value="imageLink.url"
+            dense
+            outlined
+            :label="__('Link address')"
+            :maxlength="LIMITS.urlLength"
+            :error="!imageLinkValid"
+            :error-message="__('Use https://, mailto:, tel:, / or #.')"
+            @change="(v: string | number | null) => setImageLink('linkUrl', String(v ?? ''))"
+          />
+          <q-toggle
+            :model-value="imageLink.newTab"
+            :label="__('Open in a new tab')"
+            @update:model-value="(v: boolean) => setImageLink('linkNewTab', v)"
+          />
+        </div>
         <div class="sws-props__grid">
           <q-btn
             outline
@@ -309,6 +452,40 @@ const anchorY = [
           :model-value="button?.newTab ?? false"
           :label="__('Open in a new tab')"
           @update:model-value="(v: boolean) => setButton('newTab', v)"
+        />
+        <div class="sws-props__box">
+          <strong class="sws-props__box-title">{{ __('Button states') }}</strong>
+          <div v-for="state in buttonStates" :key="state.key" class="sws-props__color-row">
+            <label class="sws-props__color">
+              <span>{{ state.label }}</span>
+              <input
+                type="color"
+                :value="button?.[state.key] ?? state.fallback"
+                @change="(e) => setButtonState(state.key, (e.target as HTMLInputElement).value)"
+              />
+            </label>
+            <q-btn
+              v-if="button?.[state.key] !== undefined"
+              flat
+              dense
+              no-caps
+              size="sm"
+              :label="__('Default')"
+              @click="setButtonState(state.key, null)"
+            />
+          </div>
+        </div>
+      </template>
+      <template v-else-if="shapeKind">
+        <q-btn-toggle
+          :model-value="shapeKind"
+          unelevated
+          dense
+          no-caps
+          toggle-color="primary"
+          :options="shapeKinds"
+          :aria-label="__('Shape')"
+          @update:model-value="setShapeKind"
         />
       </template>
     </section>
@@ -396,7 +573,7 @@ const anchorY = [
     </section>
 
     <!-- typography -->
-    <section v-if="layer.type !== 'image'" class="sws-props__section">
+    <section v-if="layer.type !== 'image' && layer.type !== 'shape'" class="sws-props__section">
       <h3>{{ __('Typography') }}</h3>
       <q-select
         :model-value="currentFont"
@@ -408,6 +585,10 @@ const anchorY = [
         :label="__('Font (locally installed)')"
         @update:model-value="setFont"
       />
+      <a class="sws-props__link" :href="fontsHref" target="_blank" rel="noopener">
+        <q-icon name="r_font_download" size="16px" aria-hidden="true" />
+        {{ installations.length === 0 ? __('Install fonts') : __('Manage fonts') }}
+      </a>
       <p v-if="fontMissing" class="sws-props__warn" role="status">
         <q-icon name="r_warning" aria-hidden="true" />
         {{ __('This font is not installed; the system font is shown.') }}
@@ -523,7 +704,7 @@ const anchorY = [
         />
       </div>
       <div class="sws-props__grid">
-        <div class="sws-props__field">
+        <div v-if="layer.type !== 'shape'" class="sws-props__field">
           <NumberField
             :model-value="style.paddingX"
             :label="__('Padding horizontal')"
@@ -534,7 +715,7 @@ const anchorY = [
           />
           <OverrideState :layer="layer" group="style" field="paddingX" />
         </div>
-        <div class="sws-props__field">
+        <div v-if="layer.type !== 'shape'" class="sws-props__field">
           <NumberField
             :model-value="style.paddingY"
             :label="__('Padding vertical')"
@@ -546,6 +727,7 @@ const anchorY = [
           <OverrideState :layer="layer" group="style" field="paddingY" />
         </div>
         <NumberField
+          v-if="shapeKind !== 'circle'"
           :model-value="style.borderRadius"
           :label="__('Corner radius')"
           suffix="px"
@@ -553,16 +735,85 @@ const anchorY = [
           :max="LIMITS.radiusMax"
           @commit="(v) => setStyle('borderRadius', v)"
         />
-        <NumberField
+        <PercentSlider
           :model-value="Math.round(style.opacity * 100)"
           :label="__('Opacity')"
-          suffix="%"
           :min="0"
           :max="100"
-          integer
           @commit="(v) => setStyle('opacity', v / 100)"
         />
       </div>
+    </section>
+
+    <!-- border and shadow -->
+    <section class="sws-props__section">
+      <h3>{{ __('Border and shadow') }}</h3>
+      <div class="sws-props__grid">
+        <NumberField
+          :model-value="style.borderWidth ?? 0"
+          :label="__('Border width')"
+          suffix="px"
+          :min="0"
+          :max="LIMITS.borderWidthMax"
+          @commit="(v) => setStyle('borderWidth', v)"
+        />
+        <label class="sws-props__color">
+          <span>{{ __('Border colour') }}</span>
+          <input
+            type="color"
+            :value="style.borderColor ?? '#000000'"
+            @change="(e) => setStyle('borderColor', (e.target as HTMLInputElement).value)"
+          />
+        </label>
+      </div>
+      <q-toggle
+        :model-value="!!style.shadowColor"
+        :label="__('Shadow')"
+        @update:model-value="toggleShadow"
+      />
+      <template v-if="style.shadowColor">
+        <div class="sws-props__grid">
+          <NumberField
+            :model-value="style.shadowX ?? 0"
+            :label="__('Shadow offset X')"
+            suffix="px"
+            :min="-LIMITS.shadowOffsetMax"
+            :max="LIMITS.shadowOffsetMax"
+            @commit="(v) => setStyle('shadowX', v)"
+          />
+          <NumberField
+            :model-value="style.shadowY ?? 0"
+            :label="__('Shadow offset Y')"
+            suffix="px"
+            :min="-LIMITS.shadowOffsetMax"
+            :max="LIMITS.shadowOffsetMax"
+            @commit="(v) => setStyle('shadowY', v)"
+          />
+          <NumberField
+            :model-value="style.shadowBlur ?? 0"
+            :label="__('Shadow blur')"
+            suffix="px"
+            :min="0"
+            :max="LIMITS.shadowBlurMax"
+            @commit="(v) => setStyle('shadowBlur', v)"
+          />
+          <PercentSlider
+            :model-value="Math.round((style.shadowOpacity ?? 0.25) * 100)"
+            :label="__('Shadow opacity')"
+            :min="0"
+            :max="100"
+            @commit="(v) => setStyle('shadowOpacity', v / 100)"
+          />
+        </div>
+        <label class="sws-props__color">
+          <span>{{ __('Shadow colour') }}</span>
+          <input
+            type="color"
+            :value="style.shadowColor"
+            @change="(e) => setStyle('shadowColor', (e.target as HTMLInputElement).value)"
+          />
+        </label>
+      </template>
     </section>
 
     <!-- animation -->

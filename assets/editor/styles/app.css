@@ -325,14 +325,24 @@ body.q-body--prevent-scroll {
   outline-offset: 2px;
   border-radius: 6px;
 }
-.sws-root .q-btn:focus-visible,
-.sws-root .q-field:focus-within .q-field__control {
+.sws-root .q-btn:focus-visible {
   outline: 3px solid var(--sws-focus);
   outline-offset: 1px;
 }
+/* Fields show exactly one focus ring: Quasar's own 2 px border in the focus colour. The native
+   input inside gets neither an outline nor WordPress admin's focus box-shadow. */
+.sws-root .q-field__native,
+.sws-root .q-field__input,
+.sws-root .q-field__native:focus,
+.sws-root .q-field__input:focus,
 .sws-root .q-field__native:focus-visible,
 .sws-root .q-field__input:focus-visible {
   outline: none;
+  box-shadow: none;
+}
+.sws-root .q-field--outlined.q-field--focused .q-field__control:after {
+  border-color: var(--sws-focus);
+  border-width: 2px;
 }
 
 /* ---------- Quasar tuning ---------- */

@@ -10,9 +10,16 @@ import {
   resolveLayerLayout,
   resolveLayerStyle,
 } from '@shared/layout';
-import { layerDeclarations, serializeDeclarations, formatNumber } from '@shared/css';
+import {
+  buttonStateCss,
+  layerDeclarations,
+  serializeDeclarations,
+  formatNumber,
+} from '@shared/css';
+import { richToHtml, richPlainText } from '@shared/richtext';
+import { focalPosition, imageFocalCss, slideBackgroundCss } from '@shared/css';
 import { effectiveSlideDurationMs, scheduleSlide } from '@shared/schedule';
-import type { BreakpointName, Layer, SliderDocument } from '@shared/types';
+import type { BreakpointName, Layer, RichParagraph, SliderDocument } from '@shared/types';
 import { ROOT, fixture, fixtureFiles, patch, type PatchOp } from './fixtures';
 
 interface InvalidCase {
@@ -101,6 +108,7 @@ describe('layout and css contract', () => {
       box: Record<string, number>;
       boxCss: string;
       bodyCss: string;
+      stateCss: string;
     }>;
   };
 
@@ -120,9 +128,13 @@ describe('layout and css contract', () => {
         stage.stageWidth,
         stage.stageHeight,
         document.fontRefs,
+        layer.type === 'shape' ? layer.content.kind : undefined,
       );
       expect(serializeDeclarations(css.box)).toBe(c.boxCss);
       expect(serializeDeclarations(css.body)).toBe(c.bodyCss);
+      expect(
+        layer.type === 'button' ? buttonStateCss(`.sws-l-${layer.id}`, layer.content) : '',
+      ).toBe(c.stateCss);
     },
   );
 
@@ -154,6 +166,24 @@ describe('layout and css contract', () => {
   });
 });
 
+describe('rich text contract', () => {
+  it('renders the same HTML as the PHP implementation', () => {
+    const golden = fixture('rich/render.json') as {
+      cases: Array<{ name: string; rich: RichParagraph[]; html: string }>;
+    };
+    for (const entry of golden.cases) expect(richToHtml(entry.rich), entry.name).toBe(entry.html);
+  });
+  it('mirrors rich text as plain text', () => {
+    expect(
+      richPlainText([
+        { runs: [{ text: 'a' }, { text: 'b', bold: true }] },
+        { runs: [] },
+        { runs: [{ text: 'c\nd' }] },
+      ]),
+    ).toBe('ab\n\nc\nd');
+  });
+});
+
 describe('schedule contract', () => {
   it('extends slides to the end of their animations', () => {
     const document = basic();
@@ -166,5 +196,49 @@ describe('schedule contract', () => {
       expect(effectiveSlideDurationMs(actual)).toBe(slide.effectiveDurationMs);
       expect(scheduleSlide(actual).extended).toBe(slide.extended);
     });
+  });
+});
+
+describe('slide overlay and focal point contract', () => {
+  const golden = fixture('css/background.json') as {
+    slides: Array<{ slide: string; css: string }>;
+    images: Array<{ layer: string; css: string }>;
+  };
+  const document = (() => {
+    const result = validateDocument(fixture('documents/valid/background.json'));
+    if (!result.ok) throw new Error('fixture');
+    return result.document;
+  })();
+
+  it.each(golden.slides.map((c) => [c.slide, c] as const))(
+    'slide %s matches the PHP output',
+    (_n, c) => {
+      const slide = document.slides.find((item) => item.id === c.slide);
+      if (!slide) throw new Error(c.slide);
+      expect(slideBackgroundCss(`.sws-s-test .sws-sl-${slide.id}`, slide.background)).toBe(c.css);
+    },
+  );
+  it.each(golden.images.map((c) => [c.layer, c] as const))(
+    'image %s matches the PHP output',
+    (_n, c) => {
+      const layer = document.slides.flatMap((s) => s.layers).find((l) => l.id === c.layer);
+      if (layer?.type !== 'image') throw new Error(c.layer);
+      expect(imageFocalCss(`.sws-s-test .sws-l-${layer.id}`, layer.content)).toBe(c.css);
+    },
+  );
+  it('emits nothing for the defaults', () => {
+    expect(slideBackgroundCss('.x', { color: null, attachmentId: null, fit: 'cover' })).toBe('');
+    expect(
+      slideBackgroundCss('.x', {
+        color: null,
+        attachmentId: null,
+        fit: 'cover',
+        overlayColor: null,
+        focalX: 50,
+        focalY: 50,
+      }),
+    ).toBe('');
+    expect(focalPosition(undefined, 50)).toBeNull();
+    expect(focalPosition(50, 10)).toBe('50% 10%');
   });
 });

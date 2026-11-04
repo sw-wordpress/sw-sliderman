@@ -127,8 +127,8 @@ function issues(value: unknown): ValidationIssue[] {
 
 export function slidersApi(client: Transport) {
   return {
-    async list(search: string, page = 1): Promise<SliderSummary[]> {
-      const body = await client.get('sliders', { search, page, perPage: 100 });
+    async list(search: string, page = 1, trashed = false): Promise<SliderSummary[]> {
+      const body = await client.get('sliders', { search, page, perPage: 100, trashed });
       if (!Array.isArray(body))
         throw new ApiError('sws_invalid_response', 'Unexpected response', 0);
       return body.map(parseSummary);
@@ -187,6 +187,12 @@ export function slidersApi(client: Transport) {
     },
     async trash(id: number): Promise<void> {
       await client.delete(`sliders/${id}`);
+    },
+    async untrash(id: number): Promise<void> {
+      await client.post(`sliders/${id}/untrash`, {});
+    },
+    async purge(id: number): Promise<void> {
+      await client.post(`sliders/${id}/purge`, {});
     },
   };
 }

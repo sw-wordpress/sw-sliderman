@@ -49,7 +49,7 @@ interface SliderRepository {
 	 *
 	 * @return array{items: list<StoredSlider>, total: int}
 	 */
-	public function list_sliders( int $page, int $per_page, string $search ): array;
+	public function list_sliders( int $page, int $per_page, string $search, bool $trashed = false ): array;
 
 	/**
 	 * Every stored document (drafts and snapshots) for reference checks.
@@ -64,4 +64,8 @@ interface SliderRepository {
 	/** Saves a user-specific recovery draft without changing the working draft or live snapshot. */
 	public function autosave( int $id, string $title, string $document_json, int $expected_version ): int;
 	public function trash( int $id ): bool;
+	/** @throws SliderNotFound When the slider is not in the trash. */
+	public function restore( int $id ): bool;
+	/** Deletes a trashed slider for good. @throws SliderNotFound When the slider is not in the trash. */
+	public function delete_permanently( int $id ): bool;
 }
