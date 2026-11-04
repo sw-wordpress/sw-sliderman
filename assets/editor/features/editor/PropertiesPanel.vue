@@ -1,13 +1,34 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useEditorStore } from '@editor/stores/editor';
 import { __, sprintf } from '@editor/i18n';
 import LayerProperties from './LayerProperties.vue';
 import SlideProperties from './SlideProperties.vue';
+import { setAllSections, isSectionOpen } from '@editor/composables/useAccordion';
 import AlignTools from './AlignTools.vue';
 
 const editor = useEditorStore();
 const tab = ref('slide');
+/** Sections per tab with their default open state (mirrors the `default-open` props). */
+const sectionDefaults: Record<string, Record<string, boolean>> = {
+  layer: {
+    'layer.content': true,
+    'layer.layout': true,
+    'layer.typography': false,
+    'layer.box': false,
+    'layer.border': false,
+    'layer.animation': false,
+  },
+  slide: { 'slide.general': true, 'slide.background': false },
+  slider: { 'slider.settings': true, 'slider.breakpoints': false },
+};
+const sectionIds = computed(() => Object.keys(sectionDefaults[tab.value] ?? {}));
+const allClosed = computed(() =>
+  Object.entries(sectionDefaults[tab.value] ?? {}).every(([id, open]) => !isSectionOpen(id, open)),
+);
+function toggleAll(): void {
+  setAllSections(allClosed.value, sectionIds.value);
+}
 watch(
   () => editor.selectedLayerIds.join(','),
   () => {
@@ -75,6 +96,12 @@ watch(
         :scope="tab === 'slider' ? 'slider' : 'slide'"
       />
     </div>
+    <div class="sws-properties__foot">
+      <span></span>
+      <q-btn flat dense no-caps size="sm" color="primary" @click="toggleAll">
+        {{ allClosed ? __('Expand all') : __('Collapse all') }}
+      </q-btn>
+    </div>
   </aside>
 </template>
 <style scoped>
@@ -91,20 +118,33 @@ watch(
   border-bottom: 1px solid var(--sws-border);
 }
 .sws-properties__body {
-  padding: 12px;
   overflow-y: auto;
   min-height: 0;
+  flex: 1;
+}
+.sws-properties__foot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--sws-border);
+  color: var(--sws-muted);
+  font-size: 12px;
 }
 .sws-properties__multi {
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   font-size: 13px;
 }
 .sws-properties__align {
-  margin-bottom: 10px;
+  margin: 12px 16px;
 }
 .sws-properties__empty {
+  padding: 12px 16px;
   color: var(--sws-muted);
   font-size: 13px;
 }

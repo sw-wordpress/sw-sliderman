@@ -27,6 +27,7 @@ import NumberField from '@editor/components/fields/NumberField.vue';
 import PercentSlider from '@editor/components/fields/PercentSlider.vue';
 import OverrideState from '@editor/components/fields/OverrideState.vue';
 import FocalPointField from '@editor/components/fields/FocalPointField.vue';
+import AccordionSection from '@editor/components/AccordionSection.vue';
 
 const props = defineProps<{ layer: Layer }>();
 const editor = useEditorStore();
@@ -283,22 +284,98 @@ const anchorY = [
   { value: 'center', label: __('centre') },
   { value: 'bottom', label: __('bottom') },
 ];
+// ---------- header and collapsed summaries ----------
+const typeIcons: Record<Layer['type'], string> = {
+  text: 'r_title',
+  image: 'r_image',
+  button: 'r_smart_button',
+  shape: 'r_category',
+};
+const typeIcon = computed(() => typeIcons[props.layer.type]);
+const typeLabel = computed(
+  () =>
+    ({
+      text: __('Text layer'),
+      image: __('Image layer'),
+      button: __('Button layer'),
+      shape: __('Shape layer'),
+    })[props.layer.type],
+);
+const contentSummary = computed(() => {
+  const l = props.layer;
+  if (l.type === 'text') return l.content.text.slice(0, 40);
+  if (l.type === 'button') return l.content.label;
+  if (l.type === 'image') return l.content.decorative ? __('Decorative') : l.content.alt;
+  return l.content.kind === 'circle' ? __('Circle') : __('Rectangle');
+});
+const layoutSummary = computed(
+  () =>
+    `${formatNumber(layout.value.x)}, ${formatNumber(layout.value.y)} · ${formatNumber(layout.value.width)} × ${formatNumber(layout.value.height)}`,
+);
+const typographySummary = computed(
+  () => `${formatNumber(style.value.fontSize)} px · ${formatNumber(style.value.lineHeight)}`,
+);
+const boxSummary = computed(
+  () =>
+    `${formatNumber(style.value.paddingX)} px · R ${formatNumber(style.value.borderRadius)} · ${Math.round(style.value.opacity * 100)} %`,
+);
+const borderSummary = computed(
+  () =>
+    `${formatNumber(style.value.borderWidth ?? 0)} px · ${style.value.shadowColor ? __('Shadow') : __('no shadow')}`,
+);
+const animationSummary = computed(() => {
+  const enter = props.layer.animation.enter;
+  if (enter.preset === 'none') return __('None');
+  const label = presetLabels[enter.preset]?.() ?? enter.preset;
+  return `${label} · ${enter.startMs}–${enter.startMs + enter.durationMs} ms`;
+});
 </script>
 
 <template>
   <div class="sws-props">
-    <q-input
-      :model-value="layer.name"
-      dense
-      outlined
-      :label="__('Layer name')"
-      :maxlength="LIMITS.nameLength"
-      @change="(v: string) => editor.updateLayer(layer.id, (l) => (l.name = String(v)))"
-    />
+    <header class="sws-layerhead">
+      <span class="sws-layerhead__icon" aria-hidden="true">
+        <q-icon :name="typeIcon" size="20px" />
+      </span>
+      <label class="sws-layerhead__name">
+        <span>{{ typeLabel }}</span>
+        <input
+          :value="layer.name"
+          :maxlength="LIMITS.nameLength"
+          :aria-label="__('Layer name')"
+          @change="
+            (e) =>
+              editor.updateLayer(layer.id, (l) => (l.name = (e.target as HTMLInputElement).value))
+          "
+        />
+      </label>
+      <q-btn
+        flat
+        dense
+        round
+        size="sm"
+        :icon="layout.visible ? 'r_visibility' : 'r_visibility_off'"
+        :aria-label="
+          layout.visible ? __('Hide on this screen size') : __('Show on this screen size')
+        "
+        :aria-pressed="!layout.visible"
+        @click="setLayout('visible', !layout.visible)"
+      />
+      <q-btn
+        flat
+        dense
+        round
+        size="sm"
+        :icon="layer.locked ? 'r_lock' : 'r_lock_open'"
+        :aria-label="layer.locked ? __('Unlock layer') : __('Lock layer')"
+        :aria-pressed="layer.locked"
+        @click="editor.updateLayer(layer.id, (l) => (l.locked = !l.locked))"
+      />
+    </header>
 
     <!-- content -->
-    <section class="sws-props__section">
-      <h3>{{ __('Content') }}</h3>
+    <AccordionSection id="layer.content" :title="__('Content')" default-open>
+      <template #summary>{{ contentSummary }}</template>
       <template v-if="layer.type === 'text'">
         <RichTextEditor
           :key="layer.id"
@@ -488,11 +565,11 @@ const anchorY = [
           @update:model-value="setShapeKind"
         />
       </template>
-    </section>
+    </AccordionSection>
 
     <!-- layout -->
-    <section class="sws-props__section">
-      <h3>{{ __('Position and size') }}</h3>
+    <AccordionSection id="layer.layout" :title="__('Position and size')" default-open>
+      <template #summary>{{ layoutSummary }}</template>
       <p v-if="overflow" class="sws-props__warn" role="status">
         <q-icon name="r_warning" aria-hidden="true" />
         {{ __('The layer extends beyond the stage on this screen size.') }}
@@ -570,11 +647,15 @@ const anchorY = [
         />
         <OverrideState :layer="layer" group="layout" field="visible" />
       </div>
-    </section>
+    </AccordionSection>
 
     <!-- typography -->
-    <section v-if="layer.type !== 'image' && layer.type !== 'shape'" class="sws-props__section">
-      <h3>{{ __('Typography') }}</h3>
+    <AccordionSection
+      v-if="layer.type !== 'image' && layer.type !== 'shape'"
+      id="layer.typography"
+      :title="__('Typography')"
+    >
+      <template #summary>{{ typographySummary }}</template>
       <q-select
         :model-value="currentFont"
         :options="fontOptions"
@@ -679,11 +760,14 @@ const anchorY = [
           @change="(e) => setStyle('color', (e.target as HTMLInputElement).value)"
         />
       </label>
-    </section>
+    </AccordionSection>
 
     <!-- box -->
-    <section class="sws-props__section">
-      <h3>{{ __('Box') }}</h3>
+    <AccordionSection id="layer.box" :title="__('Box')">
+      <template #summary>
+        <span class="sws-swatch" :style="{ background: style.backgroundColor ?? 'transparent' }" />
+        {{ boxSummary }}
+      </template>
       <div class="sws-props__color-row">
         <label class="sws-props__color">
           <span>{{ __('Background') }}</span>
@@ -743,11 +827,14 @@ const anchorY = [
           @commit="(v) => setStyle('opacity', v / 100)"
         />
       </div>
-    </section>
+    </AccordionSection>
 
     <!-- border and shadow -->
-    <section class="sws-props__section">
-      <h3>{{ __('Border and shadow') }}</h3>
+    <AccordionSection id="layer.border" :title="__('Border and shadow')">
+      <template #summary>
+        <span class="sws-swatch" :style="{ background: style.borderColor ?? 'transparent' }" />
+        {{ borderSummary }}
+      </template>
       <div class="sws-props__grid">
         <NumberField
           :model-value="style.borderWidth ?? 0"
@@ -814,11 +901,11 @@ const anchorY = [
           />
         </label>
       </template>
-    </section>
+    </AccordionSection>
 
     <!-- animation -->
-    <section class="sws-props__section">
-      <h3>{{ __('Animation') }}</h3>
+    <AccordionSection id="layer.animation" :title="__('Animation')">
+      <template #summary>{{ animationSummary }}</template>
       <q-select
         :model-value="layer.animation.enter.preset"
         :options="presetOptions"
@@ -910,8 +997,58 @@ const anchorY = [
           @commit="(v) => setExit('durationMs', v)"
         />
       </div>
-    </section>
+    </AccordionSection>
   </div>
 </template>
 
 <style scoped src="./props.css"></style>
+<style scoped>
+.sws-layerhead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 16px;
+}
+.sws-layerhead__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--sws-primary);
+  color: #fff;
+}
+.sws-layerhead__name {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--sws-muted);
+}
+.sws-layerhead__name input {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--sws-text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+}
+.sws-layerhead__name input:focus-visible {
+  outline: 2px solid var(--sws-focus);
+  outline-offset: 2px;
+}
+.sws-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--sws-border);
+  border-radius: 3px;
+}
+</style>

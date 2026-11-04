@@ -9,6 +9,8 @@ import { __, sprintf } from '@editor/i18n';
 import NumberField from '@editor/components/fields/NumberField.vue';
 import PercentSlider from '@editor/components/fields/PercentSlider.vue';
 import FocalPointField from '@editor/components/fields/FocalPointField.vue';
+import AccordionSection from '@editor/components/AccordionSection.vue';
+import { formatNumber } from '@editor/utils/format';
 import { DEFAULT_FOCAL, DEFAULT_OVERLAY_OPACITY } from '@shared/types';
 
 const props = defineProps<{ slide: Slide; scope?: 'slide' | 'slider' }>();
@@ -64,12 +66,41 @@ const breakpointNames: Array<{ name: BreakpointName; label: string }> = [
   { name: 'tablet', label: __('Tablet') },
   { name: 'mobile', label: __('Mobile') },
 ];
+const slideSummary = computed(
+  () => `${formatNumber(props.slide.durationMs / 1000)} s · ${transitionLabel.value}`,
+);
+const transitionLabel = computed(
+  () =>
+    ({ cut: __('Cut'), fade: __('Fade'), slide: __('Push') })[props.slide.transition.type] ?? '',
+);
+const backgroundSummary = computed(() => {
+  const bg = props.slide.background;
+  const parts = [bg.attachmentId === null ? __('Colour') : __('Image')];
+  if (bg.overlayColor) parts.push(__('Overlay'));
+  return parts.join(' · ');
+});
+const settingsSummary = computed(() => {
+  const st = settings.value;
+  if (!st) return '';
+  const parts = [st.layout === 'boxed' ? `${st.maxWidth} px` : __('Full width')];
+  if (st.autoplay) parts.push(__('Autoplay'));
+  return parts.join(' · ');
+});
+const breakpointSummary = computed(() => {
+  const bps = breakpoints.value;
+  return bps ? breakpointNames.map((bp) => bps[bp.name].stageWidth).join(' / ') : '';
+});
 </script>
 
 <template>
   <div class="sws-props">
-    <section v-if="scope !== 'slider'" class="sws-props__section">
-      <h3>{{ __('Slide') }}</h3>
+    <AccordionSection
+      v-if="scope !== 'slider'"
+      id="slide.general"
+      :title="__('Slide')"
+      default-open
+    >
+      <template #summary>{{ slideSummary }}</template>
       <q-input
         :model-value="slide.name"
         dense
@@ -120,6 +151,13 @@ const breakpointNames: Array<{ name: BreakpointName; label: string }> = [
         :max="LIMITS.transitionMaxMs"
         @commit="(v) => editor.updateSlide(slide.id, (s) => (s.transition.durationMs = v))"
       />
+    </AccordionSection>
+
+    <AccordionSection v-if="scope !== 'slider'" id="slide.background" :title="__('Background')">
+      <template #summary>
+        <span class="sws-swatch" :style="{ background: slide.background.color ?? 'transparent' }" />
+        {{ backgroundSummary }}
+      </template>
       <div class="sws-props__color-row">
         <label class="sws-props__color">
           <span>{{ __('Background colour') }}</span>
@@ -195,10 +233,15 @@ const breakpointNames: Array<{ name: BreakpointName; label: string }> = [
           "
         />
       </div>
-    </section>
+    </AccordionSection>
 
-    <section v-if="settings && scope !== 'slide'" class="sws-props__section">
-      <h3>{{ __('Slider') }}</h3>
+    <AccordionSection
+      v-if="settings && scope !== 'slide'"
+      id="slider.settings"
+      :title="__('Slider')"
+      default-open
+    >
+      <template #summary>{{ settingsSummary }}</template>
       <q-input
         :model-value="settings.label"
         dense
@@ -256,10 +299,14 @@ const breakpointNames: Array<{ name: BreakpointName; label: string }> = [
           (v: boolean) => editor.updateDocument((d) => (d.settings.showDots = v))
         "
       />
-    </section>
+    </AccordionSection>
 
-    <section v-if="breakpoints && scope !== 'slide'" class="sws-props__section">
-      <h3>{{ __('Screen sizes (container width)') }}</h3>
+    <AccordionSection
+      v-if="breakpoints && scope !== 'slide'"
+      id="slider.breakpoints"
+      :title="__('Screen sizes (container width)')"
+    >
+      <template #summary>{{ breakpointSummary }}</template>
       <div v-for="bp in breakpointNames" :key="bp.name" class="sws-props__grid">
         <NumberField
           :model-value="breakpoints[bp.name].minWidth"
@@ -289,8 +336,17 @@ const breakpointNames: Array<{ name: BreakpointName; label: string }> = [
           />
         </div>
       </div>
-    </section>
+    </AccordionSection>
   </div>
 </template>
 
 <style scoped src="./props.css"></style>
+<style scoped>
+.sws-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--sws-border);
+  border-radius: 3px;
+}
+</style>

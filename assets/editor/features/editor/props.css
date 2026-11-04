@@ -1,7 +1,6 @@
 .sws-props {
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 .sws-props__section {
   display: flex;
