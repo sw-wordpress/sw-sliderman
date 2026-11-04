@@ -34,6 +34,9 @@
             "dealerdirect/phpcodesniffer-composer-installer": true,
             "phpstan/extension-installer": true
         },
+        "audit": {
+            "abandoned": "report"
+        },
         "platform": {
             "php": "8.2.0"
         }

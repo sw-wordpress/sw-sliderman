@@ -36,6 +36,8 @@ rsync -a --exclude-from="$UNTRACKED" --exclude-from=- "$ROOT/" "$STAGE/$NAME/" <
 .prettierignore
 .phpunit.cache
 .phpstan.cache
+/.phpstan.cache/
+/phpstan.neon*
 .phpcs*.cache
 /vendor
 /.github
