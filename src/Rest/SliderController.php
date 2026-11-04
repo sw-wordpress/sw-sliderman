@@ -72,6 +72,10 @@ final class SliderController {
 							'default'   => '',
 							'maxLength' => 100,
 						),
+						'trashed' => array(
+							'type'    => 'boolean',
+							'default' => false,
+						),
 					),
 				),
 				array(
@@ -103,6 +107,26 @@ final class SliderController {
 					'permission_callback' => array( $this, 'can_edit' ),
 					'args'                => $id_arg,
 				),
+			)
+		);
+		register_rest_route(
+			self::NAMESPACE,
+			'/sliders/(?P<id>\d+)/untrash',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'untrash_slider' ),
+				'permission_callback' => array( $this, 'can_edit' ),
+				'args'                => $id_arg,
+			)
+		);
+		register_rest_route(
+			self::NAMESPACE,
+			'/sliders/(?P<id>\d+)/purge',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'purge_slider' ),
+				'permission_callback' => array( $this, 'can_edit' ),
+				'args'                => $id_arg,
 			)
 		);
 		register_rest_route(
@@ -154,7 +178,7 @@ final class SliderController {
 	}
 
 	public function list_sliders( WP_REST_Request $request ): WP_REST_Response {
-		$result   = $this->sliders_list( (int) $request['page'], (int) $request['perPage'], (string) $request['search'] );
+		$result   = $this->sliders_list( (int) $request['page'], (int) $request['perPage'], (string) $request['search'], (bool) $request['trashed'] );
 		$visible  = array_values( array_filter( $result['items'], static fn ( StoredSlider $slider ): bool => current_user_can( 'edit_post', $slider->id ) ) );
 		$response = new WP_REST_Response( array_map( array( $this, 'summary' ), $visible ) );
 		$response->header( 'Cache-Control', 'private, no-store' );
@@ -165,8 +189,8 @@ final class SliderController {
 	/**
 	 * @return array{items: list<StoredSlider>, total: int}
 	 */
-	private function sliders_list( int $page, int $per_page, string $search ): array {
-		return $this->sliders->list_sliders( $page, $per_page, sanitize_text_field( $search ) );
+	private function sliders_list( int $page, int $per_page, string $search, bool $trashed ): array {
+		return $this->sliders->list_sliders( $page, $per_page, sanitize_text_field( $search ), $trashed );
 	}
 
 	public function create_slider( WP_REST_Request $request ): WP_REST_Response|WP_Error {
@@ -316,6 +340,24 @@ final class SliderController {
 			return new WP_REST_Response( array( 'revisionId' => $revision ) );
 		} catch ( Throwable $error ) {
 			return Errors::from( $error ); }
+	}
+
+	public function untrash_slider( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		try {
+			$this->sliders->restore( (int) $request['id'] );
+			return new WP_REST_Response( array( 'restored' => true ) );
+		} catch ( Throwable $error ) {
+			return Errors::from( $error );
+		}
+	}
+
+	public function purge_slider( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		try {
+			$this->sliders->delete_permanently( (int) $request['id'] );
+			return new WP_REST_Response( array( 'deleted' => true ) );
+		} catch ( Throwable $error ) {
+			return Errors::from( $error );
+		}
 	}
 
 	public function trash_slider( WP_REST_Request $request ): WP_REST_Response|WP_Error {

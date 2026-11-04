@@ -42,19 +42,24 @@ final class WpSliderRepository implements SliderRepository {
 	}
 
 	public function find( int $id ): ?StoredSlider {
+		return $this->load( $id, false );
+	}
+
+	private function load( int $id, bool $trashed ): ?StoredSlider {
 		// One SQL statement pairs content, version and publication from the same DB snapshot.
 		$row = $this->db->get_row(
 			$this->db->prepare(
 				"SELECT p.*, (SELECT meta_value FROM %i WHERE post_id=p.ID AND meta_key=%s LIMIT 1) AS sws_version,
             (SELECT meta_value FROM %i WHERE post_id=p.ID AND meta_key=%s LIMIT 1) AS sws_published
-            FROM %i p WHERE p.ID=%d AND p.post_type=%s AND p.post_status<>'trash'",
+            FROM %i p WHERE p.ID=%d AND p.post_type=%s AND (p.post_status='trash')=%d",
 				$this->db->postmeta,
 				self::VERSION_KEY,
 				$this->db->postmeta,
 				self::PUBLISHED_KEY,
 				$this->db->posts,
 				$id,
-				PostTypes::SLIDER
+				PostTypes::SLIDER,
+				$trashed ? 1 : 0
 			),
 			ARRAY_A
 		);
@@ -166,11 +171,11 @@ final class WpSliderRepository implements SliderRepository {
 		);
 	}
 
-	public function list_sliders( int $page, int $per_page, string $search ): array {
+	public function list_sliders( int $page, int $per_page, string $search, bool $trashed = false ): array {
 		$query = new \WP_Query(
 			array(
 				'post_type'      => PostTypes::SLIDER,
-				'post_status'    => 'publish',
+				'post_status'    => $trashed ? 'trash' : 'publish',
 				'posts_per_page' => $per_page,
 				'paged'          => $page,
 				's'              => $search,
@@ -182,7 +187,7 @@ final class WpSliderRepository implements SliderRepository {
 		$items = array();
 		foreach ( $query->posts ?? array() as $post ) {
 			if ( $post instanceof WP_Post ) {
-				$stored = $this->find( (int) $post->ID );
+				$stored = $this->load( (int) $post->ID, $trashed );
 				if ( null !== $stored ) {
 					$items[] = $stored;
 				}
@@ -282,6 +287,33 @@ final class WpSliderRepository implements SliderRepository {
 		);
 	}
 
+	public function restore( int $id ): bool {
+		if ( null === $this->load( $id, true ) ) {
+			throw new SliderNotFound( 'Slider not found.' );
+		}
+		// WordPress restores trashed posts as drafts; sliders always keep status "publish".
+		$force = static fn (): string => 'publish';
+		add_filter( 'wp_untrash_post_status', $force );
+		try {
+			$restored = SliderWriteScope::run( static fn () => wp_untrash_post( $id ) );
+		} finally {
+			remove_filter( 'wp_untrash_post_status', $force );
+		}
+		if ( ! $restored instanceof WP_Post ) {
+			throw new StorageFailure( 'Could not restore slider.' );
+		}
+		return true;
+	}
+
+	public function delete_permanently( int $id ): bool {
+		if ( null === $this->load( $id, true ) ) {
+			throw new SliderNotFound( 'Slider not found.' );
+		}
+		if ( ! wp_delete_post( $id, true ) instanceof WP_Post ) {
+			throw new StorageFailure( 'Could not delete slider.' );
+		}
+		return true;
+	}
 
 	/** Version read directly from the database, bypassing a possibly stale object cache. */
 	private function current_version( int $id ): int {

@@ -34,6 +34,10 @@ final class DocumentValidator {
 	private const TEXT_TAGS         = array( 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div' );
 	private const LAYOUT_KEYS       = array( 'x', 'y', 'width', 'height', 'anchorX', 'anchorY', 'rotation', 'visible' );
 	private const STYLE_KEYS        = array( 'fontRef', 'fontSize', 'lineHeight', 'letterSpacing', 'color', 'textAlign', 'backgroundColor', 'borderRadius', 'paddingX', 'paddingY', 'opacity' );
+	private const BUTTON_STATE_KEYS = array( 'hoverBackgroundColor', 'hoverColor', 'focusOutlineColor' );
+	private const SHAPE_KINDS       = array( 'rectangle', 'circle' );
+	private const LAYER_TYPES       = array( 'text', 'image', 'button', 'shape' );
+	private const OPTIONAL_STYLE_KEYS = array( 'borderWidth', 'borderColor', 'shadowX', 'shadowY', 'shadowBlur', 'shadowColor', 'shadowOpacity' );
 	private const PHASE_KEYS        = array( 'preset', 'startMs', 'durationMs', 'easing', 'distance' );
 
 	/** Style keys that may be overridden per breakpoint (types.ts OVERRIDABLE_STYLE_KEYS). */
@@ -422,6 +426,25 @@ final class DocumentValidator {
 			case 'opacity':
 				$this->num( $obj, $key, $path, 0, 1 );
 				return;
+			case 'borderWidth':
+				$this->num( $obj, $key, $path, 0, Limits::BORDER_WIDTH_MAX );
+				return;
+			case 'borderColor':
+				$this->color( $obj, $key, $path, false );
+				return;
+			case 'shadowX':
+			case 'shadowY':
+				$this->num( $obj, $key, $path, -Limits::SHADOW_OFFSET_MAX, Limits::SHADOW_OFFSET_MAX );
+				return;
+			case 'shadowBlur':
+				$this->num( $obj, $key, $path, 0, Limits::SHADOW_BLUR_MAX );
+				return;
+			case 'shadowColor':
+				$this->color( $obj, $key, $path, true );
+				return;
+			case 'shadowOpacity':
+				$this->num( $obj, $key, $path, 0, 1 );
+				return;
 		}
 	}
 
@@ -514,30 +537,91 @@ final class DocumentValidator {
 		}
 	}
 
+	/** Rich text: paragraphs of runs; at least one paragraph, bounded counts and total characters. */
+	private function validate_rich( mixed $value, string $path ): void {
+		if ( ! is_array( $value ) || ! array_is_list( $value ) ) {
+			$this->add( $path, 'type' );
+			return;
+		}
+		if ( count( $value ) < 1 || count( $value ) > Limits::RICH_PARAGRAPHS ) {
+			$this->add( $path, 'count' );
+		}
+		$characters = 0;
+		foreach ( $value as $index => $paragraph ) {
+			$at    = $path . '/' . $index;
+			$entry = $this->object( $paragraph, $at, array( 'runs' ) );
+			if ( null === $entry ) {
+				continue;
+			}
+			foreach ( $this->list_of( $entry, 'runs', $at, 0, Limits::RICH_RUNS_PER_PARAGRAPH ) as $run_index => $run ) {
+				$run_at = $at . '/runs/' . $run_index;
+				$item   = $this->object( $run, $run_at, array( 'text' ), array( 'bold', 'italic', 'link' ) );
+				if ( null === $item ) {
+					continue;
+				}
+				$this->str( $item, 'text', $run_at, 1, Limits::TEXT_LENGTH );
+				if ( is_string( $item->text ?? null ) ) {
+					$characters += mb_strlen( $item->text, 'UTF-8' );
+				}
+				$this->bool( $item, 'bold', $run_at );
+				$this->bool( $item, 'italic', $run_at );
+				if ( ! property_exists( $item, 'link' ) ) {
+					continue;
+				}
+				$link_at = $run_at . '/link';
+				$link    = $this->object( $item->link, $link_at, array( 'url' ), array( 'newTab' ) );
+				if ( null === $link ) {
+					continue;
+				}
+				$this->str( $link, 'url', $link_at, 1, Limits::URL_LENGTH );
+				if ( is_string( $link->url ?? null ) && '' !== $link->url && 1 !== preg_match( self::LINK_PATTERN, $link->url ) ) {
+					$this->add( $link_at . '/url', 'url' );
+				}
+				$this->bool( $link, 'newTab', $link_at );
+			}
+		}
+		if ( $characters > Limits::TEXT_LENGTH ) {
+			$this->add( $path, 'length' );
+		}
+	}
+
 	private function validate_content( mixed $type, mixed $value, string $path ): void {
 		switch ( $type ) {
 			case 'text':
-				$content = $this->object( $value, $path, array( 'text', 'tag' ) );
+				$content = $this->object( $value, $path, array( 'text', 'tag' ), array( 'rich' ) );
 				if ( null === $content ) {
 					return;
 				}
 				$this->str( $content, 'text', $path, 0, Limits::TEXT_LENGTH );
 				$this->enumeration( $content, 'tag', $path, self::TEXT_TAGS );
+				if ( property_exists( $content, 'rich' ) ) {
+					$this->validate_rich( $content->rich, $path . '/rich' );
+				}
 				return;
 			case 'image':
-				$content = $this->object( $value, $path, array( 'attachmentId', 'alt', 'decorative', 'fit' ) );
+				$content = $this->object( $value, $path, array( 'attachmentId', 'alt', 'decorative', 'fit' ), array( 'linkUrl', 'linkNewTab', 'focalX', 'focalY' ) );
 				if ( null === $content ) {
 					return;
 				}
+				$this->num( $content, 'focalX', $path, 0, 100 );
+				$this->num( $content, 'focalY', $path, 0, 100 );
+				$this->str( $content, 'linkUrl', $path, 0, Limits::URL_LENGTH );
+				if ( property_exists( $content, 'linkUrl' ) && is_string( $content->linkUrl ) && '' !== $content->linkUrl && 1 !== preg_match( self::LINK_PATTERN, $content->linkUrl ) ) {
+					$this->add( $path . '/linkUrl', 'url' );
+				}
+				$this->bool( $content, 'linkNewTab', $path );
 				$this->attachment( $content, 'attachmentId', $path );
 				$this->str( $content, 'alt', $path, 0, Limits::ALT_LENGTH );
 				$this->bool( $content, 'decorative', $path );
 				$this->enumeration( $content, 'fit', $path, array( 'cover', 'contain' ) );
 				return;
 			case 'button':
-				$content = $this->object( $value, $path, array( 'label', 'url', 'newTab' ) );
+				$content = $this->object( $value, $path, array( 'label', 'url', 'newTab' ), self::BUTTON_STATE_KEYS );
 				if ( null === $content ) {
 					return;
+				}
+				foreach ( self::BUTTON_STATE_KEYS as $state_key ) {
+					$this->color( $content, $state_key, $path, false );
 				}
 				$this->str( $content, 'label', $path, 1, Limits::BUTTON_LABEL_LENGTH );
 				$this->str( $content, 'url', $path, 1, Limits::URL_LENGTH );
@@ -545,6 +629,13 @@ final class DocumentValidator {
 					$this->add( $path . '/url', 'url' );
 				}
 				$this->bool( $content, 'newTab', $path );
+				return;
+			case 'shape':
+				$content = $this->object( $value, $path, array( 'kind' ) );
+				if ( null === $content ) {
+					return;
+				}
+				$this->enumeration( $content, 'kind', $path, self::SHAPE_KINDS );
 				return;
 			default:
 				// The layer type itself is reported by validate_layer(); content cannot be checked.
@@ -565,7 +656,7 @@ final class DocumentValidator {
 			return;
 		}
 		$this->id( $layer, 'id', $path, true );
-		$this->enumeration( $layer, 'type', $path, array( 'text', 'image', 'button' ) );
+		$this->enumeration( $layer, 'type', $path, self::LAYER_TYPES );
 		$this->str( $layer, 'name', $path, 0, Limits::NAME_LENGTH );
 		$this->bool( $layer, 'locked', $path );
 		if ( property_exists( $layer, 'content' ) ) {
@@ -580,9 +671,9 @@ final class DocumentValidator {
 			}
 		}
 		if ( property_exists( $layer, 'style' ) ) {
-			$style = $this->object( $layer->style, $path . '/style', self::STYLE_KEYS );
+			$style = $this->object( $layer->style, $path . '/style', self::STYLE_KEYS, self::OPTIONAL_STYLE_KEYS );
 			if ( null !== $style ) {
-				foreach ( self::STYLE_KEYS as $key ) {
+				foreach ( array_merge( self::STYLE_KEYS, self::OPTIONAL_STYLE_KEYS ) as $key ) {
 					$this->validate_style_value( $style, $key, $path . '/style' );
 				}
 				if ( property_exists( $style, 'fontRef' ) && is_string( $style->fontRef ) && 1 === preg_match( self::ID_PATTERN, $style->fontRef ) && ! isset( $font_refs[ $style->fontRef ] ) ) {
@@ -616,8 +707,12 @@ final class DocumentValidator {
 		$this->num( $slide, 'durationMs', $path, Limits::SLIDE_DURATION_MIN_MS, Limits::SLIDE_DURATION_MAX_MS, true );
 		if ( property_exists( $slide, 'background' ) ) {
 			$at         = $path . '/background';
-			$background = $this->object( $slide->background, $at, array( 'color', 'attachmentId', 'fit' ) );
+			$background = $this->object( $slide->background, $at, array( 'color', 'attachmentId', 'fit' ), array( 'overlayColor', 'overlayOpacity', 'focalX', 'focalY' ) );
 			if ( null !== $background ) {
+				$this->color( $background, 'overlayColor', $at, true );
+				$this->num( $background, 'overlayOpacity', $at, 0, 1 );
+				$this->num( $background, 'focalX', $at, 0, 100 );
+				$this->num( $background, 'focalY', $at, 0, 100 );
 				$this->color( $background, 'color', $at, true );
 				$this->attachment( $background, 'attachmentId', $at );
 				$this->enumeration( $background, 'fit', $at, array( 'cover', 'contain' ) );

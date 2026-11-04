@@ -13,7 +13,7 @@ msgstr ""
 #. Plugin Name of the plugin
 #: sw-sliderman.php
 #: src/Admin/AdminPage.php:49
-#: src/Rendering/SliderRenderer.php:108
+#: src/Rendering/SliderRenderer.php:109
 msgid "SW Sliderman"
 msgstr "SW Sliderman"
 
@@ -82,60 +82,60 @@ msgstr "– Slider auswählen –"
 msgid "%s (not published)"
 msgstr "%s (nicht veröffentlicht)"
 
-#: src/Rendering/SliderRenderer.php:53
+#: src/Rendering/SliderRenderer.php:54
 msgid "Slider not found."
 msgstr "Slider nicht gefunden."
 
-#: src/Rendering/SliderRenderer.php:53
+#: src/Rendering/SliderRenderer.php:54
 msgid "This slider has not been published yet."
 msgstr "Dieser Slider wurde noch nicht veröffentlicht."
 
-#: src/Rendering/SliderRenderer.php:61
+#: src/Rendering/SliderRenderer.php:62
 msgid "The draft contains invalid data."
 msgstr "Der Entwurf enthält ungültige Daten."
 
-#: src/Rendering/SliderRenderer.php:71
-#: src/Rendering/SliderRenderer.php:76
+#: src/Rendering/SliderRenderer.php:72
+#: src/Rendering/SliderRenderer.php:77
 msgid "The published slider data is damaged."
 msgstr "Die veröffentlichten Sliderdaten sind beschädigt."
 
-#: src/Rendering/SliderRenderer.php:80
+#: src/Rendering/SliderRenderer.php:81
 msgid "This slider has no enabled slides."
 msgstr "Dieser Slider hat keine aktivierten Slides."
 
-#: src/Rendering/SliderRenderer.php:90
+#: src/Rendering/SliderRenderer.php:91
 msgid "carousel"
 msgstr "Karussell"
 
 #. translators: 1: slide position, 2: number of slides
-#: src/Rendering/SliderRenderer.php:118
+#: src/Rendering/SliderRenderer.php:119
 #, php-format
 msgid "%1$d of %2$d"
 msgstr "%1$d von %2$d"
 
-#: src/Rendering/SliderRenderer.php:123
+#: src/Rendering/SliderRenderer.php:124
 msgid "slide"
 msgstr "Slide"
 
-#: src/Rendering/SliderRenderer.php:219
+#: src/Rendering/SliderRenderer.php:230
 msgid "Pause slider"
 msgstr "Slider anhalten"
 
-#: src/Rendering/SliderRenderer.php:219
+#: src/Rendering/SliderRenderer.php:230
 msgid "Play slider"
 msgstr "Slider abspielen"
 
-#: src/Rendering/SliderRenderer.php:222
+#: src/Rendering/SliderRenderer.php:233
 msgid "Previous slide"
 msgstr "Vorheriger Slide"
 
 #. translators: %d: slide position
-#: src/Rendering/SliderRenderer.php:229
+#: src/Rendering/SliderRenderer.php:240
 #, php-format
 msgid "Show slide %d"
 msgstr "Slide %d anzeigen"
 
-#: src/Rendering/SliderRenderer.php:237
+#: src/Rendering/SliderRenderer.php:248
 msgid "Next slide"
 msgstr "Nächster Slide"
 

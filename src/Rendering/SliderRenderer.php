@@ -15,6 +15,7 @@ use SW\Slider\Application\StoredSlider;
 use SW\Slider\Application\PublishedSnapshot;
 use SW\Slider\Domain\CanonicalJson;
 use SW\Slider\Domain\DocumentValidator;
+use SW\Slider\Domain\RichText;
 use SW\Slider\Domain\Schedule;
 use SW\Slider\Infrastructure\Capabilities;
 
@@ -157,6 +158,7 @@ final class SliderRenderer {
 			'text'   => $this->text( $layer['content'] ),
 			'image'  => $this->image( $layer['content'], $layer['layout'], $eager ),
 			'button' => $this->button( $layer['content'] ),
+			'shape'  => '<span class="sws-shape sws-shape--' . ( 'circle' === ( $layer['content']['kind'] ?? '' ) ? 'circle' : 'rectangle' ) . '" aria-hidden="true"></span>',
 			default  => '',
 		};
 		if ( '' === $body ) {
@@ -170,6 +172,9 @@ final class SliderRenderer {
 	 */
 	private function text( array $content ): string {
 		$tag = in_array( $content['tag'], array( 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div' ), true ) ? $content['tag'] : 'p';
+		if ( isset( $content['rich'] ) && is_array( $content['rich'] ) && array() !== $content['rich'] ) {
+			return '<' . $tag . ' class="sws-text sws-text--rich">' . RichText::to_html( $content['rich'] ) . '</' . $tag . '>';
+		}
 		return '<' . $tag . ' class="sws-text">' . nl2br( esc_html( (string) $content['text'] ), false ) . '</' . $tag . '>';
 	}
 
@@ -182,7 +187,7 @@ final class SliderRenderer {
 			return '';
 		}
 		$width = (int) ceil( (float) $layout['width'] );
-		return (string) wp_get_attachment_image(
+		$image = (string) wp_get_attachment_image(
 			$content['attachmentId'],
 			'full',
 			false,
@@ -194,6 +199,12 @@ final class SliderRenderer {
 				'sizes'    => '(max-width: 767px) 100vw, ' . $width . 'px',
 			)
 		);
+		$url   = (string) ( $content['linkUrl'] ?? '' );
+		if ( '' === $image || '' === $url || 1 !== preg_match( DocumentValidator::LINK_PATTERN, $url ) ) {
+			return $image;
+		}
+		$target = true === ( $content['linkNewTab'] ?? false ) ? ' target="_blank" rel="noopener noreferrer"' : '';
+		return '<a class="sws-image-link" href="' . esc_url( $url, array( 'http', 'https', 'mailto', 'tel' ) ) . '"' . $target . '>' . $image . '</a>';
 	}
 
 	/**

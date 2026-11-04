@@ -2,13 +2,14 @@
 import { prepareImages } from '../../../browser/images';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { enterKeyframes, exitKeyframes, phaseTiming } from '@shared/animation';
-import { layerDeclarations, styleObject } from '@shared/css';
-import { overflowsStage, resolveLayer, type StageBox } from '@shared/layout';
+import { focalPosition, layerDeclarations, slideBackgroundCss, styleObject } from '@shared/css';
+import { overflowsStage, resolveLayer, resolveLayerLayout, type StageBox } from '@shared/layout';
 import { scheduleSlide } from '@shared/schedule';
 import type { Layer } from '@shared/types';
 import { useEditorStore } from '@editor/stores/editor';
 import { __, sprintf } from '@editor/i18n';
 import { formatNumber } from '@editor/utils/format';
+import { nextMeasurement } from '@editor/utils/measure';
 import LayerContent from './LayerContent.vue';
 import { useInstalledFonts } from '@editor/composables/useInstalledFonts';
 
@@ -54,10 +55,9 @@ onMounted(() => {
   observer = new ResizeObserver((entries) => {
     const width = entries[0]?.contentRect.width;
     const height = entries[0]?.contentRect.height;
-    if (height !== undefined && Math.abs(height - availableHeight.value) > 1)
-      availableHeight.value = height;
     // Ignore sub-pixel jitter to avoid resize/scale feedback loops.
-    if (width !== undefined && Math.abs(width - available.value) > 1) available.value = width;
+    availableHeight.value = nextMeasurement(availableHeight.value, height);
+    available.value = nextMeasurement(available.value, width);
   });
   observer.observe(scroller.value);
 });
@@ -92,6 +92,7 @@ const resolved = computed(() => {
       stage.value.stageWidth,
       stage.value.stageHeight,
       doc.fontRefs,
+      layer.type === 'shape' ? layer.content.kind : undefined,
     );
     return {
       layer,
@@ -111,6 +112,9 @@ const background = computed(() => {
     color: slide.background.color ?? 'transparent',
     image: id !== null ? (editor.media[id]?.url ?? null) : null,
     fit: slide.background.fit,
+    position: focalPosition(slide.background.focalX, slide.background.focalY) ?? undefined,
+    // Same rules as the published stylesheet (overlay between image and stage).
+    css: slideBackgroundCss(`.sws-canvas__frame .sws-sl-${slide.id}`, slide.background),
   };
 });
 
@@ -118,11 +122,13 @@ const background = computed(() => {
 type Handle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 interface PointerState {
   id: number;
-  mode: 'move' | Handle;
+  mode: 'move' | 'rotate' | Handle;
   startX: number;
   startY: number;
   boxes: Map<string, StageBox>;
   moved: boolean;
+  /** Rotation only: screen centre of the layer, pointer angle and layer rotation at the start. */
+  rotation?: { centerX: number; centerY: number; startAngle: number; startValue: number };
 }
 let pointer: PointerState | null = null;
 const guides = ref<{ x: number | null; y: number | null }>({ x: null, y: null });
@@ -157,6 +163,46 @@ function startPointer(event: PointerEvent, layer: Layer, mode: PointerState['mod
   window.addEventListener('keydown', onEscape, true);
 }
 
+const ROTATE_SNAP_DEG = 15;
+/** Angle of the pointer around the layer centre in degrees, 0 = straight above the centre. */
+function pointerAngle(x: number, y: number, centerX: number, centerY: number): number {
+  return (Math.atan2(y - centerY, x - centerX) * 180) / Math.PI + 90;
+}
+
+function startRotate(event: PointerEvent, layer: Layer): void {
+  if (event.button !== 0 || !fontsReady.value || layer.locked) return;
+  event.stopPropagation();
+  const handle = event.currentTarget as HTMLElement;
+  // The selection frame is not rotated, so its centre is the rotation centre of the layer.
+  const frame = handle.parentElement?.getBoundingClientRect();
+  if (!frame) return;
+  const centerX = frame.left + frame.width / 2;
+  const centerY = frame.top + frame.height / 2;
+  handle.setPointerCapture(event.pointerId);
+  pointer = {
+    id: event.pointerId,
+    mode: 'rotate',
+    startX: event.clientX,
+    startY: event.clientY,
+    boxes: new Map(),
+    moved: false,
+    rotation: {
+      centerX,
+      centerY,
+      startAngle: pointerAngle(event.clientX, event.clientY, centerX, centerY),
+      // Read from the store, not from the (possibly not yet re-rendered) template prop.
+      startValue: resolveLayerLayout(
+        editor.slide?.layers.find((item) => item.id === layer.id) ?? layer,
+        editor.device,
+      ).rotation,
+    },
+  };
+  pointerLayerId = layer.id;
+  editor.beginGesture();
+  window.addEventListener('keydown', onEscape, true);
+}
+let pointerLayerId = '';
+
 function snap(value: number, size: number, axis: 'x' | 'y'): number {
   const total = axis === 'x' ? stage.value.stageWidth : stage.value.stageHeight;
   const threshold = SNAP_PX / scale.value;
@@ -178,6 +224,15 @@ function snap(value: number, size: number, axis: 'x' | 'y'): number {
 
 function onPointerMove(event: PointerEvent): void {
   if (!pointer || event.pointerId !== pointer.id) return;
+  if (pointer.mode === 'rotate' && pointer.rotation) {
+    const { centerX, centerY, startAngle, startValue } = pointer.rotation;
+    const turned = pointerAngle(event.clientX, event.clientY, centerX, centerY) - startAngle;
+    let value = startValue + turned;
+    if (event.shiftKey) value = Math.round(value / ROTATE_SNAP_DEG) * ROTATE_SNAP_DEG;
+    pointer.moved = true;
+    editor.rotateLayer(pointerLayerId, value);
+    return;
+  }
   const dx = (event.clientX - pointer.startX) / scale.value;
   const dy = (event.clientY - pointer.startY) / scale.value;
   if (!pointer.moved && Math.hypot(dx, dy) * scale.value < 2) return;
@@ -323,11 +378,17 @@ const deviceLabel = computed(
     </div>
     <div ref="scroller" class="sws-canvas__scroller" @pointerdown.self="editor.clearSelection()">
       <div class="sws-slider sws-canvas__frame" :style="{ width: `${frameWidth}px` }">
-        <div class="sws-slide sws-is-active" :style="{ backgroundColor: background?.color }">
+        <component :is="'style'" v-if="background?.css">{{ background.css }}</component>
+        <div
+          class="sws-slide sws-is-active"
+          :class="`sws-sl-${editor.slide?.id ?? ''}`"
+          :style="{ backgroundColor: background?.color }"
+        >
           <img
             v-if="background?.image"
             class="sws-slide__bg"
             :class="`sws-fit-${background.fit}`"
+            :style="{ objectPosition: background.position }"
             :src="background.image"
             alt=""
           />
@@ -375,6 +436,14 @@ const deviceLabel = computed(
             >
               <template v-if="selectionBoxes.length === 1 && !sel.layer.locked">
                 <span
+                  class="sws-canvas__rotate"
+                  :title="__('Rotate (Shift: 15° steps)')"
+                  @pointerdown="startRotate($event, sel.layer)"
+                  @pointermove="onPointerMove"
+                  @pointerup="onPointerUp"
+                  @pointercancel="cancelPointer"
+                />
+                <span
                   v-for="handle in handles"
                   :key="handle"
                   class="sws-canvas__handle"
@@ -403,7 +472,7 @@ const deviceLabel = computed(
     <p class="sws-canvas__hint">
       {{
         __(
-          'Drag to move, handles to resize (Shift keeps the ratio), arrow keys move by 1 px (Shift: 10 px), Esc cancels.',
+          'Drag to move, handles to resize (Shift keeps the ratio), the round handle rotates (Shift: 15° steps), arrow keys move by 1 px (Shift: 10 px), Esc cancels.',
         )
       }}
     </p>
@@ -475,6 +544,28 @@ const deviceLabel = computed(
   border: 2px solid var(--sws-primary);
   background: #fff;
   pointer-events: auto;
+}
+.sws-canvas__rotate {
+  position: absolute;
+  left: 50%;
+  top: -28px;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border-radius: 50%;
+  border: 2px solid var(--sws-primary);
+  background: #fff;
+  cursor: grab;
+  pointer-events: auto;
+}
+.sws-canvas__rotate::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 1px;
+  height: 14px;
+  background: var(--sws-primary);
 }
 .sws-canvas__handle--nw {
   left: 0;

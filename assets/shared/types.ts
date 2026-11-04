@@ -68,6 +68,15 @@ export interface LayerStyle {
   readonly paddingX: number;
   readonly paddingY: number;
   readonly opacity: number;
+  /** Optional since the first v1 documents; absent means: no border / no shadow (see css.ts). */
+  readonly borderWidth?: number;
+  readonly borderColor?: string;
+  readonly shadowX?: number;
+  readonly shadowY?: number;
+  readonly shadowBlur?: number;
+  /** `null` or absent: no shadow. */
+  readonly shadowColor?: string | null;
+  readonly shadowOpacity?: number;
 }
 
 /** Style properties that may differ per breakpoint. Everything else is shared by all breakpoints. */
@@ -126,8 +135,7 @@ export interface AnimationPhase {
 }
 
 export type ExitAnimation =
-  | { readonly mode: 'slide-end' }
-  | ({ readonly mode: 'timed' } & AnimationPhase);
+  { readonly mode: 'slide-end' } | ({ readonly mode: 'timed' } & AnimationPhase);
 
 export interface LayerAnimation {
   readonly enter: AnimationPhase;
@@ -137,9 +145,30 @@ export interface LayerAnimation {
 export type TextTag = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'div';
 export const TEXT_TAGS: readonly TextTag[] = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div'];
 
+/** Inline link of a rich text run; the URL follows the same policy as button links. */
+export interface RichLink {
+  readonly url: string;
+  readonly newTab?: boolean;
+}
+
+/** One formatted piece of text. A `\n` inside `text` is a line break. */
+export interface RichRun {
+  readonly text: string;
+  readonly bold?: boolean;
+  readonly italic?: boolean;
+  readonly link?: RichLink;
+}
+
+export interface RichParagraph {
+  readonly runs: readonly RichRun[];
+}
+
 export interface TextContent {
+  /** Plain-text mirror of `rich` (or the whole text of a plain layer). */
   readonly text: string;
   readonly tag: TextTag;
+  /** Optional structured rich text; when present it is what is rendered. */
+  readonly rich?: readonly RichParagraph[];
 }
 
 export type ImageFit = 'cover' | 'contain';
@@ -149,12 +178,29 @@ export interface ImageContent {
   readonly alt: string;
   readonly decorative: boolean;
   readonly fit: ImageFit;
+  /** Optional link target (same URL policy as buttons); absent or empty: no link. */
+  readonly linkUrl?: string;
+  readonly linkNewTab?: boolean;
+  /** Optional focal point in percent (default 50), rendered as object-position. */
+  readonly focalX?: number;
+  readonly focalY?: number;
 }
 
 export interface ButtonContent {
   readonly label: string;
   readonly url: string;
   readonly newTab: boolean;
+  /** Optional hover/focus colours (6-digit hex); absent = the layer's normal look. */
+  readonly hoverBackgroundColor?: string;
+  readonly hoverColor?: string;
+  readonly focusOutlineColor?: string;
+}
+
+export const SHAPE_KINDS = ['rectangle', 'circle'] as const;
+export type ShapeKind = (typeof SHAPE_KINDS)[number];
+
+export interface ShapeContent {
+  readonly kind: ShapeKind;
 }
 
 interface LayerBase {
@@ -171,9 +217,11 @@ export type TextLayer = LayerBase & { readonly type: 'text'; readonly content: T
 export type ImageLayer = LayerBase & { readonly type: 'image'; readonly content: ImageContent };
 export type ButtonLayer = LayerBase & { readonly type: 'button'; readonly content: ButtonContent };
 
-export type Layer = TextLayer | ImageLayer | ButtonLayer;
+export type ShapeLayer = LayerBase & { readonly type: 'shape'; readonly content: ShapeContent };
+
+export type Layer = TextLayer | ImageLayer | ButtonLayer | ShapeLayer;
 export type LayerType = Layer['type'];
-export const LAYER_TYPES: readonly LayerType[] = ['text', 'image', 'button'];
+export const LAYER_TYPES: readonly LayerType[] = ['text', 'image', 'button', 'shape'];
 
 export type TransitionType = 'cut' | 'fade' | 'slide';
 
@@ -186,7 +234,17 @@ export interface SlideBackground {
   readonly color: string | null;
   readonly attachmentId: number | null;
   readonly fit: ImageFit;
+  /** Optional colour laid over the background image; absent or null: none. */
+  readonly overlayColor?: string | null;
+  /** Optional; DEFAULT_OVERLAY_OPACITY when a colour is set and this is absent. */
+  readonly overlayOpacity?: number;
+  /** Optional focal point of the background image in percent (default 50). */
+  readonly focalX?: number;
+  readonly focalY?: number;
 }
+
+export const DEFAULT_OVERLAY_OPACITY = 0.4;
+export const DEFAULT_FOCAL = 50;
 
 export interface Slide {
   readonly id: string;

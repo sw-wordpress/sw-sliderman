@@ -17,6 +17,8 @@ export const LIMITS = {
   nameLength: 80,
   labelLength: 120,
   textLength: 5000,
+  richParagraphs: 50,
+  richRunsPerParagraph: 100,
   altLength: 300,
   buttonLabelLength: 200,
   urlLength: 2000,
@@ -44,5 +46,8 @@ export const LIMITS = {
   letterSpacingMax: 100,
   paddingMax: 400,
   radiusMax: 2000,
+  borderWidthMax: 20,
+  shadowOffsetMax: 200,
+  shadowBlurMax: 100,
   rotationMax: 360,
 } as const;

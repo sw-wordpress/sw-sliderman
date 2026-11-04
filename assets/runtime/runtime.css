@@ -81,6 +81,9 @@
   text-transform: none;
   white-space: normal;
 }
+.sws-slider .sws-p {
+  display: block;
+}
 .sws-slider .sws-image {
   display: block;
   width: 100%;
@@ -88,6 +91,11 @@
   max-width: none;
   margin: 0;
   border-radius: inherit;
+}
+.sws-slider .sws-shape {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 .sws-slider .sws-button {
   display: flex;
@@ -238,4 +246,10 @@
   .sws-slider .sws-dot::before {
     transition: none;
   }
+}
+.sws-slider .sws-image-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
 }

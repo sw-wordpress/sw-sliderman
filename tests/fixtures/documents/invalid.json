@@ -670,6 +670,640 @@
           "code": "enum"
         }
       ]
+    },
+    {
+      "name": "border width above the maximum",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/1/style/borderWidth",
+          "value": 21
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/1/style/borderWidth",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "shadow colour must be a 6-digit hex colour or null",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/1/style/shadowColor",
+          "value": "rgba(0,0,0,1)"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/1/style/shadowColor",
+          "code": "pattern"
+        }
+      ]
+    },
+    {
+      "name": "shadow opacity must be a number",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/1/style/shadowOpacity",
+          "value": "0.5"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/1/style/shadowOpacity",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "image link must follow the URL policy",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/1/layers/0/content/linkUrl",
+          "value": "javascript:alert(1)"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/1/layers/0/content/linkUrl",
+          "code": "url"
+        }
+      ]
+    },
+    {
+      "name": "image link flag must be boolean",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/1/layers/0/content/linkNewTab",
+          "value": "yes"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/1/layers/0/content/linkNewTab",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "unknown style key is still rejected",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/1/style/textShadow",
+          "value": "1px"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/1/style/textShadow",
+          "code": "unknown_key"
+        }
+      ]
+    },
+    {
+      "name": "button hover and focus colours must be 6-digit hex",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/1/content/hoverBackgroundColor",
+          "value": "yellow"
+        },
+        {
+          "op": "set",
+          "path": "/slides/0/layers/1/content/hoverColor",
+          "value": null
+        },
+        {
+          "op": "set",
+          "path": "/slides/0/layers/1/content/focusOutlineColor",
+          "value": "#fff"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/1/content/hoverBackgroundColor",
+          "code": "pattern"
+        },
+        {
+          "path": "/slides/0/layers/1/content/hoverColor",
+          "code": "type"
+        },
+        {
+          "path": "/slides/0/layers/1/content/focusOutlineColor",
+          "code": "pattern"
+        }
+      ]
+    },
+    {
+      "name": "button content rejects unknown state keys",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/1/content/activeColor",
+          "value": "#ffffff"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/1/content/activeColor",
+          "code": "unknown_key"
+        }
+      ]
+    },
+    {
+      "name": "shape kind must be rectangle or circle",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/1/layers/1/content/kind",
+          "value": "triangle"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/1/layers/1/content/kind",
+          "code": "enum"
+        }
+      ]
+    },
+    {
+      "name": "shape content requires a kind",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "remove",
+          "path": "/slides/1/layers/1/content/kind"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/1/layers/1/content/kind",
+          "code": "required"
+        }
+      ]
+    },
+    {
+      "name": "shape content rejects unknown keys",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/1/layers/2/content/radius",
+          "value": 4
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/1/layers/2/content/radius",
+          "code": "unknown_key"
+        }
+      ]
+    },
+    {
+      "name": "rich text must be an array",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/content/rich",
+          "value": "x"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/content/rich",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "rich text needs at least one paragraph",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/content/rich",
+          "value": []
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/content/rich",
+          "code": "count"
+        }
+      ]
+    },
+    {
+      "name": "rich paragraphs reject unknown keys",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/content/rich",
+          "value": [
+            {
+              "runs": [],
+              "align": "left"
+            }
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/content/rich/0/align",
+          "code": "unknown_key"
+        }
+      ]
+    },
+    {
+      "name": "rich paragraphs require runs",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/content/rich",
+          "value": [
+            {}
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/content/rich/0/runs",
+          "code": "required"
+        }
+      ]
+    },
+    {
+      "name": "rich runs must not be empty",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/content/rich",
+          "value": [
+            {
+              "runs": [
+                {
+                  "text": ""
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/content/rich/0/runs/0/text",
+          "code": "length"
+        }
+      ]
+    },
+    {
+      "name": "rich runs reject unknown keys",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/content/rich",
+          "value": [
+            {
+              "runs": [
+                {
+                  "text": "a",
+                  "underline": true
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/content/rich/0/runs/0/underline",
+          "code": "unknown_key"
+        }
+      ]
+    },
+    {
+      "name": "rich run flags must be booleans",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/content/rich",
+          "value": [
+            {
+              "runs": [
+                {
+                  "text": "a",
+                  "bold": 1,
+                  "italic": "yes"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/content/rich/0/runs/0/bold",
+          "code": "type"
+        },
+        {
+          "path": "/slides/0/layers/0/content/rich/0/runs/0/italic",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "rich links must pass the URL policy",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/content/rich",
+          "value": [
+            {
+              "runs": [
+                {
+                  "text": "a",
+                  "link": {
+                    "url": "javascript:alert(1)"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/content/rich/0/runs/0/link/url",
+          "code": "url"
+        }
+      ]
+    },
+    {
+      "name": "rich links need a URL and a boolean newTab",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/content/rich",
+          "value": [
+            {
+              "runs": [
+                {
+                  "text": "a",
+                  "link": {
+                    "newTab": "x"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/content/rich/0/runs/0/link/url",
+          "code": "required"
+        },
+        {
+          "path": "/slides/0/layers/0/content/rich/0/runs/0/link/newTab",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "rich text total length is limited",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/content/rich",
+          "value": [
+            {
+              "runs": [
+                {
+                  "text": "a"
+                }
+              ]
+            },
+            {
+              "runs": [
+                {
+                  "text": "b"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/content/rich/0/runs/0/text",
+          "value": {
+            "repeat": "a",
+            "times": 3000
+          }
+        },
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/content/rich/1/runs/0/text",
+          "value": {
+            "repeat": "b",
+            "times": 3000
+          }
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/content/rich",
+          "code": "length"
+        }
+      ]
+    },
+    {
+      "name": "rich run text length is limited",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/content/rich",
+          "value": [
+            {
+              "runs": [
+                {
+                  "text": "a"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/content/rich/0/runs/0/text",
+          "value": {
+            "repeat": "a",
+            "times": 5001
+          }
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/content/rich/0/runs/0/text",
+          "code": "length"
+        },
+        {
+          "path": "/slides/0/layers/0/content/rich",
+          "code": "length"
+        }
+      ]
+    },
+    {
+      "name": "overlay colour must be a hex colour",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/background/overlayColor",
+          "value": "red"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/background/overlayColor",
+          "code": "pattern"
+        }
+      ]
+    },
+    {
+      "name": "overlay opacity is limited to 0..1",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/background/overlayOpacity",
+          "value": 1.5
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/background/overlayOpacity",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "background focal point is limited to 0..100",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/background/focalX",
+          "value": -1
+        },
+        {
+          "op": "set",
+          "path": "/slides/0/background/focalY",
+          "value": 100.5
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/background/focalX",
+          "code": "range"
+        },
+        {
+          "path": "/slides/0/background/focalY",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "background focal point must be a number",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/background/focalX",
+          "value": "50"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/background/focalX",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "background rejects unknown keys",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/background/overlayBlur",
+          "value": 4
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/background/overlayBlur",
+          "code": "unknown_key"
+        }
+      ]
+    },
+    {
+      "name": "image focal point is limited to 0..100",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/1/layers/0/content/focalX",
+          "value": 101
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/1/layers/0/content/focalX",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "image focal point must be a number",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/1/layers/0/content/focalY",
+          "value": null
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/1/layers/0/content/focalY",
+          "code": "type"
+        }
+      ]
     }
   ]
 }

@@ -798,4 +798,129 @@ final class SliderRestTest extends WP_UnitTestCase {
 			$this->assertSame( 500, $response->get_status() );
 			$this->assertSame( 200, $this->request( 'GET', '/sliders/' . $detail['id'] )->get_status() );
 	}
+
+	public function test_trashed_sliders_are_listed_restored_and_deleted_for_good(): void {
+		$detail = $this->create( 'Trash me' );
+		$id     = $detail['id'];
+		$this->assertSame( 200, $this->request( 'DELETE', '/sliders/' . $id )->get_status() );
+
+		$request = new WP_REST_Request( 'GET', '/sw-sliderman/v1/sliders' );
+		$request->set_param( 'trashed', true );
+		$listed = rest_get_server()->dispatch( $request )->get_data();
+		$this->assertContains( $id, array_column( $listed, 'id' ) );
+		$this->assertNotContains( $id, array_column( $this->request( 'GET', '/sliders' )->get_data(), 'id' ) );
+
+		$this->assertSame( 200, $this->request( 'POST', '/sliders/' . $id . '/untrash' )->get_status() );
+		$this->assertSame( 'publish', get_post_status( $id ) );
+		$this->assertSame( 200, $this->request( 'GET', '/sliders/' . $id )->get_status() );
+
+		$this->request( 'DELETE', '/sliders/' . $id );
+		$this->assertSame( 200, $this->request( 'POST', '/sliders/' . $id . '/purge' )->get_status() );
+		$this->assertNull( get_post( $id ) );
+	}
+
+	public function test_restore_and_purge_reject_sliders_outside_the_trash(): void {
+		$id = $this->create()['id'];
+		$this->assertSame( 404, $this->request( 'POST', '/sliders/' . $id . '/untrash' )->get_status() );
+		$this->assertSame( 404, $this->request( 'POST', '/sliders/' . $id . '/purge' )->get_status() );
+		$this->assertSame( 200, $this->request( 'GET', '/sliders/' . $id )->get_status() );
+	}
+
+	public function test_image_layer_link_is_rendered_as_anchor_and_unsafe_urls_are_rejected(): void {
+		$detail = $this->create( 'Linked image' );
+		$image  = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/test-image.jpg' );
+		$this->assertGreaterThan( 0, $image );
+		$doc                           = $this->document_of( $detail );
+		$fixture                       = json_decode( (string) file_get_contents( dirname( __DIR__, 2 ) . '/fixtures/documents/valid/basic.json' ), true );
+		$layer                         = $fixture['slides'][1]['layers'][0];
+		$layer['content']['attachmentId'] = $image;
+		$layer['style']['shadowColor'] = '#112233';
+		$doc['slides'][0]['layers']    = array( $layer );
+		$saved = $this->request( 'PUT', '/sliders/' . $detail['id'], array( 'title' => 'Linked image', 'expectedVersion' => 1, 'document' => $doc ) );
+		$this->assertSame( 200, $saved->get_status(), wp_json_encode( $saved->get_data() ) );
+		$published = $this->request( 'POST', '/sliders/' . $detail['id'] . '/publish', array( 'version' => 2 ) );
+		$this->assertSame( 200, $published->get_status(), wp_json_encode( $published->get_data() ) );
+		wp_set_current_user( 0 );
+		$html = do_shortcode( '[sw_slider id="' . $detail['id'] . '"]' );
+		$this->assertMatchesRegularExpression( '~<a class="sws-image-link" href="https://example.com/galerie" target="_blank" rel="noopener noreferrer"><img ~', $html );
+		wp_set_current_user( $this->admin );
+
+		$doc['slides'][0]['layers'][0]['content']['linkUrl'] = 'javascript:alert(1)';
+		$rejected = $this->request( 'PUT', '/sliders/' . $detail['id'], array( 'title' => 'Linked image', 'expectedVersion' => 3, 'document' => $doc ) );
+		$this->assertSame( 422, $rejected->get_status() );
+	}
+
+	public function test_shape_layers_render_decoratively_and_unknown_shape_kinds_are_rejected(): void {
+		$detail  = $this->create( 'Shapes' );
+		$doc     = $this->document_of( $detail );
+		$fixture = json_decode( (string) file_get_contents( dirname( __DIR__, 2 ) . '/fixtures/documents/valid/basic.json' ), true );
+
+		$doc['slides'][0]['layers'] = array( $fixture['slides'][1]['layers'][1], $fixture['slides'][1]['layers'][2], $fixture['slides'][0]['layers'][1] );
+		$saved                      = $this->request( 'PUT', '/sliders/' . $detail['id'], array( 'title' => 'Shapes', 'expectedVersion' => 1, 'document' => $doc ) );
+		$this->assertSame( 200, $saved->get_status(), wp_json_encode( $saved->get_data() ) );
+		$published = $this->request( 'POST', '/sliders/' . $detail['id'] . '/publish', array( 'version' => 2 ) );
+		$this->assertSame( 200, $published->get_status(), wp_json_encode( $published->get_data() ) );
+		wp_set_current_user( 0 );
+		$html = do_shortcode( '[sw_slider id="' . $detail['id'] . '"]' );
+		$this->assertStringContainsString( '<span class="sws-shape sws-shape--circle" aria-hidden="true"></span>', $html );
+		$this->assertStringContainsString( '<span class="sws-shape sws-shape--rectangle" aria-hidden="true"></span>', $html );
+		wp_set_current_user( $this->admin );
+
+		$doc['slides'][0]['layers'][0]['content']['kind'] = 'triangle';
+		$rejected = $this->request( 'PUT', '/sliders/' . $detail['id'], array( 'title' => 'Shapes', 'expectedVersion' => 3, 'document' => $doc ) );
+		$this->assertSame( 422, $rejected->get_status() );
+	}
+
+	public function test_rich_text_is_rendered_as_escaped_markup_and_invalid_rich_text_is_rejected(): void {
+		$detail  = $this->create( 'Rich' );
+		$doc     = $this->document_of( $detail );
+		$fixture = json_decode( (string) file_get_contents( dirname( __DIR__, 2 ) . '/fixtures/documents/valid/rich.json' ), true );
+		$layer   = $fixture['slides'][0]['layers'][0];
+		$doc['fontRefs']            = array();
+		$layer['style']['fontRef']  = null;
+		$doc['slides'][0]['layers'] = array( $layer );
+		$saved = $this->request( 'PUT', '/sliders/' . $detail['id'], array( 'title' => 'Rich', 'expectedVersion' => 1, 'document' => $doc ) );
+		$this->assertSame( 200, $saved->get_status(), wp_json_encode( $saved->get_data() ) );
+		$published = $this->request( 'POST', '/sliders/' . $detail['id'] . '/publish', array( 'version' => 2 ) );
+		$this->assertSame( 200, $published->get_status(), wp_json_encode( $published->get_data() ) );
+		wp_set_current_user( 0 );
+		$html = do_shortcode( '[sw_slider id="' . $detail['id'] . '"]' );
+		$this->assertStringContainsString( 'class="sws-text sws-text--rich"><span class="sws-p"><strong>Willkommen </strong>', $html );
+		$this->assertStringContainsString( '<a href="https://example.com/a?x=1&amp;y=2" target="_blank" rel="noopener noreferrer"><strong><em>Start &lt;b&gt;</em></strong></a>', $html );
+		$this->assertStringContainsString( 'Zeile eins<br>Zeile zwei', $html );
+		$this->assertStringNotContainsString( '<b>', $html );
+
+		wp_set_current_user( $this->admin );
+		$doc['slides'][0]['layers'][0]['content']['rich'][0]['runs'][0]['link'] = array( 'url' => 'javascript:alert(1)' );
+		$rejected = $this->request( 'PUT', '/sliders/' . $detail['id'], array( 'title' => 'Rich', 'expectedVersion' => 2, 'document' => $doc ) );
+		$this->assertSame( 422, $rejected->get_status() );
+	}
+
+	public function test_published_stylesheet_has_overlay_and_focal_rules_and_rejects_bad_values(): void {
+		$detail  = $this->create( 'Overlay' );
+		$doc     = $this->document_of( $detail );
+		$fixture = json_decode( (string) file_get_contents( dirname( __DIR__, 2 ) . '/fixtures/documents/valid/background.json' ), true );
+		$image   = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/test-image.jpg' );
+
+		$slide                                = $fixture['slides'][1];
+		$slide['background']['attachmentId']  = $image;
+		$slide['background']['focalX']        = 10;
+		$slide['layers'][0]['content']['attachmentId'] = $image;
+		$doc['slides']                        = array( $slide );
+		$saved = $this->request( 'PUT', '/sliders/' . $detail['id'], array( 'title' => 'Overlay', 'expectedVersion' => 1, 'document' => $doc ) );
+		$this->assertSame( 200, $saved->get_status(), wp_json_encode( $saved->get_data() ) );
+		$published = $this->request( 'POST', '/sliders/' . $detail['id'] . '/publish', array( 'version' => 2 ) );
+		$this->assertSame( 200, $published->get_status(), wp_json_encode( $published->get_data() ) );
+
+		$meta = json_decode( (string) get_post_meta( $detail['id'], '_sws_published', true ), true );
+		$path = \SW\Slider\Infrastructure\UploadPaths::path( (string) $meta['stylesheet'] );
+		$css  = (string) file_get_contents( (string) $path );
+		$this->assertStringContainsString( '::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background-color:rgba(30,41,59,0.4);}', $css );
+		$this->assertStringContainsString( '.sws-slide__bg{object-position:10% 50%;}', $css );
+		$this->assertStringContainsString( '.sws-image{object-position:20% 80%;}', $css );
+
+		$doc['slides'][0]['background']['overlayOpacity'] = 2;
+		$rejected = $this->request( 'PUT', '/sliders/' . $detail['id'], array( 'title' => 'Overlay', 'expectedVersion' => 3, 'document' => $doc ) );
+		$this->assertSame( 422, $rejected->get_status() );
+	}
 }

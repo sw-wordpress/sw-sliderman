@@ -38,13 +38,16 @@ final class LayoutContractTest extends TestCase {
 		foreach ( $golden['cases'] as $case ) {
 			$stage    = $document['breakpoints'][ $case['breakpoint'] ];
 			$resolved = LayoutResolver::resolve_layer( $layers[ $case['layer'] ], $case['breakpoint'], $document['breakpoints'] );
-			$css      = StyleSerializer::layer_declarations( $resolved, (float) $stage['stageWidth'], (float) $stage['stageHeight'], $refs );
+			$layer    = $layers[ $case['layer'] ];
+			$kind     = 'shape' === $layer['type'] ? $layer['content']['kind'] : null;
+			$css      = StyleSerializer::layer_declarations( $resolved, (float) $stage['stageWidth'], (float) $stage['stageHeight'], $refs, $kind );
 			$label    = $case['breakpoint'] . '/' . $case['layer'];
 			foreach ( $case['box'] as $key => $value ) {
 				self::assertEqualsWithDelta( $value, $resolved['box'][ $key ], 1e-9, $label . ' ' . $key );
 			}
 			self::assertSame( $case['boxCss'], StyleSerializer::serialize( $css['box'] ), $label );
 			self::assertSame( $case['bodyCss'], StyleSerializer::serialize( $css['body'] ), $label );
+			self::assertSame( $case['stateCss'], 'button' === $layer['type'] ? StyleSerializer::button_state_css( '.sws-l-' . $layer['id'], $layer['content'] ) : '', $label );
 		}
 	}
 
@@ -82,6 +85,14 @@ final class LayoutContractTest extends TestCase {
 		self::assertSame( '0.3333', StyleSerializer::format_number( 1 / 3 ) );
 	}
 
+	public function test_document_css_has_button_state_rules_and_round_circle_shapes(): void {
+		$css = StyleSerializer::document_css( Fixtures::assoc( 'documents/valid/basic.json' ), 'abc123ef' );
+		self::assertStringContainsString( '.sws-s-abc123ef .sws-l-cta .sws-layer__body:hover{background-color:#fde047;color:#1e293b;}', $css );
+		self::assertStringContainsString( '.sws-s-abc123ef .sws-l-cta .sws-button:focus-visible{outline:3px solid #4f46e5;outline-offset:3px;}', $css );
+		self::assertStringContainsString( 'border-radius:50%', $css );
+		self::assertSame( '', StyleSerializer::button_state_css( '.x', array( 'label' => 'A' ) ) );
+	}
+
 	public function test_document_css_is_scoped_and_contains_no_document_text(): void {
 		$document = Fixtures::assoc( 'documents/valid/basic.json' );
 		$css      = StyleSerializer::document_css( $document, 'abc123ef' );
@@ -95,5 +106,28 @@ final class LayoutContractTest extends TestCase {
 	public function test_scope_is_sanitized(): void {
 		$css = StyleSerializer::document_css( Fixtures::assoc( 'documents/valid/basic.json' ), 'ab}<x' );
 		self::assertStringStartsWith( '.sws-s-ab{', $css );
+	}
+
+	public function test_golden_overlay_and_focal_css(): void {
+		$document = Fixtures::assoc( 'documents/valid/background.json' );
+		$golden   = Fixtures::assoc( 'css/background.json' );
+		foreach ( $document['slides'] as $index => $slide ) {
+			self::assertSame( $golden['slides'][ $index ]['css'], StyleSerializer::slide_background_css( '.sws-s-test .sws-sl-' . $slide['id'], $slide['background'] ) );
+		}
+		$photo = self::layers_by_id( $document )['photo'];
+		self::assertSame( $golden['images'][0]['css'], StyleSerializer::image_focal_css( '.sws-s-test .sws-l-photo', $photo['content'] ) );
+		$plain = array(
+			'color'        => null,
+			'attachmentId' => null,
+			'fit'          => 'cover',
+		);
+		self::assertSame( '', StyleSerializer::slide_background_css( '.x', $plain ) );
+		$centre = array(
+			'focalX' => 50,
+			'focalY' => 50,
+		);
+		self::assertSame( '', StyleSerializer::image_focal_css( '.x', $centre ) );
+		self::assertStringContainsString( '.sws-s-abc123ef .sws-sl-slide-one::before{', StyleSerializer::document_css( $document, 'abc123ef' ) );
+		self::assertStringContainsString( '.sws-s-abc123ef .sws-l-photo .sws-image{object-position:20% 80%;}', StyleSerializer::document_css( $document, 'abc123ef' ) );
 	}
 }

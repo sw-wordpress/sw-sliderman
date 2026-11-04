@@ -7,6 +7,9 @@ import { useEditorStore } from '@editor/stores/editor';
 import { pickImage, previewOf } from '@editor/composables/useMediaPicker';
 import { __, sprintf } from '@editor/i18n';
 import NumberField from '@editor/components/fields/NumberField.vue';
+import PercentSlider from '@editor/components/fields/PercentSlider.vue';
+import FocalPointField from '@editor/components/fields/FocalPointField.vue';
+import { DEFAULT_FOCAL, DEFAULT_OVERLAY_OPACITY } from '@shared/types';
 
 const props = defineProps<{ slide: Slide; scope?: 'slide' | 'slider' }>();
 const editor = useEditorStore();
@@ -21,6 +24,29 @@ async function chooseBackground(): Promise<void> {
   editor.rememberMedia(attachment.id, previewOf(attachment));
   editor.updateSlide(props.slide.id, (slide) => {
     slide.background.attachmentId = attachment.id;
+  });
+}
+
+const backgroundUrl = computed(() => {
+  const id = props.slide.background.attachmentId;
+  return id === null ? null : (editor.media[id]?.url ?? null);
+});
+const overlayOn = computed(() => !!props.slide.background.overlayColor);
+/** Sensible first look: a black overlay at 40 % instead of an invisible one. */
+function toggleOverlay(on: boolean): void {
+  editor.updateSlide(props.slide.id, (slide) => {
+    if (!on) {
+      slide.background.overlayColor = null;
+      return;
+    }
+    slide.background.overlayColor = slide.background.overlayColor || '#000000';
+    slide.background.overlayOpacity ??= DEFAULT_OVERLAY_OPACITY;
+  });
+}
+function setBackgroundFocal(point: { x: number; y: number }): void {
+  editor.updateSlide(props.slide.id, (slide) => {
+    slide.background.focalX = point.x;
+    slide.background.focalY = point.y;
   });
 }
 
@@ -128,6 +154,45 @@ const breakpointNames: Array<{ name: BreakpointName; label: string }> = [
           no-caps
           :label="__('Remove')"
           @click="editor.updateSlide(slide.id, (s) => (s.background.attachmentId = null))"
+        />
+      </div>
+      <FocalPointField
+        v-if="backgroundUrl"
+        :src="backgroundUrl"
+        :x="slide.background.focalX ?? DEFAULT_FOCAL"
+        :y="slide.background.focalY ?? DEFAULT_FOCAL"
+        @commit="setBackgroundFocal"
+      />
+      <q-checkbox
+        :model-value="overlayOn"
+        :label="__('Overlay')"
+        @update:model-value="toggleOverlay"
+      />
+      <div v-if="overlayOn" class="sws-props__box">
+        <label class="sws-props__color">
+          <span>{{ __('Overlay colour') }}</span>
+          <input
+            type="color"
+            :value="slide.background.overlayColor ?? '#000000'"
+            @change="
+              (e) =>
+                editor.updateSlide(
+                  slide.id,
+                  (s) => (s.background.overlayColor = (e.target as HTMLInputElement).value),
+                )
+            "
+          />
+        </label>
+        <PercentSlider
+          :model-value="
+            Math.round((slide.background.overlayOpacity ?? DEFAULT_OVERLAY_OPACITY) * 100)
+          "
+          :label="__('Overlay opacity')"
+          :min="0"
+          :max="100"
+          @commit="
+            (v) => editor.updateSlide(slide.id, (s) => (s.background.overlayOpacity = v / 100))
+          "
         />
       </div>
     </section>
