@@ -13,7 +13,7 @@ function enhance(root: HTMLElement): void {
   const text = root.querySelector('script.sws-config')?.textContent ?? '';
   const config = parseConfig(text);
   if (!config || config.slides.length === 0) return;
-  instances.set(root, new SliderInstance(root, config));
+  instances.set(root, SliderInstance.create(root, config));
 }
 
 function boot(): void {

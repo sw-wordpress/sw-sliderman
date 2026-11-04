@@ -33,9 +33,11 @@ export function formatNumber(value: number): string {
   // Round half away from zero like PHP's round().
   const rounded = (Math.sign(value) * Math.round(Math.abs(value) * 10000)) / 10000;
   if (Object.is(rounded, -0) || rounded === 0) return '0';
-  let text = rounded.toFixed(4);
-  text = text.replace(/0+$/, '').replace(/\.$/, '');
-  return text;
+  const text = rounded.toFixed(4);
+  let end = text.length;
+  while (text.charAt(end - 1) === '0') end -= 1;
+  if (text.charAt(end - 1) === '.') end -= 1;
+  return text.slice(0, end);
 }
 
 function percent(value: number, total: number): string {
