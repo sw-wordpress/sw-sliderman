@@ -11,7 +11,7 @@ namespace SW\Slider\Application;
 
 /**
  * Decides which stored artifact files may be deleted (PLAN.md 11): only files that no active
- * snapshot references and that are older than a conservative grace period. A page cached or
+ * snapshot has referenced for a conservative grace period. A page cached or
  * rendered just before a publication can therefore still load its stylesheet.
  */
 final class ArtifactRetention {
@@ -21,28 +21,43 @@ final class ArtifactRetention {
 	public const TEMPORARY_PREFIX  = '.tmp-';
 
 	/**
-	 * @param array<string, int> $files      Stylesheet file name => modification time (Unix).
-	 * @param list<string>       $referenced Relative paths (`artifacts/<name>`) of active snapshots.
-	 * @param int                $now        Current Unix time.
+	 * @param array<string, int> $files             Stylesheet file name => modification time (Unix).
+	 * @param list<string>       $referenced        Relative paths (`artifacts/<name>`) of active snapshots.
+	 * @param array<string, int> $unreferenced_since File name => Unix time the file was first seen unreferenced.
+	 * @param int                $now               Current Unix time.
 	 *
-	 * @return list<string> File names to delete.
+	 * @return array{delete: list<string>, since: array<string, int>} File names to delete and the updated
+	 *         "unreferenced since" record. The grace period starts when the last reference disappeared,
+	 *         not at the file's age: a long-published artifact stays available for cached pages after a
+	 *         republication.
 	 */
-	public static function expired( array $files, array $referenced, int $now ): array {
-		$keep    = array_flip( $referenced );
-		$expired = array();
+	public static function plan( array $files, array $referenced, array $unreferenced_since, int $now ): array {
+		$keep   = array_flip( $referenced );
+		$delete = array();
+		$since  = array();
 		foreach ( $files as $name => $modified ) {
 			$name = (string) $name;
 			if ( str_starts_with( $name, self::TEMPORARY_PREFIX ) ) {
 				if ( $now - $modified >= self::TEMPORARY_SECONDS ) {
-					$expired[] = $name;
+					$delete[] = $name;
 				}
 				continue;
 			}
-			if ( ! isset( $keep[ 'artifacts/' . $name ] ) && $now - $modified >= self::GRACE_SECONDS ) {
-				$expired[] = $name;
+			if ( isset( $keep[ 'artifacts/' . $name ] ) ) {
+				continue;
+			}
+			$first = min( $now, $unreferenced_since[ $name ] ?? $now );
+			if ( $now - $first >= self::GRACE_SECONDS ) {
+				$delete[] = $name;
+			} else {
+				$since[ $name ] = $first;
 			}
 		}
-		sort( $expired );
-		return $expired;
+		sort( $delete );
+		ksort( $since );
+		return array(
+			'delete' => $delete,
+			'since'  => $since,
+		);
 	}
 }

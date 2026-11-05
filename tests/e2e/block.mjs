@@ -38,6 +38,9 @@ try {
   helper('activate');
   const slider = helper('slider', TITLE);
   check('test slider created and published', slider.published === true);
+  // More than one list page: the oldest slider (ours) is only on page 2 of the newest-first list.
+  helper('bulk', TITLE, 101);
+  helper('age', String(slider.id));
 
   const admin = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
   await admin.addCookies(

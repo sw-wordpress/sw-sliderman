@@ -16,7 +16,7 @@ Run `npm test` for deterministic lifecycle and sizing tests. After `npm run buil
 
 The root carries `data-sws-state`: `loading`, `ready`, `transitioning`, `playing`, `paused` or `error` (`assets/runtime/state.ts`). `error` means an image failed or timed out; the slide stays readable. A new successful navigation clears it.
 
-Stylesheet artifacts are named by document hash and renderer version. A snapshot built by another renderer version is not loaded; its CSS is recalculated inline. The daily task `sws_cleanup_artifacts` deletes files that no active snapshot references and that are older than seven days (temporary files: one day). An unreadable snapshot aborts the run.
+Stylesheet artifacts are named by document hash and renderer version. A snapshot built by another renderer version is not loaded; its CSS is recalculated inline. The daily task `sws_cleanup_artifacts` deletes files that no active snapshot has referenced for seven days. The period starts when the cleanup first sees the file unreferenced (option `sws_artifact_unreferenced`), not at the file's age, so cached pages keep their stylesheet after a republication (temporary files: one day by age). An unreadable snapshot aborts the run.
 
 The first slide's background image (else its first image layer) is loaded eagerly with `fetchpriority="high"`; all later images are lazy and promoted by the runtime before their slide is shown.
 

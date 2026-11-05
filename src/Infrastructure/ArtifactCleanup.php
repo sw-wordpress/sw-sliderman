@@ -18,7 +18,8 @@ use SW\Slider\Application\ArtifactRetention;
  */
 final class ArtifactCleanup {
 
-	public const HOOK = 'sws_cleanup_artifacts';
+	public const HOOK   = 'sws_cleanup_artifacts';
+	public const OPTION = 'sws_artifact_unreferenced';
 
 	public function __construct( private readonly \wpdb $db ) {
 	}
@@ -63,8 +64,15 @@ final class ArtifactCleanup {
 				$files[ $name ] = (int) filemtime( $path );
 			}
 		}
+		$now      = $now ?? time();
+		$recorded = get_option( self::OPTION, array() );
+		$recorded = is_array( $recorded ) ? array_map( 'intval', $recorded ) : array();
+		$plan     = ArtifactRetention::plan( $files, $referenced, $recorded, $now );
+		if ( $plan['since'] !== $recorded ) {
+			update_option( self::OPTION, $plan['since'], false );
+		}
 		$deleted = 0;
-		foreach ( ArtifactRetention::expired( $files, $referenced, $now ?? time() ) as $name ) {
+		foreach ( $plan['delete'] as $name ) {
 			wp_delete_file( $directory . '/' . $name );
 			++$deleted;
 		}

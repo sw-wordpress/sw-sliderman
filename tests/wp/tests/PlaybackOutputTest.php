@@ -195,31 +195,39 @@ final class PlaybackOutputTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( '.sws-stage', (string) wp_styles()->get_data( $handle, 'after' )[0] );
 	}
 
-	public function test_cleanup_removes_only_old_unreferenced_artifacts(): void {
+	public function test_cleanup_waits_the_grace_period_after_the_reference_is_gone(): void {
 		global $wpdb;
+		delete_option( ArtifactCleanup::OPTION );
 		$this->isolate_uploads();
 		$id     = $this->publish_two_slides( false );
 		$snap   = json_decode( (string) get_post_meta( $id, '_sws_published', true ), true );
 		$active = UploadPaths::path( $snap['stylesheet'] );
 		$dir    = dirname( $active );
 		$old    = $dir . '/0000000000000000-r1.css';
-		$fresh  = $dir . '/1111111111111111-r1.css';
 		$temp   = $dir . '/.tmp-aaaaaaaaaaaa.css';
-		foreach ( array( $old, $fresh, $temp ) as $file ) {
+		foreach ( array( $old, $temp ) as $file ) {
 			file_put_contents( $file, 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 			$this->created[] = $file;
 		}
 		$now = time();
-		touch( $old, $now - 8 * DAY_IN_SECONDS );
+		// A long-published artifact that was just replaced: ancient file age, but only now unreferenced.
+		touch( $old, $now - 90 * DAY_IN_SECONDS );
 		touch( $temp, $now - 2 * DAY_IN_SECONDS );
 		touch( $active, $now - 60 * DAY_IN_SECONDS );
 
 		$cleanup = new ArtifactCleanup( $wpdb );
-		$this->assertSame( 2, $cleanup->run( $now ) );
-		$this->assertFileDoesNotExist( $old );
+		$this->assertSame( 1, $cleanup->run( $now ), 'only the stale temporary file goes on the first run' );
 		$this->assertFileDoesNotExist( $temp );
-		$this->assertFileExists( $fresh, 'inside the grace period' );
+		$this->assertFileExists( $old, 'still available for cached pages' );
+		$this->assertSame( $now, get_option( ArtifactCleanup::OPTION )['0000000000000000-r1.css'] );
+		$this->assertArrayNotHasKey( basename( $active ), get_option( ArtifactCleanup::OPTION ), 'referenced file is not tracked' );
+
+		$this->assertSame( 0, $cleanup->run( $now + 6 * DAY_IN_SECONDS ) );
+		$this->assertFileExists( $old );
+		$this->assertSame( 1, $cleanup->run( $now + 7 * DAY_IN_SECONDS ) );
+		$this->assertFileDoesNotExist( $old );
 		$this->assertFileExists( $active, 'referenced by the active snapshot' );
+		$this->assertSame( array(), get_option( ArtifactCleanup::OPTION ) );
 	}
 
 	public function test_cleanup_does_nothing_when_a_snapshot_is_unreadable(): void {
@@ -231,6 +239,7 @@ final class PlaybackOutputTest extends WP_UnitTestCase {
 		$this->created[] = $path;
 		touch( $path, time() - 30 * DAY_IN_SECONDS );
 		update_post_meta( $id, '_sws_published', wp_slash( '{broken' ) );
+		update_option( ArtifactCleanup::OPTION, array( '9999999999999999-r1.css' => time() - 30 * DAY_IN_SECONDS ), false );
 		$this->assertSame( 0, ( new ArtifactCleanup( $wpdb ) )->run() );
 		$this->assertFileExists( $path );
 	}

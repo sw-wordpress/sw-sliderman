@@ -15,24 +15,59 @@
   const t = window.swsBlockStrings || {};
   const apiFetch = wp.apiFetch;
 
+  const PER_PAGE = 100;
+  const MAX_PAGES = 20;
+
+  /** All sliders the user may edit, page by page (newest first), bounded to 2,000 entries. */
+  async function loadSliders() {
+    let all = [];
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const items = await apiFetch({
+        path: '/sw-sliderman/v1/sliders?perPage=' + PER_PAGE + '&page=' + page,
+      });
+      if (!Array.isArray(items)) break;
+      all = all.concat(items);
+      if (items.length < PER_PAGE) break;
+    }
+    return all;
+  }
+
   registerBlockType('sw-sliderman/slider', {
     edit: function Edit({ attributes, setAttributes }) {
       const [sliders, setSliders] = useState(null);
       const [failed, setFailed] = useState(false);
+      // The saved selection, looked up directly when it is not part of the loaded list.
+      const [looked, setLooked] = useState(null);
       useEffect(() => {
         let active = true;
-        apiFetch({ path: '/sw-sliderman/v1/sliders?perPage=100' })
-          .then((items) => active && setSliders(Array.isArray(items) ? items : []))
+        loadSliders()
+          .then((items) => active && setSliders(items))
           .catch(() => active && setFailed(true));
         return () => {
           active = false;
         };
       }, []);
+      useEffect(() => {
+        let active = true;
+        setLooked(null);
+        const id = attributes.sliderId;
+        if (sliders && id > 0 && !sliders.some((item) => item.id === id)) {
+          apiFetch({ path: '/sw-sliderman/v1/sliders/' + id })
+            .then((item) => active && setLooked(item))
+            .catch(() => active && setLooked(null));
+        }
+        return () => {
+          active = false;
+        };
+      }, [sliders, attributes.sliderId]);
 
       const list = sliders || [];
-      const selected = list.find((item) => item.id === attributes.sliderId);
+      const selected =
+        list.find((item) => item.id === attributes.sliderId) ||
+        (looked && looked.id === attributes.sliderId ? looked : null);
+      const choices = selected && !list.includes(selected) ? [selected].concat(list) : list;
       const options = [{ value: 0, label: t.choose }].concat(
-        list.map((item) => ({
+        choices.map((item) => ({
           value: item.id,
           label: item.title + (item.publishedGmt ? '' : ' (' + t.notPublished + ')'),
         })),
