@@ -1,3 +1,4 @@
+import type { HeroPlayback } from '../browser/heroEffects';
 import { prepareImages } from '../browser/images';
 import { enterKeyframes, exitKeyframes, phaseTiming } from '@shared/animation';
 import { resolveStage } from '@shared/layout';
@@ -33,6 +34,7 @@ export class SliderInstance {
   private phase: 'loading' | 'ready' | 'transitioning' = 'loading';
   private resources = new AbortController();
   private readonly prepared: Animation[] = [];
+  private hero: HeroPlayback | null = null;
   private timer: number | null = null;
   private userPaused = false;
   private hovered = false;
@@ -216,6 +218,15 @@ export class SliderInstance {
 
   /** (Re)starts the autoplay timer for the current slide, or stops it when a pause reason applies. */
   private schedule(): void {
+    if (this.phase === 'ready') {
+      const paused =
+        this.userPaused || this.hovered || this.focused || this.offscreen || document.hidden;
+      this.hero?.animations.forEach((animation) => {
+        if (animation.playState === 'finished' || animation.playState === 'idle') return;
+        if (paused) animation.pause();
+        else if (animation.playState === 'paused') animation.play();
+      });
+    }
     if (this.timer !== null) {
       window.clearTimeout(this.timer);
       this.timer = null;
@@ -366,6 +377,10 @@ export class SliderInstance {
     const width = this.viewport.getBoundingClientRect().width;
     const stage = resolveStage(breakpoints, width);
     const schedule = scheduleSlide(slide);
+    if (slide.effects && window.swsHeroEffects) {
+      this.hero = window.swsHeroEffects(slideEl, slide.effects, schedule.durationMs);
+      this.hero.animations.forEach((animation) => this.track(animation, paused));
+    }
     for (const layer of schedule.layers) {
       const el = slideEl.querySelector<HTMLElement>(
         `[data-sws-layer="${CSS.escape(layer.layerId)}"] .sws-layer__anim`,
@@ -400,6 +415,8 @@ export class SliderInstance {
   }
 
   private cancelLayers(): void {
+    this.hero?.dispose();
+    this.hero = null;
     this.running.forEach((animation) => animation.cancel());
     this.running.clear();
     this.prepared.length = 0;

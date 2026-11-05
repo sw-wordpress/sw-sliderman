@@ -1,6 +1,6 @@
 /** Native browser regressions without WordPress writes. Run after npm run build. */
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,7 +13,7 @@ const chrome = readdirSync(cache)
   .sort()
   .pop();
 const browser = await chromium.launch({
-  executablePath: join(cache, chrome, 'chrome-linux/chrome'),
+  executablePath: [join(cache, chrome, 'chrome-linux/chrome'), join(cache, chrome, 'chrome-linux64/chrome')].find(existsSync),
   args: ['--no-sandbox'],
 });
 const page = await browser.newPage({ viewport: { width: 1100, height: 800 } });

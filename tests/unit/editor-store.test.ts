@@ -50,6 +50,28 @@ describe('editor store saving', () => {
     await useEditorStore().load(7);
   });
 
+  it('keeps effects and masks through undo, redo, duplication and saving', async () => {
+    const editor = useEditorStore();
+    const slide = editor.document?.slides[0];
+    if (!slide) throw new Error('slide');
+    editor.updateSlide(slide.id, (s) => {
+      s.effects = { cinematic: true, lightSweep: true };
+      if (s.layers[0]) s.layers[0].animation.enter.preset = 'reveal-circle';
+    });
+    editor.undo();
+    expect(editor.document?.slides[0]?.effects).toBeUndefined();
+    editor.redo();
+    expect(editor.document?.slides[0]?.effects?.lightSweep).toBe(true);
+    editor.duplicateSlide(slide.id);
+    expect(editor.document?.slides[1]?.effects).toEqual({ cinematic: true, lightSweep: true });
+    expect(editor.document?.slides[1]?.layers[0]?.animation.enter.preset).toBe('reveal-circle');
+    api.save.mockResolvedValue({ status: 'saved', version: 4 });
+    await editor.save();
+    expect(editor.saveState).toBe('saved');
+    expect(validateDocument(editor.document).ok).toBe(true);
+    editor.cancelAutosave();
+  });
+
   it('a late response does not mark newer edits as saved', async () => {
     const editor = useEditorStore();
     const first = deferred<{ status: 'saved'; version: number }>();

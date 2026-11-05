@@ -304,3 +304,103 @@ describe('runtime', () => {
     animate.mockRestore();
   });
 });
+
+describe('hero effect lifecycle', () => {
+  afterEach(() => {
+    delete window.swsHeroEffects;
+  });
+  function withEffects() {
+    const base = config(false);
+    return {
+      ...base,
+      slides: base.slides.map((slide) => ({
+        ...slide,
+        effects: { cinematic: true, lightSweep: true },
+      })),
+    };
+  }
+  function player() {
+    const animations: Array<{
+      playState: string;
+      pause: ReturnType<typeof vi.fn>;
+      play: ReturnType<typeof vi.fn>;
+      cancel: ReturnType<typeof vi.fn>;
+      currentTime: number;
+      finished: Promise<void>;
+    }> = [];
+    const dispose = vi.fn();
+    const play = vi.fn().mockImplementation(() => {
+      const animation = {
+        playState: 'running',
+        currentTime: 0,
+        finished: new Promise<void>(() => {}),
+        pause: vi.fn(() => {
+          animation.playState = 'paused';
+        }),
+        play: vi.fn(() => {
+          animation.playState = 'running';
+        }),
+        cancel: vi.fn(() => {
+          animation.playState = 'idle';
+        }),
+      };
+      animations.push(animation);
+      return { animations: [animation], dispose };
+    });
+    window.swsHeroEffects = play;
+    return { play, dispose, animations };
+  }
+  it('cancels effects on navigation and destroy, pauses on hover, focus and visibility', async () => {
+    const effect = player();
+    const root = markup(3, false);
+    const instance = SliderInstance.create(root, withEffects());
+    await vi.advanceTimersByTimeAsync(0);
+    expect(effect.play).toHaveBeenCalledTimes(1);
+    root.dispatchEvent(new Event('mouseenter'));
+    expect(effect.animations[0]?.playState).toBe('paused');
+    root.dispatchEvent(new Event('mouseleave'));
+    expect(effect.animations[0]?.playState).toBe('running');
+    root.dispatchEvent(new FocusEvent('focusin'));
+    expect(effect.animations[0]?.playState).toBe('paused');
+    root.dispatchEvent(new FocusEvent('focusout'));
+    expect(effect.animations[0]?.playState).toBe('running');
+    instance.goTo(1, true);
+    expect(effect.dispose).toHaveBeenCalledTimes(1);
+    expect(effect.play).toHaveBeenCalledTimes(2);
+    instance.destroy();
+    expect(effect.dispose).toHaveBeenCalledTimes(2);
+    expect(effect.animations.every((a) => a.cancel.mock.calls.length > 0)).toBe(true);
+  });
+  it('does not run effects for reduced motion or when the optional bundle is absent', async () => {
+    const effect = player();
+    reduced = true;
+    const root = markup(3, false);
+    const instance = SliderInstance.create(root, withEffects());
+    await vi.advanceTimersByTimeAsync(0);
+    instance.goTo(1, true);
+    expect(effect.play).not.toHaveBeenCalled();
+    instance.destroy();
+    reduced = false;
+    delete window.swsHeroEffects;
+    const fallback = SliderInstance.create(markup(3, false), withEffects());
+    await vi.advanceTimersByTimeAsync(0);
+    fallback.goTo(2, true);
+    fallback.destroy();
+  });
+  it('parses effect switches strictly and keeps old configurations disabled', () => {
+    expect(config(false).slides[0]?.effects).toEqual({ cinematic: false, lightSweep: false });
+    const raw = withEffects();
+    expect(parseConfig(JSON.stringify(raw))?.slides[0]?.effects).toEqual({
+      cinematic: true,
+      lightSweep: true,
+    });
+    expect(
+      parseConfig(
+        JSON.stringify({
+          ...raw,
+          slides: [{ ...raw.slides[0], effects: { cinematic: 1, lightSweep: 'true' } }],
+        }),
+      )?.slides[0]?.effects,
+    ).toEqual({ cinematic: false, lightSweep: false });
+  });
+});

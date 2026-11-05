@@ -117,6 +117,10 @@ Visuelle Tracks je Ebene, Abspielkopf, Scrubbing, Zoom, Verschieben/Skalieren vo
 
 Typisierte Aktionen können später zu Slide wechseln, pausieren, abspielen oder eine validierte URL öffnen. Scroll-/Pointer-Effekte sind ein separater Ausbau mit vereinbarter Komposition gegenüber zeitbasierten Animationen. Die Escape-Hatch „eigenes JavaScript“ ist nicht vorgesehen.
 
+### 7.3 M9: erstes Effektpaket
+
+Freigegeben: optionale filmische Tiefe (Hintergrundzoom und leichte Bühnenbewegung), einmaliger Lichtreflex sowie maskierte Ebenenpresets von links und kreisförmig. Vertrag, Bedienung, Grenzen und Abnahme: [M9-Effekte](docs/effects.md). Scroll-/Pointer-Effekte und Erweiterungsregistries bleiben spätere Aufgaben.
+
 ## 8. Google Fonts und lokale Schriftverwaltung – Pflichtumfang
 
 ### 8.1 Verbindlicher Vertrag

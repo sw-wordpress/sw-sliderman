@@ -273,11 +273,11 @@ msgid "The version is missing or invalid."
 msgstr "Die Version fehlt oder ist ungültig."
 
 #. translators: 1: required PHP version, 2: current PHP version
-#: sw-sliderman.php:35
+#: sw-sliderman.php:34
 #, php-format
 msgid "SW Sliderman requires PHP %1$s or newer. You are running PHP %2$s."
 msgstr "SW Sliderman benötigt PHP %1$s oder neuer. Installiert ist PHP %2$s."
 
-#: sw-sliderman.php:54
+#: sw-sliderman.php:53
 msgid "SW Sliderman: the vendor directory is missing. Install the release package or run \"composer install\"."
 msgstr "SW Sliderman: Das vendor-Verzeichnis fehlt. Das Release-Paket installieren oder „composer install“ ausführen."

@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { LIMITS } from '@shared/limits';
 import { scheduleSlide } from '@shared/schedule';
-import type { BreakpointName, Slide } from '@shared/types';
+import type { BreakpointName, Slide, SlideEffects } from '@shared/types';
 import { useEditorStore } from '@editor/stores/editor';
 import { pickImage, previewOf } from '@editor/composables/useMediaPicker';
 import { __, sprintf } from '@editor/i18n';
@@ -49,6 +49,12 @@ function setBackgroundFocal(point: { x: number; y: number }): void {
   editor.updateSlide(props.slide.id, (slide) => {
     slide.background.focalX = point.x;
     slide.background.focalY = point.y;
+  });
+}
+
+function setEffect(key: keyof SlideEffects, enabled: boolean): void {
+  editor.updateSlide(props.slide.id, (slide) => {
+    slide.effects = { ...slide.effects, [key]: enabled };
   });
 }
 
@@ -233,6 +239,22 @@ const breakpointSummary = computed(() => {
           "
         />
       </div>
+    </AccordionSection>
+
+    <AccordionSection v-if="scope !== 'slider'" id="slide.effects" :title="__('Effects')">
+      <q-toggle
+        :model-value="slide.effects?.cinematic ?? false"
+        :label="__('Cinematic depth')"
+        @update:model-value="(v: boolean) => setEffect('cinematic', v)"
+      />
+      <q-toggle
+        :model-value="slide.effects?.lightSweep ?? false"
+        :label="__('Light sweep')"
+        @update:model-value="(v: boolean) => setEffect('lightSweep', v)"
+      />
+      <p class="sws-props__hint">
+        {{ __('Use Preview to play effects. Reduced motion shows static content.') }}
+      </p>
     </AccordionSection>
 
     <AccordionSection

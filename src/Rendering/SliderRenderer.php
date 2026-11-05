@@ -268,6 +268,7 @@ final class SliderRenderer {
 					'id'         => $slide['id'],
 					'durationMs' => Schedule::effective_slide_duration_ms( $slide ),
 					'transition' => $slide['transition'],
+					'effects'    => $slide['effects'] ?? new \stdClass(),
 					'layers'     => array_map(
 						static fn ( array $layer ): array => array(
 							'id'        => $layer['id'],

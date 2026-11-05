@@ -29,10 +29,7 @@
         {
           "op": "set",
           "path": "",
-          "value": [
-            1,
-            2
-          ]
+          "value": [1, 2]
         }
       ],
       "issues": [
@@ -938,9 +935,7 @@
         {
           "op": "set",
           "path": "/slides/0/layers/0/content/rich",
-          "value": [
-            {}
-          ]
+          "value": [{}]
         }
       ],
       "issues": [
@@ -1301,6 +1296,83 @@
       "issues": [
         {
           "path": "/slides/1/layers/0/content/focalY",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "effects must be an object",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/effects",
+          "value": []
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/effects",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "effects reject unknown keys",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/effects",
+          "value": {
+            "sparkles": true
+          }
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/effects/sparkles",
+          "code": "unknown_key"
+        }
+      ]
+    },
+    {
+      "name": "effect switches must be booleans",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/effects",
+          "value": {
+            "cinematic": 1,
+            "lightSweep": "yes"
+          }
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/effects/cinematic",
+          "code": "type"
+        },
+        {
+          "path": "/slides/0/effects/lightSweep",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "effects reject null",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/effects",
+          "value": null
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/effects",
           "code": "type"
         }
       ]

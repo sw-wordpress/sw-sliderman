@@ -27,14 +27,15 @@ function files(dir) {
 
 const runtimeJs = readFileSync(join(root, 'build/runtime/runtime.js'));
 const runtimeCss = readFileSync(join(root, 'build/runtime/runtime.css'));
-const jsGzip = gzipSync(runtimeJs).length;
+const effectsJs = readFileSync(join(root, 'build/runtime/effects.js'));
+const jsGzip = gzipSync(runtimeJs).length + gzipSync(effectsJs).length;
 const cssGzip = gzipSync(runtimeCss).length;
-console.log(`runtime.js  ${kib(runtimeJs.length)} KiB (${kib(jsGzip)} KiB gzip, budget 60)`);
+console.log(`runtime + optional effects  ${kib(runtimeJs.length + effectsJs.length)} KiB (${kib(jsGzip)} KiB gzip, budget 60)`);
 console.log(`runtime.css ${kib(runtimeCss.length)} KiB (${kib(cssGzip)} KiB gzip, budget 25)`);
 if (jsGzip > 60 * 1024) failures.push('runtime.js exceeds 60 KiB gzip');
 if (cssGzip > 25 * 1024) failures.push('runtime.css exceeds 25 KiB gzip');
 
-const runtimeText = runtimeJs.toString('utf8');
+const runtimeText = runtimeJs.toString('utf8') + effectsJs.toString('utf8');
 for (const marker of ['__VUE', 'createApp', 'defineStore', 'pinia', 'quasar']) {
   if (runtimeText.includes(marker)) failures.push(`runtime.js contains editor code marker "${marker}"`);
 }

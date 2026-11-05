@@ -232,6 +232,8 @@ const presetLabels: Record<string, () => string> = {
   'zoom-in': () => __('Zoom in'),
   'zoom-out': () => __('Zoom out'),
   rotate: () => __('Rotate'),
+  'reveal-left': () => __('Masked reveal from left'),
+  'reveal-circle': () => __('Circular reveal'),
 };
 const presetOptions = computed(() =>
   ANIMATION_PRESETS.map((value) => ({ value, label: presetLabels[value]?.() ?? value })),

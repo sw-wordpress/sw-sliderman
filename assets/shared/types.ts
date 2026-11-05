@@ -119,6 +119,8 @@ export const ANIMATION_PRESETS = [
   'zoom-in',
   'zoom-out',
   'rotate',
+  'reveal-left',
+  'reveal-circle',
 ] as const;
 export type AnimationPreset = (typeof ANIMATION_PRESETS)[number];
 
@@ -246,12 +248,19 @@ export interface SlideBackground {
 export const DEFAULT_OVERLAY_OPACITY = 0.4;
 export const DEFAULT_FOCAL = 50;
 
+/** Optional M9 effects. Missing switches are off; old documents keep their appearance. */
+export interface SlideEffects {
+  readonly cinematic?: boolean;
+  readonly lightSweep?: boolean;
+}
+
 export interface Slide {
   readonly id: string;
   readonly name: string;
   readonly enabled: boolean;
   readonly durationMs: number;
   readonly background: SlideBackground;
+  readonly effects?: SlideEffects;
   readonly transition: SlideTransition;
   readonly layers: readonly Layer[];
 }
