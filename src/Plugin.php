@@ -16,6 +16,7 @@ use SW\Slider\Domain\DocumentValidator;
 use SW\Slider\Fonts\DownloadPolicy;
 use SW\Slider\Fonts\FontCatalog;
 use SW\Slider\Fonts\CatalogUpdater;
+use SW\Slider\Infrastructure\WpArtifactGuard;
 use SW\Slider\Infrastructure\WpFontJobs;
 use SW\Slider\Integration\The7;
 use SW\Slider\Infrastructure\UploadPaths;
@@ -27,6 +28,7 @@ use SW\Slider\Fonts\GoogleFontsProvider;
 use SW\Slider\Fonts\UploadsFontStorage;
 use SW\Slider\Fonts\WpFontRepository;
 use SW\Slider\Fonts\WpHttpClient;
+use SW\Slider\Infrastructure\ArtifactCleanup;
 use SW\Slider\Infrastructure\Lifecycle;
 use SW\Slider\Infrastructure\SliderWriteScope;
 use SW\Slider\Infrastructure\PostTypes;
@@ -36,6 +38,7 @@ use SW\Slider\Infrastructure\WpResourceChecker;
 use SW\Slider\Infrastructure\WpSliderRepository;
 use SW\Slider\Infrastructure\WpSystemPorts;
 use SW\Slider\Rendering\Assets;
+use SW\Slider\Rendering\Block;
 use SW\Slider\Rendering\CssArtifactBuilder;
 use SW\Slider\Rendering\Shortcode;
 use SW\Slider\Rendering\SliderRenderer;
@@ -73,6 +76,7 @@ final class Plugin {
 		};
 		$installer       = new FontInstaller( $catalog, $provider, $font_repo, $font_storage, static fn (): string => $system->now_gmt(), $current_offline );
 		$library         = new FontLibrary( $font_repo, $font_storage, static fn (): iterable => $sliders->all_documents(), static fn ( \Closure $operation ): mixed => \SW\Slider\Infrastructure\ResourceGuard::run( $wpdb, $operation ) );
+		$guard           = new WpArtifactGuard( $wpdb );
 		$service         = new SliderService(
 			$sliders,
 			new DocumentValidator(),
@@ -80,17 +84,21 @@ final class Plugin {
 			new UploadsArtifactStore(),
 			new CssArtifactBuilder(),
 			$system,
-			$template
+			$template,
+			new \SW\Slider\Domain\DocumentMigrator(),
+			$guard
 		);
 		$assets          = new Assets( $sliders, $font_repo, SWS_URL, SWS_DIR, SWS_VERSION );
 
 		( new Translations( SWS_DIR . 'languages' ) )->register();
 		( new Lifecycle() )->register();
+		( new ArtifactCleanup( $wpdb, new WpArtifactGuard( $wpdb, 0 ) ) )->register();
 		( new PostTypes() )->register();
 		( new SliderWriteScope() )->register();
 		$assets->register();
 		$renderer = new SliderRenderer( $sliders, $assets );
 		( new Shortcode( $renderer ) )->register();
+		( new Block( $renderer, SWS_DIR ) )->register();
 		( new The7( $sliders, $renderer ) )->register();
 		( new DraftPreview( $service, $renderer ) )->register();
 		( new SliderController( $service ) )->register();

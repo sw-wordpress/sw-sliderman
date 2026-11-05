@@ -34,6 +34,9 @@ $sws_required = array(
 	'build/runtime/runtime.js',
 	'build/runtime/effects.js',
 	'build/runtime/runtime.css',
+	'build/block/block.json',
+	'build/block/editor.js',
+	'build/block/editor.asset.php',
 	'fonts/catalog.json',
 	'schemas/defaults/new-slider.json',
 	'languages/sw-sliderman-de_DE.mo',
@@ -43,6 +46,10 @@ foreach ( $sws_required as $sws_path ) {
 	if ( ! is_file( $sws_dir . '/' . $sws_path ) ) {
 		$sws_failures[] = 'missing file: ' . $sws_path;
 	}
+}
+$sws_block = json_decode( (string) @file_get_contents( $sws_dir . '/build/block/block.json' ), true ); // phpcs:ignore WordPress.PHP.NoSilencedErrors, WordPress.WP.AlternativeFunctions
+if ( ! is_array( $sws_block ) || 'sw-sliderman/slider' !== ( $sws_block['name'] ?? null ) || 'file:./editor.js' !== ( $sws_block['editorScript'] ?? null ) ) {
+	$sws_failures[] = 'build/block/block.json is not the slider block metadata';
 }
 if ( array() !== $sws_failures ) {
 	fwrite( STDERR, implode( "\n", $sws_failures ) . "\n" );

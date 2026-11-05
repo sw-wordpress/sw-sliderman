@@ -17,7 +17,7 @@ export default defineConfig({
     css: false,
     coverage: {
       provider: 'v8',
-      include: ['assets/**/*.{ts,vue}'],
+      include: ['assets/**/*.{ts,vue,js}'],
       reporter: ['text', 'lcov', 'json-summary'],
       reportsDirectory: 'coverage/js',
       thresholds: { lines: 80.01 },

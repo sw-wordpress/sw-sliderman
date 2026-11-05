@@ -19,6 +19,26 @@ use SW\Slider\Application\ArtifactStore;
 final class UploadsArtifactStore implements ArtifactStore {
 
 	public function store_stylesheet( string $name, string $css ): ?string {
+		$relative = $this->write( $name, $css );
+		if ( null !== $relative ) {
+			$this->forget_retirement( $name );
+		}
+		return $relative;
+	}
+
+	/**
+	 * A stored or reused artifact is referenced again: its next retirement must get a full grace
+	 * period. Runs inside the publication's artifact guard, like the cleanup that maintains the record.
+	 */
+	private function forget_retirement( string $name ): void {
+		$recorded = get_option( ArtifactCleanup::OPTION, array() );
+		if ( is_array( $recorded ) && isset( $recorded[ $name ] ) ) {
+			unset( $recorded[ $name ] );
+			update_option( ArtifactCleanup::OPTION, $recorded, false );
+		}
+	}
+
+	private function write( string $name, string $css ): ?string {
 		$relative = 'artifacts/' . $name;
 		$target   = UploadPaths::path( $relative );
 		if ( null === $target ) {

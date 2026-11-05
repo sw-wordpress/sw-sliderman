@@ -57,6 +57,7 @@ msgid "Sliders"
 msgstr ""
 
 #: src/Infrastructure/PostTypes.php:34
+#: src/Rendering/Block.php:52
 msgid "Slider"
 msgstr ""
 
@@ -84,6 +85,44 @@ msgstr ""
 #: src/Integration/The7.php:141
 #, php-format
 msgid "%s (not published)"
+msgstr ""
+
+#: src/Rendering/Block.php:50
+msgid "SW SliderMan"
+msgstr ""
+
+#: src/Rendering/Block.php:51
+msgid "Displays a published SW SliderMan slider."
+msgstr ""
+
+#: src/Rendering/Block.php:53
+msgid "Select a slider."
+msgstr ""
+
+#: src/Rendering/Block.php:54
+msgid "— Select a slider —"
+msgstr ""
+
+#: src/Rendering/Block.php:55
+msgid "not published"
+msgstr ""
+
+#. translators: %s: slider title.
+#: src/Rendering/Block.php:57
+#, php-format
+msgid "Published slider: %s"
+msgstr ""
+
+#: src/Rendering/Block.php:58
+msgid "This slider is not published yet; visitors see nothing."
+msgstr ""
+
+#: src/Rendering/Block.php:59
+msgid "The selected slider was not found."
+msgstr ""
+
+#: src/Rendering/Block.php:60
+msgid "The slider list could not be loaded. The saved slider ID stays unchanged."
 msgstr ""
 
 #: src/Rendering/SliderRenderer.php:54

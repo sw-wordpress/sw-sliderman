@@ -17,3 +17,4 @@ foreach ( wp_roles()->role_objects as $sws_role ) {
 	}
 }
 delete_option( 'sws_db_version' );
+delete_option( 'sws_artifact_unreferenced' );

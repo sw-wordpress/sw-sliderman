@@ -92,14 +92,11 @@ final class Assets {
 			return;
 		}
 		$post = get_queried_object();
-		if ( ! $post instanceof \WP_Post || ! has_shortcode( $post->post_content, Shortcode::TAG ) ) {
+		if ( ! $post instanceof \WP_Post ) {
 			return;
 		}
-		preg_match_all( '/' . get_shortcode_regex( array( Shortcode::TAG ) ) . '/', $post->post_content, $matches, PREG_SET_ORDER );
-		foreach ( $matches as $match ) {
-			$attributes = shortcode_parse_atts( $match[3] );
-			$id         = isset( $attributes['id'] ) && ctype_digit( (string) $attributes['id'] ) ? (int) $attributes['id'] : 0;
-			$published  = $id > 0 ? $this->sliders->find( $id )?->published : null;
+		foreach ( $this->embedded_ids( $post->post_content ) as $id ) {
+			$published = $this->sliders->find( $id )?->published;
 			if ( null === $published ) {
 				continue;
 			}
@@ -107,6 +104,49 @@ final class Assets {
 				$this->enqueue( $published, CanonicalJson::decode_assoc( $published->document_json ), substr( $published->document_hash, 0, 12 ) );
 			} catch ( JsonException ) {
 				continue;
+			}
+		}
+	}
+
+	/**
+	 * Slider IDs embedded by shortcode or block in post content (top-level and nested blocks).
+	 *
+	 * @param string $content Post content.
+	 *
+	 * @return list<int>
+	 */
+	public function embedded_ids( string $content ): array {
+		$ids = array();
+		if ( has_shortcode( $content, Shortcode::TAG ) ) {
+			preg_match_all( '/' . get_shortcode_regex( array( Shortcode::TAG ) ) . '/', $content, $matches, PREG_SET_ORDER );
+			foreach ( $matches as $match ) {
+				$attributes = shortcode_parse_atts( $match[3] );
+				if ( isset( $attributes['id'] ) && ctype_digit( (string) $attributes['id'] ) ) {
+					$ids[] = (int) $attributes['id'];
+				}
+			}
+		}
+		if ( has_block( Block::NAME, $content ) ) {
+			$this->collect_block_ids( parse_blocks( $content ), $ids );
+		}
+		return array_values( array_unique( array_filter( $ids, static fn ( int $id ): bool => $id > 0 ) ) );
+	}
+
+	/**
+	 * @param array<int|string, mixed> $blocks Parsed blocks.
+	 * @param list<int>                $ids    Collected IDs.
+	 */
+	private function collect_block_ids( array $blocks, array &$ids ): void {
+		foreach ( $blocks as $block ) {
+			if ( ! is_array( $block ) ) {
+				continue;
+			}
+			$attrs = $block['attrs'] ?? null;
+			if ( Block::NAME === ( $block['blockName'] ?? null ) && is_array( $attrs ) && is_int( $attrs['sliderId'] ?? null ) ) {
+				$ids[] = $attrs['sliderId'];
+			}
+			if ( is_array( $block['innerBlocks'] ?? null ) ) {
+				$this->collect_block_ids( $block['innerBlocks'], $ids );
 			}
 		}
 	}
@@ -155,8 +195,10 @@ final class Assets {
 
 		$handle = 'sws-slider-' . $scope;
 		if ( ! wp_style_is( $handle, 'registered' ) ) {
-			$url  = null === $published->stylesheet ? null : UploadPaths::url( $published->stylesheet );
-			$path = null === $published->stylesheet ? null : UploadPaths::path( $published->stylesheet );
+			// An artifact of another renderer version is never used: recalculation below is the safe fallback.
+			$current = null === $published->stylesheet || CssArtifactBuilder::RENDERER_VERSION !== $published->renderer_version ? null : $published->stylesheet;
+			$url     = null === $current ? null : UploadPaths::url( $current );
+			$path    = null === $current ? null : UploadPaths::path( $current );
 			if ( null !== $url && null !== $path && is_readable( $path ) ) {
 				// Content-addressed, immutable file name: no version query string needed.
 				wp_register_style( $handle, $url, array( self::RUNTIME ), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion

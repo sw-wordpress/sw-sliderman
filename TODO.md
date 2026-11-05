@@ -20,7 +20,7 @@ Stand: 30.10.2026 · Konzeptversion: 1.0 · Referenz: [PLAN.md](PLAN.md)
 | M1 | Plugin-Fundament und stabile Datenverträge | M0-Ergebnis | Technisch geprüft; Nachweise unten |
 | M2 | Lokale Google-Fonts-Verwaltung | M1 | Technisch und Schriftvorschau praktisch |
 | M3 | Produktiver visueller Editor und responsive Layouts | M1, M2 | Stefan prüft Gestaltung |
-| M4 | Animation und vollständige Frontend-Wiedergabe | M3 | Stefan prüft Verhalten |
+| M4 | Animation und vollständige Frontend-Wiedergabe | M3 | Von Stefan abgenommen; Nachweise unten |
 | M5 | Vorlagen und portabler Austausch | M2–M4 | Import-/Export-Abnahme |
 | M6 | Version 1.0 und dokumentierte Kompatibilität | M1–M5 | Releasefreigabe von Stefan |
 | M7 | Erweiterte Zeitleiste, Gruppen und Aktionen | M6 | Eigene Ausbaufreigabe |
@@ -235,35 +235,35 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 
 ### Animation und Navigation
 
-- [ ] M4.01 Gemeinsame Zeitplanberechnung und begrenzte Presets für Eintritt/Austritt implementieren.
-- [ ] M4.02 Startzeit, Dauer, Easing, Sichtbarphase und Slide-Dauer validieren.
-- [ ] M4.03 Layouttransformationen von Animationstransformationen trennen.
-- [ ] M4.04 Cut-, Fade- und Slide-Übergang ergänzen.
-- [ ] M4.05 Zustandsautomat für Laden, Bereit, Übergang, Abspielen, Pause und Fehler implementieren.
-- [ ] M4.06 Schnelle Navigation, unterbrochene Übergänge und Ressourcen-Timeouts behandeln.
-- [ ] M4.07 Pfeile, Punkte, Touch-Wischen und Schleifensteuerung ergänzen.
-- [ ] M4.08 Autoplay standardmäßig deaktivieren; Pause/Start, Hover-/Fokus-/Tab-/Sichtbarkeitspause umsetzen.
-- [ ] M4.09 Manuelle Pause gegenüber automatischer Fortsetzung priorisieren.
+- [x] M4.01 Gemeinsame Zeitplanberechnung und begrenzte Presets für Eintritt/Austritt implementieren. `assets/shared/schedule.ts`/`animation.ts`, `src/Domain/Schedule.php`; Nachweis: `tests/unit/animation.test.ts` (alle Presets, Parität mit dem PHP-Validator), `tests/fixtures/schedule`.
+- [x] M4.02 Startzeit, Dauer, Easing, Sichtbarphase und Slide-Dauer validieren. Gemeinsame Negativfälle in `tests/fixtures/documents/invalid.json` (Start, Dauer, Easing, Preset, Slide-Dauer, Übergang, Austrittsreihenfolge) für PHP und TS.
+- [x] M4.03 Layouttransformationen von Animationstransformationen trennen. Getrennte Wrapper `.sws-layer` → `__anim` → `__body`; `PlaybackOutputTest::test_layers_keep_…`, Keyframes nur `opacity`/`transform`/`clip-path` (`animation.test.ts`).
+- [x] M4.04 Cut-, Fade- und Slide-Übergang ergänzen. `animation.test.ts` (Cut, Fade, Slide inkl. Richtung), `tests/e2e/runtime-regressions.mjs`.
+- [x] M4.05 Zustandsautomat für Laden, Bereit, Übergang, Abspielen, Pause und Fehler implementieren. `assets/runtime/state.ts`, `data-sws-state` (loading, ready, transitioning, playing, paused, error); `runtime.test.ts` „playback state“.
+- [x] M4.06 Schnelle Navigation, unterbrochene Übergänge und Ressourcen-Timeouts behandeln. Generationszähler, Bild-/Font-Wartefrist 1200 ms, Fehlerzustand bei Bildfehler/Timeout; `runtime.test.ts`, `runtime-regressions.mjs`.
+- [x] M4.07 Pfeile, Punkte, Touch-Wischen und Schleifensteuerung ergänzen. Pfeile, Punkte, Tastatur, Schleife und Wischgesten; `runtime.test.ts` („touch swipe“, „without loop“).
+- [x] M4.08 Autoplay standardmäßig deaktivieren; Pause/Start, Hover-/Fokus-/Tab-/Sichtbarkeitspause umsetzen. Autoplay standardmäßig aus; Pause/Start, Hover-/Fokus-/Tab-/Viewport-Pause; `runtime.test.ts`.
+- [x] M4.09 Manuelle Pause gegenüber automatischer Fortsetzung priorisieren. Nutzerpause wird nie automatisch fortgesetzt; `runtime.test.ts`.
 ### Ausgabe und Integration
 
-- [ ] M4.10 Semantischen PHP-Renderer mit statischem Fallback und lokaler Konfiguration erstellen.
-- [ ] M4.11 Shortcode, dynamischen Gutenberg-Block und PHP-Funktion auf denselben Renderer führen.
-- [ ] M4.12 Blockauswahl und sichere Vorschau integrieren; WordPress-eigene React-Laufzeit verwenden.
-- [ ] M4.13 Assets nur bei Einbindung ausgeben; auch späte PHP-Template-Einbindungen unterstützen.
-- [ ] M4.14 Instanzkennungen, mehrere Slider und wiederholte Einbindung desselben Sliders prüfen.
-- [ ] M4.15 Veröffentlichte Artefakte cachen, bei Rendererwechsel erneuern und alte Referenzen sicher bereinigen.
-- [ ] M4.16 Responsive Bilder, reservierte Höhe und Lazy Loading späterer Slides ergänzen.
+- [x] M4.10 Semantischen PHP-Renderer mit statischem Fallback und lokaler Konfiguration erstellen. `SliderRenderer` mit statischem ersten Slide und JSON-Konfiguration; `SliderRestTest`, `PlaybackOutputTest`.
+- [x] M4.11 Shortcode, dynamischen Gutenberg-Block und PHP-Funktion auf denselben Renderer führen. Nachweis: `src/Rendering/Block.php`, `sws_render_slider()`, `tests/wp/tests/BlockTest.php` (identisches Markup, Fehlerfälle, Head-Erkennung inkl. verschachtelter Blöcke). Der Block-Editor-Skript ist ein buildfreies Skript mit WordPress-Globals (keine zweite React-Kopie).
+- [x] M4.12 Blockauswahl und sichere Vorschau integrieren; WordPress-eigene React-Laufzeit verwenden. `tests/e2e/block.mjs` im echten Block-Editor der Dev-Site (Einfügen über den Inserter, Auswahl, Speichern als dynamischer Block ohne gespeichertes Markup, Frontend ohne Fehler, Runtime mit Pluginversion). Der Editor zeigt nur einen Platzhalter und nutzt die WordPress-React-Laufzeit.
+- [x] M4.13 Assets nur bei Einbindung ausgeben; auch späte PHP-Template-Einbindungen unterstützen. Assets nur bei Einbindung; frühe Erkennung (Shortcode, Block, verschachtelt) und spätes Einbinden mit Inline-Fallback; `BlockTest`, `PlaybackOutputTest::test_late_embedding_…`.
+- [x] M4.14 Instanzkennungen, mehrere Slider und wiederholte Einbindung desselben Sliders prüfen. Eindeutige Instanz- und Element-IDs bei mehreren/wiederholten Sliderinstanzen, Runtime einmal geladen; `PlaybackOutputTest`.
+- [x] M4.15 Veröffentlichte Artefakte cachen, bei Rendererwechsel erneuern und alte Referenzen sicher bereinigen. Artefakte nach Hash+Rendererversion; fremde Rendererversion → sichere Neuberechnung statt Datei; tägliche Bereinigung (`ArtifactCleanup`, `ArtifactRetention`: 7 Tage Karenz, nur unreferenzierte Dateien, Abbruch bei beschädigtem Snapshot); `ArtifactRetentionTest`, `PlaybackOutputTest`.
+- [x] M4.16 Responsive Bilder, reservierte Höhe und Lazy Loading späterer Slides ergänzen. `srcset`/`sizes`/Breite/Höhe von WordPress, erstes Bild eager mit `fetchpriority=high` (Hintergrund hat Vorrang), spätere Slides lazy, reservierte Höhe per `aspect-ratio`; `PlaybackOutputTest`.
 - [x] M4.24 The7-Theme: Modus „SW SliderMan“ in den Seitenoptionen „Page Header → Slideshow“; Ausgabe über `presscore_do_header_slideshow` und den gemeinsamen Renderer (`src/Integration/The7.php`). Nachweis: `tests/wp/tests/The7IntegrationTest.php`, Browserprüfung der Metabox auf der Dev-Site. Praktische Frontend-Abnahme durch Stefan offen.
 
 ### Zugänglichkeit
 
-- [ ] M4.17 Alle Steuerelemente per Tastatur und mit sichtbarem Fokus bedienen.
-- [ ] M4.18 Inaktive Inhalte aus Fokusreihenfolge und Accessibility Tree entfernen.
-- [ ] M4.19 Fokus bei manueller Navigation erhalten; aktive Fokusinhalte nicht automatisch wechseln.
-- [ ] M4.20 Reduced Motion als statischen lesbaren Endzustand ohne Autoplay umsetzen.
-- [ ] M4.21 Automatische und manuelle Slidewechsel sinnvoll für Screenreader behandeln.
-- [ ] M4.22 Ohne JavaScript, mit langsamen Fonts, fehlenden Bildern und mit einem einzigen Slide prüfen.
-- [ ] M4.23 Stefan prüft Timing, mobile Wischgesten, Pause und tatsächliche Gestaltung.
+- [x] M4.17 Alle Steuerelemente per Tastatur und mit sichtbarem Fokus bedienen. `tests/e2e/accessibility.mjs`: Tab-Reihenfolge, Pfeiltasten, Enter/Space, sichtbarer Fokusring (`:focus-visible`).
+- [x] M4.18 Inaktive Inhalte aus Fokusreihenfolge und Accessibility Tree entfernen. `inert` auf inaktiven Slides; im Browser nicht tabbar und nicht sichtbar (`accessibility.mjs`).
+- [x] M4.19 Fokus bei manueller Navigation erhalten; aktive Fokusinhalte nicht automatisch wechseln. Fokus bleibt auf Steuerelementen; liegt er im Slide, pausiert Autoplay, und ein Wischen übergibt ihn an den neuen Slide statt ihn zu verlieren (`accessibility.mjs`, `runtime.test.ts`).
+- [x] M4.20 Reduced Motion als statischen lesbaren Endzustand ohne Autoplay umsetzen. `accessibility.mjs`: kein Autoplay, keine Animationen (`getAnimations()` = 0), Endzustand sichtbar, manuelle Navigation funktioniert.
+- [x] M4.21 Automatische und manuelle Slidewechsel sinnvoll für Screenreader behandeln. Manuelle Wechsel setzen die Live-Region („2 of 3“), Autoplay bleibt still (`accessibility.mjs`).
+- [x] M4.22 Ohne JavaScript, mit langsamen Fonts, fehlenden Bildern und mit einem einzigen Slide prüfen. Ohne JS (nur erster Slide, keine toten Steuerelemente), einzelner Slide (keine Steuerelemente), fehlendes Bild (Alt-Text, Zustand `error`) in `accessibility.mjs`; Fonts: `font-display: swap` und begrenzte Wartefrist.
+- [x] M4.23 Stefan prüft Timing, mobile Wischgesten, Pause und tatsächliche Gestaltung. Funktionen von Stefan abgenommen (05.11.2026).
 
 **Abnahmekriterium:** Editor und Frontend spielen dieselbe Animation ab. Wiederholte Navigation erzeugt keine überlappenden Zustände; Inhalt und Navigation bleiben zugänglich.
 

@@ -2,7 +2,7 @@
 /**
  * Local end-to-end helper (development site only, never shipped).
  *
- * Usage: php tests/e2e/wp-helper.php auth|activate|page <slider-id>|cleanup <title-prefix>
+ * Usage: php tests/e2e/wp-helper.php auth|activate|page <slider-id>|slider <title>|bulk <prefix> <count>|age <id>|cleanup <title-prefix>
  * Prints JSON. `auth` returns admin cookies for Playwright; `page` creates/updates a test page
  * that embeds the slider twice.
  *
@@ -35,6 +35,53 @@ if ( 'page' === $sws_command ) {
 		)
 	);
 	echo wp_json_encode( array( 'url' => get_permalink( $sws_page_id ) ) ), "\n";
+	exit;
+}
+if ( 'slider' === $sws_command ) {
+	// Creates and publishes a default slider (title must start with E2E so cleanup removes it).
+	$sws_admins = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
+	wp_set_current_user( (int) ( $sws_admins[0] ?? 0 ) );
+	do_action( 'rest_api_init' );
+	$sws_call = static function ( string $method, string $route, array $body ): array {
+		$request = new WP_REST_Request( $method, '/sw-sliderman/v1' . $route );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( (string) wp_json_encode( $body ) );
+		$response = rest_get_server()->dispatch( $request );
+		return array( $response->get_status(), $response->get_data() );
+	};
+	list( , $sws_created ) = $sws_call( 'POST', '/sliders', array( 'title' => $argv[2] ?? 'E2E Block' ) );
+	list( $sws_status )    = $sws_call( 'POST', '/sliders/' . $sws_created['id'] . '/publish', array( 'version' => $sws_created['version'] ) );
+	echo wp_json_encode( array( 'id' => $sws_created['id'], 'published' => 200 === $sws_status ) ), "\n";
+	exit;
+}
+if ( 'bulk' === $sws_command ) {
+	// Many unpublished sliders, to exercise paginated lists.
+	$sws_admins = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
+	wp_set_current_user( (int) ( $sws_admins[0] ?? 0 ) );
+	do_action( 'rest_api_init' );
+	$sws_count = max( 1, min( 300, (int) ( $argv[3] ?? 1 ) ) );
+	for ( $sws_i = 1; $sws_i <= $sws_count; $sws_i++ ) {
+		$request = new WP_REST_Request( 'POST', '/sw-sliderman/v1/sliders' );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( (string) wp_json_encode( array( 'title' => ( $argv[2] ?? 'E2E Block' ) . ' bulk ' . $sws_i ) ) );
+		rest_get_server()->dispatch( $request );
+	}
+	echo wp_json_encode( array( 'created' => $sws_count ) ), "\n";
+	exit;
+}
+if ( 'age' === $sws_command ) {
+	// Makes a slider the oldest one, so newest-first lists show it last.
+	global $wpdb;
+	$wpdb->update( $wpdb->posts, array( 'post_modified' => '2001-01-01 00:00:00', 'post_modified_gmt' => '2001-01-01 00:00:00' ), array( 'ID' => (int) ( $argv[2] ?? 0 ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	clean_post_cache( (int) ( $argv[2] ?? 0 ) );
+	echo "{}\n";
+	exit;
+}
+if ( 'cleanup-pages' === $sws_command ) {
+	foreach ( get_posts( array( 'post_type' => 'page', 'posts_per_page' => -1, 'post_status' => 'any', 's' => (string) ( $argv[2] ?? 'E2E' ) ) ) as $sws_post ) {
+		wp_delete_post( $sws_post->ID, true );
+	}
+	echo "{}\n";
 	exit;
 }
 if ( 'cleanup' === $sws_command ) {

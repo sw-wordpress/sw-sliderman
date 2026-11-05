@@ -72,6 +72,9 @@ jobs:
           grep -Fx "$PLUGIN_SLUG/vendor/autoload.php" "$RUNNER_TEMP/zip-contents.txt"
           grep -Fx "$PLUGIN_SLUG/build/editor/editor.js" "$RUNNER_TEMP/zip-contents.txt"
           grep -Fx "$PLUGIN_SLUG/build/runtime/runtime.js" "$RUNNER_TEMP/zip-contents.txt"
+          grep -Fx "$PLUGIN_SLUG/build/block/block.json" "$RUNNER_TEMP/zip-contents.txt"
+          grep -Fx "$PLUGIN_SLUG/build/block/editor.js" "$RUNNER_TEMP/zip-contents.txt"
+          grep -Fx "$PLUGIN_SLUG/build/block/editor.asset.php" "$RUNNER_TEMP/zip-contents.txt"
           grep -Fx "$PLUGIN_SLUG/fonts/catalog.json" "$RUNNER_TEMP/zip-contents.txt"
           grep -Fx "$PLUGIN_SLUG/languages/sw-sliderman-de_DE.mo" "$RUNNER_TEMP/zip-contents.txt"
           if grep -Eq "^$PLUGIN_SLUG/(assets|tests|tools|bin|node_modules|\.git|\.github)/|^$PLUGIN_SLUG/vendor/(phpunit|phpstan|squizlabs|wp-coding-standards)/" "$RUNNER_TEMP/zip-contents.txt"; then

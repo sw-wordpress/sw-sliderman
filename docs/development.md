@@ -11,10 +11,13 @@ Status: M0 accepted; M1 foundation and persistence implemented; evidence and rem
 | TS/Vue | ESLint 9, Prettier, vue-tsc (strict, `exactOptionalPropertyTypes`) | `npm run lint`, `npm run typecheck` |
 | TS unit/contract | Vitest + jsdom (`tests/unit`) | `npm test` |
 | Build | Vite 6: editor (ES module), runtime (IIFE) | `npm run build` |
+| Block files | `assets/block` copied to `build/block` (shipped; `assets/` is not) | `node bin/build-block.mjs` (part of the build) |
 | Bundle guard | runtime budget, import boundary, no remote fonts, scoped admin CSS | `node bin/check-bundles.mjs` (part of the build) |
 | E2E | Playwright against the local site | `node tests/e2e/editor.mjs` |
 | Preview/Website-Vergleich (M3.24) | Playwright, Referenzdokument auf drei Breiten (1180/820/375 px); Toleranz 1 px + 0,1 % der Containerbreite, Schrift 0,6 px; legt `E2E Parity*`-Slider an und entfernt sie | `node tests/e2e/parity.mjs` |
 | Hero effects | Native Chromium at desktop/tablet/mobile widths; no WordPress writes (after build) | `node tests/e2e/hero-effects.mjs` |
+| Accessibility regressions | Playwright, intercepted fixture, no WordPress writes (after build) | `node tests/e2e/accessibility.mjs` |
+| Block in the block editor | Playwright against the dev site (creates and removes `E2E Block*` sliders/pages) | `node tests/e2e/block.mjs` |
 | Runtime regressions | Playwright with intercepted fixtures, no WordPress writes (after build) | `node tests/e2e/runtime-regressions.mjs` |
 
 Node 18.18 is enough locally (versions pinned like sw-backupit); CI uses Node 22.
@@ -40,7 +43,7 @@ M2 local-font browser/acceptance checks: [font-testing.md](font-testing.md).
 
 ## Coverage
 
-`npm run coverage` misst alle produktiven TS-/Vue-Dateien und erzwingt mehr als 80 % Zeilenabdeckung. PHP: `composer coverage`, danach WordPress-PHPUnit mit `--coverage-clover coverage/wordpress.xml` (vom Projektroot); `php tests/coverage/merge.php coverage/unit.xml coverage/wordpress.xml` vereinigt beide Berichte und erzwingt ebenfalls > 80 %. PHP benötigt PCOV oder Xdebug, CI verwendet Xdebug. Kein produktiver Bereich ist ausgenommen. SonarQube erhält PHP-Clover und JS-LCOV aus CI-Artefakten.
+`npm run coverage` misst alle produktiven TS-/Vue-/JS-Dateien (auch das buildfreie Block-Skript `assets/block/editor.js`) und erzwingt mehr als 80 % Zeilenabdeckung. PHP: `composer coverage`, danach WordPress-PHPUnit mit `--coverage-clover coverage/wordpress.xml` (vom Projektroot); `php tests/coverage/merge.php coverage/unit.xml coverage/wordpress.xml` vereinigt beide Berichte und erzwingt ebenfalls > 80 %. PHP benötigt PCOV oder Xdebug, CI verwendet Xdebug. Kein produktiver Bereich ist ausgenommen. SonarQube erhält PHP-Clover und JS-LCOV aus CI-Artefakten.
 
 ## CI
 

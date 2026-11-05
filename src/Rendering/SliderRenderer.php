@@ -135,13 +135,17 @@ final class SliderRenderer {
 					'loading'  => $active ? 'eager' : 'lazy',
 					'decoding' => 'async',
 					'sizes'    => '100vw',
-				)
+				) + ( $active ? array( 'fetchpriority' => 'high' ) : array() )
 			);
 		}
 
 		$html .= '<div class="sws-stage">';
+		// High priority only where the first slide has no background image that is the likely LCP.
+		$priority = $active && ! is_int( $background );
 		foreach ( $slide['layers'] as $layer ) {
-			$html .= $this->layer( $layer, $active );
+			$is_image = 'image' === $layer['type'];
+			$html    .= $this->layer( $layer, $active, $priority && $is_image );
+			$priority = $priority && ! $is_image;
 		}
 		$html .= '</div></div>';
 		return $html;
@@ -150,13 +154,13 @@ final class SliderRenderer {
 	/**
 	 * @param array<string, mixed> $layer Validated layer.
 	 */
-	private function layer( array $layer, bool $eager ): string {
+	private function layer( array $layer, bool $eager, bool $priority = false ): string {
 		if ( 1 !== preg_match( DocumentValidator::ID_PATTERN, (string) $layer['id'] ) ) {
 			return '';
 		}
 		$body = match ( $layer['type'] ) {
 			'text'   => $this->text( $layer['content'] ),
-			'image'  => $this->image( $layer['content'], $layer['layout'], $eager ),
+			'image'  => $this->image( $layer['content'], $layer['layout'], $eager, $priority ),
 			'button' => $this->button( $layer['content'] ),
 			'shape'  => '<span class="sws-shape sws-shape--' . ( 'circle' === ( $layer['content']['kind'] ?? '' ) ? 'circle' : 'rectangle' ) . '" aria-hidden="true"></span>',
 			default  => '',
@@ -182,7 +186,7 @@ final class SliderRenderer {
 	 * @param array<string, mixed> $content Image content.
 	 * @param array<string, mixed> $layout  Base layout (for the `sizes` hint).
 	 */
-	private function image( array $content, array $layout, bool $eager ): string {
+	private function image( array $content, array $layout, bool $eager, bool $priority = false ): string {
 		if ( ! is_int( $content['attachmentId'] ) ) {
 			return '';
 		}
@@ -197,7 +201,7 @@ final class SliderRenderer {
 				'loading'  => $eager ? 'eager' : 'lazy',
 				'decoding' => 'async',
 				'sizes'    => '(max-width: 767px) 100vw, ' . $width . 'px',
-			)
+			) + ( $priority ? array( 'fetchpriority' => 'high' ) : array() )
 		);
 		$url   = (string) ( $content['linkUrl'] ?? '' );
 		if ( '' === $image || '' === $url || 1 !== preg_match( DocumentValidator::LINK_PATTERN, $url ) ) {

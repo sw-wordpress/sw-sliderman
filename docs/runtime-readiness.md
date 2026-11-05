@@ -11,3 +11,12 @@ Image sizing buttons use the selected image's media dimensions (falling back to 
 ## Regression checks
 
 Run `npm test` for deterministic lifecycle and sizing tests. After `npm run build`, run `node tests/e2e/runtime-regressions.mjs` for Chromium's native image decoding and Web Animations. The browser check serves an intercepted HTML fixture with a delayed image; it needs an installed Playwright Chromium but makes no WordPress writes. It verifies readiness, no visible entrance frame before animation, transition/entrance clock ordering, autoplay, hover pause and looping.
+
+## State, artifacts and images (M4.05, M4.15, M4.16)
+
+The root carries `data-sws-state`: `loading`, `ready`, `transitioning`, `playing`, `paused` or `error` (`assets/runtime/state.ts`). `error` means an image failed or timed out; the slide stays readable. A new successful navigation clears it.
+
+Stylesheet artifacts are named by document hash and renderer version. A snapshot built by another renderer version is not loaded; its CSS is recalculated inline. The daily task `sws_cleanup_artifacts` deletes files that no active snapshot has referenced for seven days. The period starts when the cleanup first sees the file unreferenced (option `sws_artifact_unreferenced`), not at the file's age, so cached pages keep their stylesheet after a republication; storing or reusing an artifact clears its record, so a later retirement starts a new period (temporary files: one day by age). An unreadable snapshot aborts the run. Publication (storing or reusing the stylesheet until the snapshot is active) and each cleanup pass share one site-wide database lock (`WpArtifactGuard`), so a cleanup can never delete a file that a concurrent publication just reused. A busy lock makes publication report `RepositoryBusy` after 5 s and makes the cleanup skip that pass.
+
+The first slide's background image (else its first image layer) is loaded eagerly with `fetchpriority="high"`; all later images are lazy and promoted by the runtime before their slide is shown.
+

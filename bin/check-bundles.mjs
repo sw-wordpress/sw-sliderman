@@ -10,7 +10,7 @@
  * This is a guard against regressions, not a replacement for the browser request recording
  * required by PLAN.md 16.
  */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
@@ -55,6 +55,15 @@ const editorJs = files(join(root, 'build/editor'))
   .join('\n');
 const versionedEffectsImport = /import\(["'][^"']*heroEffects[^"']*\?ver=["']\s*\+\s*encodeURIComponent\(window\.swsEditorConfig\.version\)\)/;
 if (!versionedEffectsImport.test(editorJs)) failures.push('editor effects import lacks the central plugin version');
+
+// The block ships from build/block (assets/ is not part of the release ZIP) and must match its source.
+for (const file of ['block.json', 'editor.js', 'editor.asset.php']) {
+  const built = join(root, 'build/block', file);
+  if (!existsSync(built)) failures.push(`build/block/${file} is missing (run bin/build-block.mjs)`);
+  else if (readFileSync(built, 'utf8') !== readFileSync(join(root, 'assets/block', file), 'utf8')) {
+    failures.push(`build/block/${file} differs from assets/block/${file}`);
+  }
+}
 
 // Editor CSS: every top-level selector must be scoped (keyframes and font-face excluded).
 const editorCss = readFileSync(join(root, 'build/editor/editor.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');

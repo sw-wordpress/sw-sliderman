@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseConfig } from '../../assets/runtime/config';
 import { SliderInstance } from '../../assets/runtime/SliderInstance';
+import { derivePlaybackState } from '../../assets/runtime/state';
 
 /** Runtime state handling in jsdom (no real animations; Web Animations are stubbed). */
 function markup(slides: number, autoplay: boolean): HTMLElement {
@@ -302,6 +303,249 @@ describe('runtime', () => {
     instance.destroy();
     hidden.mockRestore();
     animate.mockRestore();
+  });
+});
+
+describe('focus handling (M4.19)', () => {
+  it('keeps focus in the slider when the focused slide content is left by a swipe or key', async () => {
+    const root = markup(3, false);
+    const instance = SliderInstance.create(root, config(false));
+    await vi.advanceTimersByTimeAsync(0);
+    const link = root.querySelector('a') as HTMLAnchorElement;
+    link.focus();
+    expect(document.activeElement).toBe(link);
+    instance.goTo(1, true);
+    await vi.advanceTimersByTimeAsync(0);
+    const slides = root.querySelectorAll<HTMLElement>('.sws-slide');
+    expect(document.activeElement).toBe(slides[1]);
+    expect(slides[1]?.tabIndex).toBe(-1);
+    instance.destroy();
+  });
+
+  it('does not move focus that is on a control, and never navigates automatically while focus is inside', async () => {
+    const root = markup(3, true);
+    const instance = SliderInstance.create(root, config(true));
+    await vi.advanceTimersByTimeAsync(0);
+    const next = root.querySelector('.sws-next') as HTMLButtonElement;
+    next.focus();
+    next.click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(document.activeElement).toBe(next);
+    expect(active(root)).toBe(1);
+    await vi.advanceTimersByTimeAsync(60000);
+    expect(active(root)).toBe(1);
+    instance.destroy();
+  });
+});
+
+describe('deferred focus hand-over during a transition', () => {
+  let releases: Array<() => void> = [];
+  function fadeSetup() {
+    const root = markup(3, false);
+    const cfg = config(false);
+    const slides = cfg.slides.map((slide) => ({
+      ...slide,
+      transition: { type: 'fade' as const, durationMs: 400 },
+    }));
+    releases = [];
+    HTMLElement.prototype.animate = vi.fn().mockImplementation(() => {
+      let release: () => void = () => undefined;
+      const finished = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      releases.push(release);
+      return { finished, cancel: vi.fn(), play: vi.fn(), pause: vi.fn() };
+    });
+    return { root, instance: SliderInstance.create(root, { ...cfg, slides }) };
+  }
+  const finishTransition = async () => {
+    releases.forEach((release) => release());
+    await vi.advanceTimersByTimeAsync(0);
+  };
+
+  it('hands focus lost to <body> over to the new slide after the transition', async () => {
+    const { root, instance } = fadeSetup();
+    await vi.advanceTimersByTimeAsync(0);
+    const link = root.querySelector('a') as HTMLAnchorElement;
+    link.focus();
+    instance.goTo(1, true);
+    await vi.advanceTimersByTimeAsync(0);
+    link.blur(); // what `inert` does to the focused element of the leaving slide
+    await finishTransition();
+    expect(document.activeElement).toBe(root.querySelectorAll('.sws-slide')[1]);
+    instance.destroy();
+  });
+
+  it('keeps a control the user focused during the transition', async () => {
+    const { root, instance } = fadeSetup();
+    await vi.advanceTimersByTimeAsync(0);
+    (root.querySelector('a') as HTMLAnchorElement).focus();
+    instance.goTo(1, true);
+    await vi.advanceTimersByTimeAsync(0);
+    const dot = root.querySelector('.sws-dot') as HTMLButtonElement;
+    dot.focus();
+    await finishTransition();
+    expect(document.activeElement).toBe(dot);
+    instance.destroy();
+  });
+
+  it('keeps focus the user moved outside the slider during the transition', async () => {
+    const { root, instance } = fadeSetup();
+    await vi.advanceTimersByTimeAsync(0);
+    const outside = document.createElement('button');
+    document.body.append(outside);
+    (root.querySelector('a') as HTMLAnchorElement).focus();
+    instance.goTo(1, true);
+    await vi.advanceTimersByTimeAsync(0);
+    outside.focus();
+    await finishTransition();
+    expect(document.activeElement).toBe(outside);
+    instance.destroy();
+  });
+
+  it('drops a pending hand-over when the transition is superseded', async () => {
+    const { root, instance } = fadeSetup();
+    await vi.advanceTimersByTimeAsync(0);
+    (root.querySelector('a') as HTMLAnchorElement).focus();
+    instance.goTo(1, true);
+    await vi.advanceTimersByTimeAsync(0);
+    document.dispatchEvent(new Event('visibilitychange'));
+    const next = root.querySelector('.sws-next') as HTMLButtonElement;
+    next.focus();
+    instance.goTo(2, false);
+    await vi.advanceTimersByTimeAsync(0);
+    await finishTransition();
+    expect(document.activeElement).toBe(next);
+    instance.destroy();
+  });
+});
+
+describe('touch swipe', () => {
+  function pointer(target: Element, type: string, x: number, y: number, kind = 'touch'): void {
+    target.dispatchEvent(
+      Object.assign(new Event(type, { bubbles: true }), {
+        pointerType: kind,
+        pointerId: 1,
+        clientX: x,
+        clientY: y,
+      }),
+    );
+  }
+
+  it('navigates on a horizontal swipe, ignores vertical scrolling, short moves and mouse drags', async () => {
+    const root = markup(3, false);
+    const instance = SliderInstance.create(root, config(false));
+    await vi.advanceTimersByTimeAsync(0);
+    const viewport = root.querySelector('.sws-viewport') as HTMLElement;
+    const swipe = (dx: number, dy: number, kind = 'touch') => {
+      pointer(viewport, 'pointerdown', 200, 100, kind);
+      pointer(viewport, 'pointerup', 200 + dx, 100 + dy, kind);
+    };
+    swipe(-30, 0);
+    swipe(-80, 90);
+    swipe(-120, 0, 'mouse');
+    expect(active(root)).toBe(0);
+    swipe(-80, 10);
+    expect(active(root)).toBe(1);
+    swipe(80, 0);
+    expect(active(root)).toBe(0);
+    pointer(viewport, 'pointerdown', 200, 100);
+    pointer(viewport, 'pointercancel', 100, 100);
+    pointer(viewport, 'pointerup', 100, 100);
+    expect(active(root)).toBe(0);
+    instance.destroy();
+  });
+});
+
+describe('playback state', () => {
+  const state = (root: HTMLElement) => root.dataset.swsState;
+
+  it('derives every public state from phase, errors and pause reasons', () => {
+    const base = {
+      phase: 'ready',
+      resourceError: false,
+      autoplayEnabled: true,
+      running: true,
+    } as const;
+    expect(derivePlaybackState(base)).toBe('playing');
+    expect(derivePlaybackState({ ...base, running: false })).toBe('paused');
+    expect(derivePlaybackState({ ...base, autoplayEnabled: false })).toBe('ready');
+    expect(derivePlaybackState({ ...base, resourceError: true })).toBe('error');
+    expect(derivePlaybackState({ ...base, phase: 'loading', resourceError: true })).toBe('loading');
+    expect(derivePlaybackState({ ...base, phase: 'transitioning' })).toBe('transitioning');
+  });
+
+  it('moves loading -> playing -> paused (hover, user) -> playing and is removed on destroy', async () => {
+    const root = markup(3, true);
+    const instance = SliderInstance.create(root, config(true));
+    expect(state(root)).toBe('loading');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state(root)).toBe('playing');
+    root.dispatchEvent(new Event('mouseenter'));
+    expect(state(root)).toBe('paused');
+    root.dispatchEvent(new Event('mouseleave'));
+    expect(state(root)).toBe('playing');
+    (root.querySelector('.sws-toggle') as HTMLButtonElement).click();
+    expect(state(root)).toBe('paused');
+    instance.destroy();
+    expect(state(root)).toBeUndefined();
+  });
+
+  it('is ready without autoplay and for a single slide', async () => {
+    const manual = markup(3, false);
+    SliderInstance.create(manual, config(false));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state(manual)).toBe('ready');
+  });
+
+  it('shows transitioning while a slide transition runs', async () => {
+    const root = markup(3, false);
+    const cfg = config(false);
+    const slides = cfg.slides.map((slide) => ({
+      ...slide,
+      transition: { type: 'fade' as const, durationMs: 400 },
+    }));
+    const finished = new Promise<void>(() => undefined);
+    HTMLElement.prototype.animate = vi.fn().mockReturnValue({ finished, cancel: vi.fn() });
+    const instance = SliderInstance.create(root, { ...cfg, slides });
+    await vi.advanceTimersByTimeAsync(0);
+    instance.goTo(1, true);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state(root)).toBe('transitioning');
+    instance.destroy();
+  });
+
+  it.each(['error', 'timeout'])(
+    'enters error after a failed or stalled image (%s) and recovers on the next slide',
+    async (mode) => {
+      const root = markup(3, false);
+      const image = document.createElement('img');
+      image.src = '/missing.jpg';
+      root.querySelectorAll('.sws-slide')[1]?.append(image);
+      const instance = SliderInstance.create(root, config(false));
+      await vi.advanceTimersByTimeAsync(0);
+      instance.goTo(1, true);
+      if (mode === 'error') image.dispatchEvent(new Event('error'));
+      await vi.advanceTimersByTimeAsync(mode === 'timeout' ? 1200 : 0);
+      expect(active(root)).toBe(1);
+      expect(state(root)).toBe('error');
+      instance.goTo(2, true);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(state(root)).toBe('ready');
+      instance.destroy();
+    },
+  );
+
+  it('first-slide image failure is reported as error', async () => {
+    const root = markup(3, false);
+    const image = document.createElement('img');
+    image.src = '/missing.jpg';
+    root.querySelector('.sws-slide')?.append(image);
+    const instance = SliderInstance.create(root, config(false));
+    image.dispatchEvent(new Event('error'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state(root)).toBe('error');
+    instance.destroy();
   });
 });
 
