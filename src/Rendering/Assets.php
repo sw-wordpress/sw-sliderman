@@ -13,6 +13,7 @@ use JsonException;
 use SW\Slider\Application\PublishedSnapshot;
 use SW\Slider\Application\SliderRepository;
 use SW\Slider\Domain\CanonicalJson;
+use SW\Slider\Domain\EffectCatalog;
 use SW\Slider\Fonts\FontRepository;
 use SW\Slider\Infrastructure\UploadPaths;
 
@@ -29,6 +30,7 @@ final class Assets {
 
 	public const RUNTIME = 'sws-runtime';
 	public const EFFECTS = 'sws-effects';
+	public const GPU     = 'sws-gpu';
 
 	/** @var array<string, true> Style handles already printed or enqueued. */
 	private array $used = array();
@@ -40,7 +42,8 @@ final class Assets {
 		private readonly FontRepository $fonts,
 		private readonly string $plugin_url,
 		private readonly string $plugin_dir,
-		private readonly string $version
+		private readonly string $version,
+		private readonly ?EffectCatalog $effects = null
 	) {
 	}
 
@@ -57,6 +60,18 @@ final class Assets {
 			wp_register_script(
 				self::EFFECTS,
 				$this->plugin_url . 'build/runtime/effects.js',
+				array(),
+				$version,
+				array(
+					'in_footer' => true,
+					'strategy'  => 'defer',
+				)
+			);
+		}
+		if ( is_readable( $this->plugin_dir . 'build/gpu/gpu.js' ) ) {
+			wp_register_script(
+				self::GPU,
+				$this->plugin_url . 'build/gpu/gpu.js',
 				array(),
 				$version,
 				array(
@@ -169,6 +184,28 @@ final class Assets {
 	}
 
 	/**
+	 * Whether an enabled slide has a GPU effect layer of a registered type.
+	 *
+	 * @param array<string, mixed> $document Published document.
+	 */
+	private function uses_effects( array $document ): bool {
+		if ( null === $this->effects ) {
+			return false;
+		}
+		foreach ( $document['slides'] as $slide ) {
+			if ( true !== $slide['enabled'] ) {
+				continue;
+			}
+			foreach ( $slide['layers'] as $layer ) {
+				if ( 'effect' === $layer['type'] && null !== $this->effects->find( (string) $layer['content']['effect'] ) ) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Enqueues runtime, slider and font styles; returns the style handles not yet used.
 	 *
 	 * @param array<string, mixed> $document Published document.
@@ -188,6 +225,13 @@ final class Assets {
 					$runtime->deps[] = self::EFFECTS;
 				}
 				break;
+			}
+		}
+		if ( $this->uses_effects( $document ) ) {
+			// The GPU platform is a separate lazy bundle that the runtime waits for only on effect pages.
+			$runtime = wp_scripts()->query( self::RUNTIME, 'registered' );
+			if ( wp_script_is( self::GPU, 'registered' ) && $runtime instanceof \_WP_Dependency && ! in_array( self::GPU, $runtime->deps, true ) ) {
+				$runtime->deps[] = self::GPU;
 			}
 		}
 		wp_enqueue_script( self::RUNTIME );

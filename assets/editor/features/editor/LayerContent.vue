@@ -45,7 +45,9 @@ const image = computed(() => {
       v-if="image"
       class="sws-image"
       :class="`sws-fit-${layer.content.fit}`"
-      :style="{ objectPosition: focalPosition(layer.content.focalX, layer.content.focalY) ?? undefined }"
+      :style="{
+        objectPosition: focalPosition(layer.content.focalX, layer.content.focalY) ?? undefined,
+      }"
       :src="image"
       :alt="layer.content.alt"
       draggable="false"
@@ -61,10 +63,34 @@ const image = computed(() => {
     :class="`sws-shape--${layer.content.kind}`"
     aria-hidden="true"
   ></span>
+  <span v-else-if="layer.type === 'effect'" class="sws-effect-placeholder" aria-hidden="true">
+    <q-icon name="r_auto_awesome" size="32px" />
+    {{ layer.content.effect }}
+  </span>
   <span v-else class="sws-button">{{ layer.content.label }}</span>
 </template>
 
 <style scoped>
+.sws-effect-placeholder {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(120, 185, 255, 0.18),
+    rgba(120, 185, 255, 0.18) 10px,
+    rgba(120, 185, 255, 0.08) 10px,
+    rgba(120, 185, 255, 0.08) 20px
+  );
+  color: #fff;
+  font:
+    14px/1.2 system-ui,
+    sans-serif;
+}
 .sws-shape {
   display: block;
   width: 100%;

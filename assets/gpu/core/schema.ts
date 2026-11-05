@@ -18,10 +18,17 @@ export type SchemaIssueCode =
   | 'pattern'
   | 'schema';
 
+/** Codes reported for a value; `schema` only occurs when a schema itself is checked. */
+export type ValueIssueCode = Exclude<SchemaIssueCode, 'schema'>;
+
 export interface SchemaIssue {
   /** JSON pointer (RFC 6901) of the offending value, or of the offending schema node for `schema`. */
   readonly path: string;
   readonly code: SchemaIssueCode;
+}
+
+export interface ValueIssue extends SchemaIssue {
+  readonly code: ValueIssueCode;
 }
 
 type Json = Record<string, unknown>;
@@ -238,13 +245,13 @@ const stripDefault = (node: Json): Json => {
  * Validates a value against a checked schema. A wrongly typed value is reported once and not
  * inspected further; unknown keys are reported individually (same behaviour as the PHP copy).
  */
-export function validateParams(schema: unknown, value: unknown): SchemaIssue[] {
-  const issues: SchemaIssue[] = [];
+export function validateParams(schema: unknown, value: unknown): ValueIssue[] {
+  const issues: ValueIssue[] = [];
   if (isObject(schema)) validateNode(schema, value, '', issues);
   return issues;
 }
 
-function validateNode(node: Json, value: unknown, path: string, issues: SchemaIssue[]): void {
+function validateNode(node: Json, value: unknown, path: string, issues: ValueIssue[]): void {
   if (Array.isArray(node.oneOf)) return validateOneOf(node, value, path, issues);
   switch (node.type) {
     case 'object':
@@ -263,13 +270,13 @@ function validateNode(node: Json, value: unknown, path: string, issues: SchemaIs
   }
 }
 
-function checkEnum(node: Json, value: unknown, path: string, issues: SchemaIssue[]): void {
+function checkEnum(node: Json, value: unknown, path: string, issues: ValueIssue[]): void {
   if (Array.isArray(node.enum) && !node.enum.some((entry) => same(entry, value)))
     issues.push({ path, code: 'enum' });
   else if ('const' in node && !same(node.const, value)) issues.push({ path, code: 'enum' });
 }
 
-function validateObject(node: Json, value: unknown, path: string, issues: SchemaIssue[]): void {
+function validateObject(node: Json, value: unknown, path: string, issues: ValueIssue[]): void {
   if (!isObject(value)) return void issues.push({ path, code: 'type' });
   const properties = (node.properties ?? {}) as Json;
   for (const key of Object.keys(value)) {
@@ -286,7 +293,7 @@ function validateObject(node: Json, value: unknown, path: string, issues: Schema
   }
 }
 
-function validateOneOf(node: Json, value: unknown, path: string, issues: SchemaIssue[]): void {
+function validateOneOf(node: Json, value: unknown, path: string, issues: ValueIssue[]): void {
   if (!isObject(value)) return void issues.push({ path, code: 'type' });
   const discriminator = node.discriminator as string;
   const at = `${path}/${escapePointer(discriminator)}`;
@@ -299,7 +306,7 @@ function validateOneOf(node: Json, value: unknown, path: string, issues: SchemaI
   validateObject(branch, value, path, issues);
 }
 
-function validateArray(node: Json, value: unknown, path: string, issues: SchemaIssue[]): void {
+function validateArray(node: Json, value: unknown, path: string, issues: ValueIssue[]): void {
   if (!Array.isArray(value)) return void issues.push({ path, code: 'type' });
   const min = typeof node.minItems === 'number' ? node.minItems : 0;
   if (value.length < min || value.length > (node.maxItems as number))
@@ -308,7 +315,7 @@ function validateArray(node: Json, value: unknown, path: string, issues: SchemaI
   value.forEach((item, index) => validateNode(items, item, `${path}/${index}`, issues));
 }
 
-function validateString(node: Json, value: unknown, path: string, issues: SchemaIssue[]): void {
+function validateString(node: Json, value: unknown, path: string, issues: ValueIssue[]): void {
   if (typeof value !== 'string') return void issues.push({ path, code: 'type' });
   const length = codePoints(value);
   const min = typeof node.minLength === 'number' ? node.minLength : 0;
@@ -318,7 +325,7 @@ function validateString(node: Json, value: unknown, path: string, issues: Schema
   checkEnum(node, value, path, issues);
 }
 
-function validateNumber(node: Json, value: unknown, path: string, issues: SchemaIssue[]): void {
+function validateNumber(node: Json, value: unknown, path: string, issues: ValueIssue[]): void {
   if (
     typeof value !== 'number' ||
     !Number.isFinite(value) ||

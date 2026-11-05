@@ -83,7 +83,11 @@ export function createLayer(
   stageHeight: number,
   name: string,
 ): Layer {
-  const size = { text: [640, 120], image: [480, 320], button: [240, 56], shape: [200, 200] }[type];
+  // An effect layer fills the whole stage by default (it can be resized like any layer).
+  const size =
+    type === 'effect'
+      ? [stageWidth, stageHeight]
+      : { text: [640, 120], image: [480, 320], button: [240, 56], shape: [200, 200] }[type];
   const [width = 200, height = 100] = size;
   const layout: LayerLayout = {
     x: Math.round((stageWidth - width) / 2),
@@ -120,6 +124,20 @@ export function createLayer(
       return { ...common, type, content: { label: name, url: '#', newTab: false } };
     case 'shape':
       return { ...common, type, content: { kind: 'rectangle' } };
+    case 'effect':
+      return {
+        ...common,
+        type,
+        content: {
+          effect: 'particle-field',
+          schemaVersion: 1,
+          seed: 1,
+          quality: 'auto',
+          params: {},
+          fallbackImageId: null,
+          alt: '',
+        },
+      };
     default: {
       const unknown: never = type;
       throw new Error(`Unknown layer type ${String(unknown)}`);

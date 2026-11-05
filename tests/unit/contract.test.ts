@@ -20,7 +20,7 @@ import { richToHtml, richPlainText } from '@shared/richtext';
 import { focalPosition, imageFocalCss, slideBackgroundCss } from '@shared/css';
 import { effectiveSlideDurationMs, scheduleSlide } from '@shared/schedule';
 import type { BreakpointName, Layer, RichParagraph, SliderDocument } from '@shared/types';
-import { ROOT, fixture, fixtureFiles, patch, type PatchOp } from './fixtures';
+import { ROOT, effectCatalog, fixture, fixtureFiles, patch, type PatchOp } from './fixtures';
 
 interface InvalidCase {
   name: string;
@@ -41,7 +41,7 @@ function layersById(document: SliderDocument): Map<string, Layer> {
 
 describe('document validator contract', () => {
   it.each(fixtureFiles('documents/valid'))('valid fixture %s has no issues', (file) => {
-    expect(collectIssues(fixture(`documents/valid/${file}`))).toEqual([]);
+    expect(collectIssues(fixture(`documents/valid/${file}`), effectCatalog())).toEqual([]);
   });
 
   it('default template is valid', () => {
@@ -54,7 +54,7 @@ describe('document validator contract', () => {
   const suite = fixture('documents/invalid.json') as { cases: InvalidCase[] };
   it.each(suite.cases.map((c) => [c.name, c] as const))('%s', (_name, c) => {
     const document = patch(fixture(`documents/valid/${c.base}.json`), c.ops);
-    const actual = collectIssues(document)
+    const actual = collectIssues(document, effectCatalog())
       .map((i) => `${i.path} ${i.code}`)
       .sort();
     const expected = c.issues.map((i) => `${i.path} ${i.code}`).sort();

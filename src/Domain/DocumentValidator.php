@@ -36,7 +36,9 @@ final class DocumentValidator {
 	private const STYLE_KEYS          = array( 'fontRef', 'fontSize', 'lineHeight', 'letterSpacing', 'color', 'textAlign', 'backgroundColor', 'borderRadius', 'paddingX', 'paddingY', 'opacity' );
 	private const BUTTON_STATE_KEYS   = array( 'hoverBackgroundColor', 'hoverColor', 'focusOutlineColor' );
 	private const SHAPE_KINDS         = array( 'rectangle', 'circle' );
-	private const LAYER_TYPES         = array( 'text', 'image', 'button', 'shape' );
+	private const LAYER_TYPES         = array( 'text', 'image', 'button', 'shape', 'effect' );
+	private const EFFECT_QUALITY      = array( 'auto', 'low', 'medium', 'high', 'ultra' );
+	private const EFFECT_TYPE_PATTERN = '/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*(?:\/[a-z][a-z0-9]*(?:-[a-z0-9]+)*)?$/D';
 	private const OPTIONAL_STYLE_KEYS = array( 'borderWidth', 'borderColor', 'shadowX', 'shadowY', 'shadowBlur', 'shadowColor', 'shadowOpacity' );
 	private const PHASE_KEYS          = array( 'preset', 'startMs', 'durationMs', 'easing', 'distance' );
 
@@ -56,6 +58,13 @@ final class DocumentValidator {
 	 * @var array<string, true>
 	 */
 	private array $ids = array();
+
+	/**
+	 * @param EffectCatalog|null $effects Registered effect types. Without a catalog, effect parameters
+	 *                                    are only bounded, not checked against a schema.
+	 */
+	public function __construct( private readonly ?EffectCatalog $effects = null ) {
+	}
 
 	/**
 	 * Validates a decoded document.
@@ -637,10 +646,105 @@ final class DocumentValidator {
 				}
 				$this->enumeration( $content, 'kind', $path, self::SHAPE_KINDS );
 				return;
+			case 'effect':
+				$content = $this->object( $value, $path, array( 'effect', 'schemaVersion', 'seed', 'quality', 'params' ), array( 'preset', 'alt', 'fallbackImageId', 'assets' ) );
+				if ( null !== $content ) {
+					$this->validate_effect( $content, $path );
+				}
+				return;
 			default:
 				// The layer type itself is reported by validate_layer(); content cannot be checked.
 				return;
 		}
+	}
+
+	/**
+	 * Effect layer content: bounded envelope, then the parameters against the type's schema.
+	 *
+	 * Unknown types (an add-on was deactivated) stay valid and keep their bounded parameters; they
+	 * render the static fallback. Parameters of another `schemaVersion` than the installed module's
+	 * are only bounded here (older: the module upgrades them at runtime; newer: static fallback).
+	 */
+	private function validate_effect( stdClass $content, string $path ): void {
+		$type = $content->effect ?? null;
+		if ( property_exists( $content, 'effect' ) ) {
+			if ( ! is_string( $type ) ) {
+				$this->add( $path . '/effect', 'type' );
+			} elseif ( strlen( $type ) > 64 || 1 !== preg_match( self::EFFECT_TYPE_PATTERN, $type ) ) {
+				$this->add( $path . '/effect', 'pattern' );
+			}
+		}
+		$this->num( $content, 'schemaVersion', $path, 1, 1000, true );
+		$this->num( $content, 'seed', $path, 0, 2147483647, true );
+		$this->enumeration( $content, 'quality', $path, self::EFFECT_QUALITY );
+		$this->str( $content, 'preset', $path, 0, Limits::ID_LENGTH );
+		$this->str( $content, 'alt', $path, 0, Limits::ALT_LENGTH );
+		$this->attachment( $content, 'fallbackImageId', $path );
+		if ( property_exists( $content, 'assets' ) ) {
+			$this->validate_effect_assets( $content->assets, $path . '/assets' );
+		}
+		if ( ! property_exists( $content, 'params' ) ) {
+			return;
+		}
+		$at     = $path . '/params';
+		$params = $content->params;
+		if ( ! $params instanceof stdClass ) {
+			$this->add( $at, 'type' );
+			return;
+		}
+		if ( strlen( CanonicalJson::encode( $params ) ) > Limits::EFFECT_PARAMS_BYTES || self::depth( $params ) > Limits::EFFECT_PARAMS_DEPTH ) {
+			$this->add( $at, 'length' );
+			return;
+		}
+		$descriptor = is_string( $type ) && null !== $this->effects ? $this->effects->find( $type ) : null;
+		$version    = $content->schemaVersion ?? null;
+		if ( null === $descriptor || ! self::is_number( $version, true ) ) {
+			return;
+		}
+		// Only parameters of exactly the installed schema version are checked. Older ones are upgraded by
+		// the module at runtime; newer ones (an add-on was downgraded) cannot be judged and render the
+		// static fallback instead of breaking the published page.
+		if ( (int) $version === $descriptor->schema_version ) {
+			foreach ( EffectSchema::validate( $descriptor->schema, $params ) as $issue ) {
+				$this->add( $at . $issue->path, $issue->code );
+			}
+		}
+	}
+
+	private function validate_effect_assets( mixed $value, string $path ): void {
+		if ( ! $value instanceof stdClass ) {
+			$this->add( $path, 'type' );
+			return;
+		}
+		$entries = get_object_vars( $value );
+		if ( count( $entries ) > Limits::EFFECT_ASSETS ) {
+			$this->add( $path, 'count' );
+		}
+		foreach ( $entries as $key => $attachment ) {
+			$at = $path . '/' . EffectSchema::escape( (string) $key );
+			if ( 1 !== preg_match( self::ID_PATTERN, (string) $key ) ) {
+				$this->add( $at, 'pattern' );
+			} elseif ( ! self::is_number( $attachment, true ) ) {
+				$this->add( $at, 'type' );
+			} elseif ( $attachment < 1 || $attachment > 9007199254740991 ) {
+				$this->add( $at, 'range' );
+			}
+		}
+	}
+
+	/** Nesting depth of a decoded JSON value (a scalar is 0, an empty container 1). */
+	private static function depth( mixed $value ): int {
+		if ( $value instanceof stdClass ) {
+			$value = get_object_vars( $value );
+		}
+		if ( ! is_array( $value ) ) {
+			return 0;
+		}
+		$deepest = 0;
+		foreach ( $value as $child ) {
+			$deepest = max( $deepest, self::depth( $child ) );
+		}
+		return 1 + $deepest;
 	}
 
 	/**
@@ -734,7 +838,11 @@ final class DocumentValidator {
 				$this->num( $transition, 'durationMs', $at, 0, Limits::TRANSITION_MAX_MS, true );
 			}
 		}
+		$effect_layers = 0;
 		foreach ( $this->list_of( $slide, 'layers', $path, 0, Limits::LAYERS_PER_SLIDE ) as $index => $layer ) {
+			if ( $layer instanceof stdClass && 'effect' === ( $layer->type ?? null ) && Limits::EFFECT_LAYERS_PER_SLIDE + 1 === ++$effect_layers ) {
+				$this->add( $path . '/layers', 'count' );
+			}
 			$this->validate_layer( $layer, $path . '/layers/' . $index, $font_refs );
 		}
 	}

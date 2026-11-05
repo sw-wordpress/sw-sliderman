@@ -43,3 +43,8 @@ The 512-KiB document limit applies to **canonical ASCII storage**, including Uni
 Autosave records are user-specific WordPress revisions and never change the main draft version or live snapshot. The editor's existing periodic save remains a normal versioned draft save; the new separate autosave endpoint is an explicit recovery API, not a claim that the periodic save now uses WordPress autosaves. The revision dialog can restore a recovery or historical revision after saving the current work. Foreign-parent revisions are rejected. A restored revision creates a new draft version, and publication remains an explicit action.
 
 Saved draft previews use authenticated `admin-post.php?action=sws_preview&id=…&_wpnonce=…`, with current per-object edit permission and a user/object-bound nonce. Responses are private/no-store, noindex and same-origin framed, and render through the same renderer and assets as live output. No draft JSON or CSS file is written publicly; styles are generated inline for the authorized request. The ordinary shortcode continues to read only published snapshots.
+
+## Effect layers (M10)
+
+Layer type `effect` (GPU effect, content and rules in [GPU_EFFECTS.md](GPU_EFFECTS.md)): `effect` (type id), `schemaVersion`, `seed`, `quality`, `params`, optional `preset`, `alt`, `fallbackImageId`, `assets`. Additive; older plugin versions reject the type.
+

@@ -432,7 +432,7 @@ Nächste notwendige Änderung:
 
 - [x] G0 ADR 0005, `docs/GPU_EFFECTS.md`, TODO-Abschnitt.
 - [x] G1 `assets/gpu/core`: Typen, Registry, Schema-Dialekt (TS + PHP + Fixtures), RNG, Zeitschritt, Qualität, Transition. Nachweis: `gpu-core.test.ts`, `gpu-schema.test.ts`, `EffectSchemaTest.php`, `tests/fixtures/effects/schema.json`; Kern-Coverage 97,7 %.
-- [ ] G2 Dokument/PHP: Ebenentyp `effect`, Validierung, Limits, statischer Fallback, PHP-Registry für Add-on-Plugins, Asset-Einbindung, Bundle-Budget.
+- [x] G2 Dokument/PHP: Ebenentyp `effect`, Validierung, Limits, statischer Fallback, PHP-Registry für Add-on-Plugins, Asset-Einbindung. Nachweis: gemeinsame Fixtures (`valid/effect.json`, `effect-catalog.json`, 27 Fälle in `invalid.json`), `EffectLayerTest.php` (25 Tests), `DocumentValidatorTest`/`contract.test.ts`; PHP-Coverage 88,0 %. Bundle-Budget für `gpu.js` folgt mit dem Bundle in G3.
 - [ ] G3 `device`/`stage`: Capability-Prüfung, WebGL2, Scheduler, Observer, Kontextverlust, Slide-Lebenszyklus, Pause-Schalter.
 - [ ] G4 `particle-field`: Spawnformen, Integrator, Operatoren, Stile, Kamera, erste Presets.
 - [ ] G5 Bildrekonstruktion und Magnet-Dipol (`photo-grains`, `magnetic-canvas`).

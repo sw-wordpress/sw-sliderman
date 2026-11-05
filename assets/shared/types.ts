@@ -221,9 +221,34 @@ export type ButtonLayer = LayerBase & { readonly type: 'button'; readonly conten
 
 export type ShapeLayer = LayerBase & { readonly type: 'shape'; readonly content: ShapeContent };
 
-export type Layer = TextLayer | ImageLayer | ButtonLayer | ShapeLayer;
+export const EFFECT_QUALITIES = ['auto', 'low', 'medium', 'high', 'ultra'] as const;
+export type EffectQuality = (typeof EFFECT_QUALITIES)[number];
+
+/**
+ * GPU effect layer (M10, docs/GPU_EFFECTS.md). `params` is validated against the schema of the
+ * registered effect type; documents never contain code or shaders.
+ */
+export interface EffectContent {
+  /** Type id: `name` for built-in modules, `vendor/name` for add-ons. */
+  readonly effect: string;
+  readonly schemaVersion: number;
+  readonly seed: number;
+  readonly quality: EffectQuality;
+  readonly params: Record<string, unknown>;
+  readonly preset?: string;
+  /** Alternative text of the static fallback image (empty: decorative). */
+  readonly alt?: string;
+  /** Static image for no JavaScript, reduced motion and unavailable GPU. */
+  readonly fallbackImageId?: number | null;
+  /** Named media library attachments the effect reads (e.g. `image`). */
+  readonly assets?: Readonly<Record<string, number>>;
+}
+
+export type EffectLayer = LayerBase & { readonly type: 'effect'; readonly content: EffectContent };
+
+export type Layer = TextLayer | ImageLayer | ButtonLayer | ShapeLayer | EffectLayer;
 export type LayerType = Layer['type'];
-export const LAYER_TYPES: readonly LayerType[] = ['text', 'image', 'button', 'shape'];
+export const LAYER_TYPES: readonly LayerType[] = ['text', 'image', 'button', 'shape', 'effect'];
 
 export type TransitionType = 'cut' | 'fade' | 'slide';
 

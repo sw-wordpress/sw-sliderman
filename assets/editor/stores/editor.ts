@@ -407,6 +407,7 @@ export const useEditorStore = defineStore('editor', () => {
       image: __('Image'),
       button: __('Button'),
       shape: __('Shape'),
+      effect: __('Effect'),
     };
     const desktop = doc.breakpoints.desktop;
     const layer = createLayer(type, desktop.stageWidth, desktop.stageHeight, names[type]);

@@ -50,4 +50,8 @@ export const LIMITS = {
   shadowOffsetMax: 200,
   shadowBlurMax: 100,
   rotationMax: 360,
+  effectParamsBytes: 16384,
+  effectParamsDepth: 8,
+  effectLayersPerSlide: 3,
+  effectAssets: 4,
 } as const;

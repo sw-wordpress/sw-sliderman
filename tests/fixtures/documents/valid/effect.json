@@ -1,0 +1,429 @@
+{
+  "schemaVersion": 1,
+  "id": "slider-effect",
+  "settings": {
+    "label": "Startseite",
+    "layout": "boxed",
+    "maxWidth": 1440,
+    "autoplay": false,
+    "loop": true,
+    "showArrows": true,
+    "showDots": true
+  },
+  "breakpoints": {
+    "desktop": {
+      "minWidth": 1024,
+      "stageWidth": 1440,
+      "stageHeight": 600
+    },
+    "tablet": {
+      "minWidth": 768,
+      "stageWidth": 1024,
+      "stageHeight": 560
+    },
+    "mobile": {
+      "minWidth": 0,
+      "stageWidth": 390,
+      "stageHeight": 520
+    }
+  },
+  "fontRefs": [
+    {
+      "id": "font-heading",
+      "installationId": "lato-3f2a91c4",
+      "weight": 700,
+      "style": "normal"
+    }
+  ],
+  "slides": [
+    {
+      "id": "slide-one",
+      "name": "Start",
+      "enabled": true,
+      "durationMs": 6000,
+      "background": {
+        "color": "#0f172a",
+        "attachmentId": null,
+        "fit": "cover"
+      },
+      "transition": {
+        "type": "fade",
+        "durationMs": 600
+      },
+      "layers": [
+        {
+          "id": "headline",
+          "type": "text",
+          "name": "Überschrift",
+          "locked": false,
+          "content": {
+            "text": "Willkommen – ÄÖÜäöüß € \"quoted\" \\ <b>no html</b>",
+            "tag": "h2"
+          },
+          "layout": {
+            "x": 100,
+            "y": 120,
+            "width": 700,
+            "height": 140,
+            "anchorX": "left",
+            "anchorY": "top",
+            "rotation": 0,
+            "visible": true
+          },
+          "style": {
+            "fontRef": "font-heading",
+            "fontSize": 64,
+            "lineHeight": 1.1,
+            "letterSpacing": 0,
+            "color": "#FFFFFF",
+            "textAlign": "left",
+            "backgroundColor": null,
+            "borderRadius": 0,
+            "paddingX": 0,
+            "paddingY": 0,
+            "opacity": 1
+          },
+          "overrides": {
+            "tablet": {
+              "style": {
+                "fontSize": 48
+              }
+            },
+            "mobile": {
+              "layout": {
+                "x": 24,
+                "y": 64,
+                "width": 342
+              },
+              "style": {
+                "fontSize": 34,
+                "textAlign": "center"
+              }
+            }
+          },
+          "animation": {
+            "enter": {
+              "preset": "fade",
+              "startMs": 0,
+              "durationMs": 500,
+              "easing": "ease-out",
+              "distance": 0
+            },
+            "exit": {
+              "mode": "slide-end"
+            }
+          }
+        },
+        {
+          "id": "cta",
+          "type": "button",
+          "name": "Button",
+          "locked": false,
+          "content": {
+            "label": "Mehr erfahren",
+            "url": "https://example.com/angebot?x=1&y=2",
+            "newTab": false,
+            "hoverBackgroundColor": "#FDE047",
+            "hoverColor": "#1E293B",
+            "focusOutlineColor": "#4F46E5"
+          },
+          "layout": {
+            "x": 0,
+            "y": 80,
+            "width": 240,
+            "height": 56,
+            "anchorX": "center",
+            "anchorY": "bottom",
+            "rotation": 0,
+            "visible": true
+          },
+          "style": {
+            "fontRef": null,
+            "fontSize": 20,
+            "lineHeight": 1.2,
+            "letterSpacing": 0.5,
+            "color": "#0f172a",
+            "textAlign": "center",
+            "backgroundColor": "#facc15",
+            "borderRadius": 12,
+            "paddingX": 24,
+            "paddingY": 14,
+            "opacity": 1,
+            "borderWidth": 2,
+            "borderColor": "#0F172A",
+            "shadowX": 0,
+            "shadowY": 4,
+            "shadowBlur": 12,
+            "shadowColor": "#000000",
+            "shadowOpacity": 0.3
+          },
+          "overrides": {
+            "mobile": {
+              "layout": {
+                "y": 40
+              }
+            }
+          },
+          "animation": {
+            "enter": {
+              "preset": "slide-up",
+              "startMs": 300,
+              "durationMs": 600,
+              "easing": "ease-out",
+              "distance": 40
+            },
+            "exit": {
+              "mode": "timed",
+              "preset": "fade",
+              "startMs": 5000,
+              "durationMs": 400,
+              "easing": "ease-in",
+              "distance": 0
+            }
+          }
+        },
+        {
+          "id": "fx",
+          "type": "effect",
+          "name": "Effekt",
+          "locked": false,
+          "content": {
+            "effect": "particle-field",
+            "schemaVersion": 2,
+            "seed": 7319,
+            "quality": "auto",
+            "params": {
+              "count": 20000,
+              "tint": "#78b9ff"
+            },
+            "preset": "orbital-mist",
+            "alt": "",
+            "fallbackImageId": 12,
+            "assets": {
+              "image": 12
+            }
+          },
+          "layout": {
+            "x": 0,
+            "y": 0,
+            "width": 1440,
+            "height": 600,
+            "anchorX": "left",
+            "anchorY": "top",
+            "rotation": 0,
+            "visible": true
+          },
+          "style": {
+            "fontRef": null,
+            "fontSize": 20,
+            "lineHeight": 1.2,
+            "letterSpacing": 0,
+            "color": "#ffffff",
+            "textAlign": "center",
+            "backgroundColor": null,
+            "borderRadius": 0,
+            "paddingX": 0,
+            "paddingY": 0,
+            "opacity": 1
+          },
+          "overrides": {},
+          "animation": {
+            "enter": {
+              "preset": "fade",
+              "startMs": 0,
+              "durationMs": 600,
+              "easing": "ease-out",
+              "distance": 0
+            },
+            "exit": {
+              "mode": "slide-end"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "slide-two",
+      "name": "Bild",
+      "enabled": true,
+      "durationMs": 5000,
+      "background": {
+        "color": null,
+        "attachmentId": 42,
+        "fit": "cover"
+      },
+      "transition": {
+        "type": "slide",
+        "durationMs": 800
+      },
+      "layers": [
+        {
+          "id": "photo",
+          "type": "image",
+          "name": "Foto",
+          "locked": true,
+          "content": {
+            "attachmentId": 7,
+            "alt": "Ein Leuchtturm",
+            "decorative": false,
+            "fit": "contain",
+            "linkUrl": "https://example.com/galerie",
+            "linkNewTab": true
+          },
+          "layout": {
+            "x": 40.5,
+            "y": -10,
+            "width": 400,
+            "height": 300,
+            "anchorX": "right",
+            "anchorY": "center",
+            "rotation": -7.5,
+            "visible": true
+          },
+          "style": {
+            "fontRef": null,
+            "fontSize": 16,
+            "lineHeight": 1.4,
+            "letterSpacing": 0,
+            "color": "#000000",
+            "textAlign": "left",
+            "backgroundColor": null,
+            "borderRadius": 24,
+            "paddingX": 0,
+            "paddingY": 0,
+            "opacity": 0.9
+          },
+          "overrides": {
+            "mobile": {
+              "layout": {
+                "visible": false
+              }
+            }
+          },
+          "animation": {
+            "enter": {
+              "preset": "zoom-in",
+              "startMs": 200,
+              "durationMs": 7000,
+              "easing": "ease",
+              "distance": 0
+            },
+            "exit": {
+              "mode": "slide-end"
+            }
+          }
+        },
+        {
+          "id": "badge",
+          "type": "shape",
+          "name": "Badge",
+          "locked": false,
+          "content": {
+            "kind": "circle"
+          },
+          "layout": {
+            "x": 24,
+            "y": 24,
+            "width": 120,
+            "height": 120,
+            "anchorX": "left",
+            "anchorY": "top",
+            "rotation": 0,
+            "visible": true
+          },
+          "style": {
+            "fontRef": null,
+            "fontSize": 16,
+            "lineHeight": 1.2,
+            "letterSpacing": 0,
+            "color": "#ffffff",
+            "textAlign": "center",
+            "backgroundColor": "#E2E8F0",
+            "borderRadius": 0,
+            "paddingX": 0,
+            "paddingY": 0,
+            "opacity": 0.85,
+            "borderWidth": 3,
+            "borderColor": "#4F46E5"
+          },
+          "overrides": {
+            "mobile": {
+              "layout": {
+                "width": 90,
+                "height": 90
+              }
+            }
+          },
+          "animation": {
+            "enter": {
+              "preset": "zoom-in",
+              "startMs": 0,
+              "durationMs": 400,
+              "easing": "ease-out",
+              "distance": 0
+            },
+            "exit": {
+              "mode": "slide-end"
+            }
+          }
+        },
+        {
+          "id": "panel",
+          "type": "shape",
+          "name": "Panel",
+          "locked": false,
+          "content": {
+            "kind": "rectangle"
+          },
+          "layout": {
+            "x": 0,
+            "y": 0,
+            "width": 300,
+            "height": 80,
+            "anchorX": "center",
+            "anchorY": "bottom",
+            "rotation": 0,
+            "visible": true
+          },
+          "style": {
+            "fontRef": null,
+            "fontSize": 16,
+            "lineHeight": 1.2,
+            "letterSpacing": 0,
+            "color": "#ffffff",
+            "textAlign": "center",
+            "backgroundColor": "#0F172A",
+            "borderRadius": 16,
+            "paddingX": 0,
+            "paddingY": 0,
+            "opacity": 1,
+            "shadowX": 0,
+            "shadowY": 6,
+            "shadowBlur": 16,
+            "shadowColor": "#000000",
+            "shadowOpacity": 0.2
+          },
+          "overrides": {
+            "mobile": {
+              "layout": {
+                "width": 280
+              }
+            }
+          },
+          "animation": {
+            "enter": {
+              "preset": "slide-up",
+              "startMs": 0,
+              "durationMs": 400,
+              "easing": "ease-out",
+              "distance": 20
+            },
+            "exit": {
+              "mode": "slide-end"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

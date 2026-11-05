@@ -292,6 +292,7 @@ const typeIcons: Record<Layer['type'], string> = {
   image: 'r_image',
   button: 'r_smart_button',
   shape: 'r_category',
+  effect: 'r_auto_awesome',
 };
 const typeIcon = computed(() => typeIcons[props.layer.type]);
 const typeLabel = computed(
@@ -301,6 +302,7 @@ const typeLabel = computed(
       image: __('Image layer'),
       button: __('Button layer'),
       shape: __('Shape layer'),
+      effect: __('Effect layer'),
     })[props.layer.type],
 );
 const contentSummary = computed(() => {
@@ -308,6 +310,7 @@ const contentSummary = computed(() => {
   if (l.type === 'text') return l.content.text.slice(0, 40);
   if (l.type === 'button') return l.content.label;
   if (l.type === 'image') return l.content.decorative ? __('Decorative') : l.content.alt;
+  if (l.type === 'effect') return l.content.effect;
   return l.content.kind === 'circle' ? __('Circle') : __('Rectangle');
 });
 const layoutSummary = computed(
@@ -653,7 +656,7 @@ const animationSummary = computed(() => {
 
     <!-- typography -->
     <AccordionSection
-      v-if="layer.type !== 'image' && layer.type !== 'shape'"
+      v-if="layer.type !== 'image' && layer.type !== 'shape' && layer.type !== 'effect'"
       id="layer.typography"
       :title="__('Typography')"
     >

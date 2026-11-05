@@ -15,6 +15,7 @@ const icons: Record<LayerType, string> = {
   image: 'r_image',
   button: 'r_smart_button',
   shape: 'r_category',
+  effect: 'r_auto_awesome',
 };
 
 function visible(layer: Layer): boolean {
