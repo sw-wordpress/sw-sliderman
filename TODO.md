@@ -20,7 +20,7 @@ Stand: 30.10.2026 · Konzeptversion: 1.0 · Referenz: [PLAN.md](PLAN.md)
 | M1 | Plugin-Fundament und stabile Datenverträge | M0-Ergebnis | Technisch geprüft; Nachweise unten |
 | M2 | Lokale Google-Fonts-Verwaltung | M1 | Technisch und Schriftvorschau praktisch |
 | M3 | Produktiver visueller Editor und responsive Layouts | M1, M2 | Stefan prüft Gestaltung |
-| M4 | Animation und vollständige Frontend-Wiedergabe | M3 | Stefan prüft Verhalten |
+| M4 | Animation und vollständige Frontend-Wiedergabe | M3 | Von Stefan abgenommen; Nachweise unten |
 | M5 | Vorlagen und portabler Austausch | M2–M4 | Import-/Export-Abnahme |
 | M6 | Version 1.0 und dokumentierte Kompatibilität | M1–M5 | Releasefreigabe von Stefan |
 | M7 | Erweiterte Zeitleiste, Gruppen und Aktionen | M6 | Eigene Ausbaufreigabe |
@@ -263,7 +263,7 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 - [x] M4.20 Reduced Motion als statischen lesbaren Endzustand ohne Autoplay umsetzen. `accessibility.mjs`: kein Autoplay, keine Animationen (`getAnimations()` = 0), Endzustand sichtbar, manuelle Navigation funktioniert.
 - [x] M4.21 Automatische und manuelle Slidewechsel sinnvoll für Screenreader behandeln. Manuelle Wechsel setzen die Live-Region („2 of 3“), Autoplay bleibt still (`accessibility.mjs`).
 - [x] M4.22 Ohne JavaScript, mit langsamen Fonts, fehlenden Bildern und mit einem einzigen Slide prüfen. Ohne JS (nur erster Slide, keine toten Steuerelemente), einzelner Slide (keine Steuerelemente), fehlendes Bild (Alt-Text, Zustand `error`) in `accessibility.mjs`; Fonts: `font-display: swap` und begrenzte Wartefrist.
-- [ ] M4.23 Stefan prüft Timing, mobile Wischgesten, Pause und tatsächliche Gestaltung.
+- [x] M4.23 Stefan prüft Timing, mobile Wischgesten, Pause und tatsächliche Gestaltung. Funktionen von Stefan abgenommen (05.11.2026).
 
 **Abnahmekriterium:** Editor und Frontend spielen dieselbe Animation ab. Wiederholte Navigation erzeugt keine überlappenden Zustände; Inhalt und Navigation bleiben zugänglich.
 
