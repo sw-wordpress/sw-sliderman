@@ -43,6 +43,7 @@ export class SliderInstance {
   private focused = false;
   private offscreen = false;
   private resourceError = false;
+  private rescueFocus = false;
   private reducedMotion: boolean;
   private destroyed = false;
 
@@ -323,6 +324,9 @@ export class SliderInstance {
     // only after the slide transition, so delayed entrances cannot flash their static content.
     this.playLayers(this.index, true);
     incoming.hidden = false;
+    // Focus inside the leaving slide would be dropped to <body> by `inert`; the incoming slide is
+    // still inert until the transition ends, so `finish()` hands the focus over.
+    this.rescueFocus = outgoing.contains(document.activeElement);
     incoming.classList.add('sws-is-active');
     outgoing.classList.remove('sws-is-active');
     outgoing.inert = true;
@@ -368,6 +372,11 @@ export class SliderInstance {
     });
     this.hide(outgoing);
     incoming.inert = false;
+    if (this.rescueFocus) {
+      this.rescueFocus = false;
+      incoming.tabIndex = -1;
+      incoming.focus({ preventScroll: true });
+    }
     this.setPhase('ready');
     this.prepared.splice(0).forEach((animation) => animation.play());
     this.schedule();

@@ -15,6 +15,8 @@ Status: M0 accepted; M1 foundation and persistence implemented; evidence and rem
 | E2E | Playwright against the local site | `node tests/e2e/editor.mjs` |
 | Preview/Website-Vergleich (M3.24) | Playwright, Referenzdokument auf drei Breiten (1180/820/375 px); Toleranz 1 px + 0,1 % der Containerbreite, Schrift 0,6 px; legt `E2E Parity*`-Slider an und entfernt sie | `node tests/e2e/parity.mjs` |
 | Hero effects | Native Chromium at desktop/tablet/mobile widths; no WordPress writes (after build) | `node tests/e2e/hero-effects.mjs` |
+| Accessibility regressions | Playwright, intercepted fixture, no WordPress writes (after build) | `node tests/e2e/accessibility.mjs` |
+| Block in the block editor | Playwright against the dev site (creates and removes `E2E Block*` sliders/pages) | `node tests/e2e/block.mjs` |
 | Runtime regressions | Playwright with intercepted fixtures, no WordPress writes (after build) | `node tests/e2e/runtime-regressions.mjs` |
 
 Node 18.18 is enough locally (versions pinned like sw-backupit); CI uses Node 22.

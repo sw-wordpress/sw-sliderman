@@ -248,7 +248,7 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 
 - [x] M4.10 Semantischen PHP-Renderer mit statischem Fallback und lokaler Konfiguration erstellen. `SliderRenderer` mit statischem ersten Slide und JSON-Konfiguration; `SliderRestTest`, `PlaybackOutputTest`.
 - [x] M4.11 Shortcode, dynamischen Gutenberg-Block und PHP-Funktion auf denselben Renderer führen. Nachweis: `src/Rendering/Block.php`, `sws_render_slider()`, `tests/wp/tests/BlockTest.php` (identisches Markup, Fehlerfälle, Head-Erkennung inkl. verschachtelter Blöcke). Der Block-Editor-Skript ist ein buildfreies Skript mit WordPress-Globals (keine zweite React-Kopie).
-- [ ] M4.12 Blockauswahl und sichere Vorschau integrieren; WordPress-eigene React-Laufzeit verwenden.
+- [x] M4.12 Blockauswahl und sichere Vorschau integrieren; WordPress-eigene React-Laufzeit verwenden. `tests/e2e/block.mjs` im echten Block-Editor der Dev-Site (Einfügen über den Inserter, Auswahl, Speichern als dynamischer Block ohne gespeichertes Markup, Frontend ohne Fehler, Runtime mit Pluginversion). Der Editor zeigt nur einen Platzhalter und nutzt die WordPress-React-Laufzeit.
 - [x] M4.13 Assets nur bei Einbindung ausgeben; auch späte PHP-Template-Einbindungen unterstützen. Assets nur bei Einbindung; frühe Erkennung (Shortcode, Block, verschachtelt) und spätes Einbinden mit Inline-Fallback; `BlockTest`, `PlaybackOutputTest::test_late_embedding_…`.
 - [x] M4.14 Instanzkennungen, mehrere Slider und wiederholte Einbindung desselben Sliders prüfen. Eindeutige Instanz- und Element-IDs bei mehreren/wiederholten Sliderinstanzen, Runtime einmal geladen; `PlaybackOutputTest`.
 - [x] M4.15 Veröffentlichte Artefakte cachen, bei Rendererwechsel erneuern und alte Referenzen sicher bereinigen. Artefakte nach Hash+Rendererversion; fremde Rendererversion → sichere Neuberechnung statt Datei; tägliche Bereinigung (`ArtifactCleanup`, `ArtifactRetention`: 7 Tage Karenz, nur unreferenzierte Dateien, Abbruch bei beschädigtem Snapshot); `ArtifactRetentionTest`, `PlaybackOutputTest`.
@@ -257,12 +257,12 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 
 ### Zugänglichkeit
 
-- [ ] M4.17 Alle Steuerelemente per Tastatur und mit sichtbarem Fokus bedienen.
-- [ ] M4.18 Inaktive Inhalte aus Fokusreihenfolge und Accessibility Tree entfernen.
-- [ ] M4.19 Fokus bei manueller Navigation erhalten; aktive Fokusinhalte nicht automatisch wechseln.
-- [ ] M4.20 Reduced Motion als statischen lesbaren Endzustand ohne Autoplay umsetzen.
-- [ ] M4.21 Automatische und manuelle Slidewechsel sinnvoll für Screenreader behandeln.
-- [ ] M4.22 Ohne JavaScript, mit langsamen Fonts, fehlenden Bildern und mit einem einzigen Slide prüfen.
+- [x] M4.17 Alle Steuerelemente per Tastatur und mit sichtbarem Fokus bedienen. `tests/e2e/accessibility.mjs`: Tab-Reihenfolge, Pfeiltasten, Enter/Space, sichtbarer Fokusring (`:focus-visible`).
+- [x] M4.18 Inaktive Inhalte aus Fokusreihenfolge und Accessibility Tree entfernen. `inert` auf inaktiven Slides; im Browser nicht tabbar und nicht sichtbar (`accessibility.mjs`).
+- [x] M4.19 Fokus bei manueller Navigation erhalten; aktive Fokusinhalte nicht automatisch wechseln. Fokus bleibt auf Steuerelementen; liegt er im Slide, pausiert Autoplay, und ein Wischen übergibt ihn an den neuen Slide statt ihn zu verlieren (`accessibility.mjs`, `runtime.test.ts`).
+- [x] M4.20 Reduced Motion als statischen lesbaren Endzustand ohne Autoplay umsetzen. `accessibility.mjs`: kein Autoplay, keine Animationen (`getAnimations()` = 0), Endzustand sichtbar, manuelle Navigation funktioniert.
+- [x] M4.21 Automatische und manuelle Slidewechsel sinnvoll für Screenreader behandeln. Manuelle Wechsel setzen die Live-Region („2 of 3“), Autoplay bleibt still (`accessibility.mjs`).
+- [x] M4.22 Ohne JavaScript, mit langsamen Fonts, fehlenden Bildern und mit einem einzigen Slide prüfen. Ohne JS (nur erster Slide, keine toten Steuerelemente), einzelner Slide (keine Steuerelemente), fehlendes Bild (Alt-Text, Zustand `error`) in `accessibility.mjs`; Fonts: `font-display: swap` und begrenzte Wartefrist.
 - [ ] M4.23 Stefan prüft Timing, mobile Wischgesten, Pause und tatsächliche Gestaltung.
 
 **Abnahmekriterium:** Editor und Frontend spielen dieselbe Animation ab. Wiederholte Navigation erzeugt keine überlappenden Zustände; Inhalt und Navigation bleiben zugänglich.

@@ -306,6 +306,38 @@ describe('runtime', () => {
   });
 });
 
+describe('focus handling (M4.19)', () => {
+  it('keeps focus in the slider when the focused slide content is left by a swipe or key', async () => {
+    const root = markup(3, false);
+    const instance = SliderInstance.create(root, config(false));
+    await vi.advanceTimersByTimeAsync(0);
+    const link = root.querySelector('a') as HTMLAnchorElement;
+    link.focus();
+    expect(document.activeElement).toBe(link);
+    instance.goTo(1, true);
+    await vi.advanceTimersByTimeAsync(0);
+    const slides = root.querySelectorAll<HTMLElement>('.sws-slide');
+    expect(document.activeElement).toBe(slides[1]);
+    expect(slides[1]?.tabIndex).toBe(-1);
+    instance.destroy();
+  });
+
+  it('does not move focus that is on a control, and never navigates automatically while focus is inside', async () => {
+    const root = markup(3, true);
+    const instance = SliderInstance.create(root, config(true));
+    await vi.advanceTimersByTimeAsync(0);
+    const next = root.querySelector('.sws-next') as HTMLButtonElement;
+    next.focus();
+    next.click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(document.activeElement).toBe(next);
+    expect(active(root)).toBe(1);
+    await vi.advanceTimersByTimeAsync(60000);
+    expect(active(root)).toBe(1);
+    instance.destroy();
+  });
+});
+
 describe('touch swipe', () => {
   function pointer(target: Element, type: string, x: number, y: number, kind = 'touch'): void {
     target.dispatchEvent(

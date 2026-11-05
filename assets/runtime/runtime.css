@@ -112,9 +112,15 @@
 .sws-slider .sws-button:hover {
   filter: brightness(1.08);
 }
-.sws-slider .sws-button:focus-visible {
+.sws-slider .sws-button:focus-visible,
+.sws-slider .sws-image-link:focus-visible,
+.sws-slider .sws-text a:focus-visible {
   outline: 3px solid currentColor;
   outline-offset: 3px;
+}
+/* Programmatic focus target after a slide change; keyboard users keep their controls' rings. */
+.sws-slider .sws-slide:focus {
+  outline: none;
 }
 
 /* Controls: only useful with JavaScript; the static fallback shows the first slide. */
