@@ -16,6 +16,9 @@ final class PlaybackOutputTest extends WP_UnitTestCase {
 	/** @var list<string> */
 	private array $created = array();
 
+	/** Artifact reused by the republication in the race scenarios. */
+	private ?string $reused = null;
+
 	public function set_up(): void {
 		parent::set_up();
 		Capabilities::grant_defaults();
@@ -323,9 +326,10 @@ final class PlaybackOutputTest extends WP_UnitTestCase {
 	 * Publishes A, then B (A's artifact becomes unreferenced for 30 days), and republishes A: the
 	 * artifact of A is reused. `$cleanup_during_publish` runs the cleanup inside that last publication.
 	 *
-	 * @return array{file: string, deleted: int|null, active: string} Reused file, cleanup result, active stylesheet.
+	 * @return array{file: string, deleted: int|null, active: string, retire_again: callable(): int} Reused file, cleanup
+	 *         result, active stylesheet and a step that replaces the slider's content again (retiring the file once more).
 	 */
-	private function republish_with_concurrent_cleanup( bool $guarded ): array {
+	private function republish_with_concurrent_cleanup( bool $guarded, bool $interfere = true ): array {
 		global $wpdb;
 		$this->isolate_uploads();
 		$other_db = $this->second_connection();
@@ -334,8 +338,10 @@ final class PlaybackOutputTest extends WP_UnitTestCase {
 		$running  = false;
 		$service  = $this->service(
 			$guarded ? new \SW\Slider\Infrastructure\WpArtifactGuard( $wpdb ) : null,
-			function () use ( &$deleted, &$running, $cleanup ): void {
-				if ( $running ) {
+			function () use ( &$deleted, &$running, $cleanup, $interfere ): void {
+				if ( $running && $interfere ) {
+					// The cleanup process had read its (overdue) retirement record before this publication cleared it.
+					update_option( ArtifactCleanup::OPTION, array( basename( (string) $this->reused ) => time() - 30 * DAY_IN_SECONDS ), false );
 					$deleted = $cleanup->run( time() );
 				}
 			}
@@ -350,7 +356,8 @@ final class PlaybackOutputTest extends WP_UnitTestCase {
 		$first   = $service->publish( $id, $version );
 		$version = $service->save_draft( $id, 'Race', $label( $service->get_draft( $id ), 'B' ), $version );
 		$service->publish( $id, $version );
-		$reused  = $first->stylesheet;
+		$reused       = $first->stylesheet;
+		$this->reused = $reused;
 		$this->assertNotNull( $reused );
 		$this->assertFileExists( UploadPaths::path( $reused ) );
 
@@ -360,10 +367,16 @@ final class PlaybackOutputTest extends WP_UnitTestCase {
 		$running = true;
 		$active  = $service->publish( $id, $version );
 		$this->assertSame( $reused, $active->stylesheet, 'identical content reuses the existing artifact' );
+		$retire_again = function () use ( $service, $id, $label, $version ): int {
+			$next = $service->save_draft( $id, 'Race', $label( $service->get_draft( $id ), 'B' ), $version );
+			$service->publish( $id, $next );
+			return $next;
+		};
 		return array(
-			'file'    => $reused,
-			'deleted' => $deleted,
-			'active'  => (string) $active->stylesheet,
+			'file'         => $reused,
+			'deleted'      => $deleted,
+			'active'       => (string) $active->stylesheet,
+			'retire_again' => $retire_again,
 		);
 	}
 
@@ -371,6 +384,20 @@ final class PlaybackOutputTest extends WP_UnitTestCase {
 		$result = $this->republish_with_concurrent_cleanup( true );
 		$this->assertSame( 0, $result['deleted'], 'cleanup is excluded while the publication holds the guard' );
 		$this->assertFileExists( (string) UploadPaths::path( $result['file'] ), 'the active snapshot keeps its stylesheet' );
+	}
+
+	public function test_a_republished_artifact_gets_a_full_grace_period_when_it_is_retired_again(): void {
+		global $wpdb;
+		$result = $this->republish_with_concurrent_cleanup( true, false );
+		$name   = basename( $result['file'] );
+		$this->assertArrayNotHasKey( $name, (array) get_option( ArtifactCleanup::OPTION ), 'the old retirement record is cleared on reuse' );
+
+		// Replaced again before the next daily pass: the stale 30-day record must not survive.
+		( $result['retire_again'] )();
+		$cleanup = new ArtifactCleanup( $wpdb, new \SW\Slider\Infrastructure\WpArtifactGuard( $wpdb, 0 ) );
+		$this->assertSame( 0, $cleanup->run( time() + DAY_IN_SECONDS ), 'cached pages may still reference it' );
+		$this->assertFileExists( (string) UploadPaths::path( $result['file'] ) );
+		$this->assertSame( 1, $cleanup->run( time() + 9 * DAY_IN_SECONDS ), 'deleted once the new period has passed' );
 	}
 
 	public function test_without_the_guard_the_same_interleaving_loses_the_artifact(): void {
