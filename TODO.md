@@ -434,7 +434,7 @@ Nächste notwendige Änderung:
 - [x] G1 `assets/gpu/core`: Typen, Registry, Schema-Dialekt (TS + PHP + Fixtures), RNG, Zeitschritt, Qualität, Transition. Nachweis: `gpu-core.test.ts`, `gpu-schema.test.ts`, `EffectSchemaTest.php`, `tests/fixtures/effects/schema.json`; Kern-Coverage 97,7 %.
 - [x] G2 Dokument/PHP: Ebenentyp `effect`, Validierung, Limits, statischer Fallback, PHP-Registry für Add-on-Plugins, Asset-Einbindung. Nachweis: gemeinsame Fixtures (`valid/effect.json`, `effect-catalog.json`, 27 Fälle in `invalid.json`), `EffectLayerTest.php` (25 Tests), `DocumentValidatorTest`/`contract.test.ts`; PHP-Coverage 88,0 %. Bundle-Budget für `gpu.js` folgt mit dem Bundle in G3.
 - [x] G3 `device`/`stage`: Capability-Prüfung, WebGL2, Scheduler, Observer, Kontextverlust, Slide-Lebenszyklus, Pause-Schalter. Nachweis: Unit-Tests (Gerät, Stage, Controller, Entry, Runtime-Anbindung), `tests/e2e/gpu-platform.mjs` mit echtem WebGL2; `gpu.js` 8,4 KiB gzip (Budget 30).
-- [ ] G4 `particle-field`: Spawnformen, Integrator, Operatoren, Stile, Kamera, erste Presets.
+- [x] G4 `particle-field`: Spawnformen, Integrator, Operatoren, Stile, Kamera, vier Presets. Nachweis: `gpu-particles.test.ts` (31), `tests/e2e/gpu-particles.mjs` mit echtem WebGL2 (GPU = CPU-Referenz, GLSL-Spawn = TS, Determinismus, Stabilität); Modul 11 KiB gzip. Durchsatz auf echter GPU offen (G7).
 - [ ] G5 Bildrekonstruktion und Magnet-Dipol (`photo-grains`, `magnetic-canvas`).
 - [ ] G6 Editor: Ebene, Schema-Panel, Preset-Galerie, Live-Vorschau, Impuls-Knopf.
 - [ ] G7 Stabilisierung: adaptive Qualität, Benchmark-Protokoll, Visual Regression, Zugänglichkeit.

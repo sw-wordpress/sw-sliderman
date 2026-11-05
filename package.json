@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "vite --config vite.editor.config.ts",
     "build": "npm run typecheck && npm run build:only",
-    "build:only": "vite build --config vite.editor.config.ts && vite build --config vite.runtime.config.ts && vite build --config vite.effects.config.ts && vite build --config vite.gpu.config.ts && node bin/build-block.mjs && node bin/check-bundles.mjs",
+    "build:only": "vite build --config vite.editor.config.ts && vite build --config vite.runtime.config.ts && vite build --config vite.effects.config.ts && vite build --config vite.gpu.config.ts && vite build --config vite.gpu-modules.config.ts && node bin/build-block.mjs && node bin/check-bundles.mjs",
     "typecheck": "vue-tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",

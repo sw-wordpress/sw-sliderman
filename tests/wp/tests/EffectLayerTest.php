@@ -104,14 +104,14 @@ final class EffectLayerTest extends WP_UnitTestCase {
 	 */
 	public function test_invalid_add_on_descriptors_are_skipped_and_reported( array $override, string $reason ): void {
 		$registry = $this->add_ons( array( $this->glow( $override ) ) );
-		$this->assertSame( array(), $registry->all() );
+		$this->assertSame( array( 'particle-field' ), array_keys( $registry->all() ), 'only the shipped effect remains' );
 		$this->assertStringContainsString( $reason, implode( ' | ', $registry->problems() ) );
 	}
 
 	public function test_duplicates_and_non_array_descriptors_are_reported(): void {
 		$registry = $this->add_ons( array( $this->glow(), $this->glow() ) );
 		$this->filter = static fn ( array $list ): array => array_merge( $list, array( 'not an array' ) );
-		$this->assertCount( 1, $registry->all() );
+		$this->assertSame( array( 'particle-field', 'acme/glow' ), array_keys( $registry->all() ) );
 		$this->assertStringContainsString( 'already registered', implode( '|', $registry->problems() ) );
 		remove_filter( EffectRegistry::FILTER, $this->filter );
 		add_filter( EffectRegistry::FILTER, $this->filter );
@@ -391,5 +391,67 @@ final class EffectLayerTest extends WP_UnitTestCase {
 		$assets->register_runtime();
 		$this->renderer( $registry, $assets )->render( $this->publish( $registry ) );
 		$this->assertNotContains( Assets::GPU, wp_scripts()->registered[ Assets::RUNTIME ]->deps );
+	}
+
+	public function test_the_shipped_particle_field_is_registered_with_valid_presets(): void {
+		$registry = new EffectRegistry( SWS_DIR, SWS_URL, SWS_VERSION );
+		$this->assertSame( array(), $registry->problems() );
+		$effect = $registry->descriptor( 'particle-field' );
+		$this->assertNotNull( $effect );
+		$this->assertTrue( $effect['builtin'] );
+		$this->assertTrue( $effect['continuous'] );
+		$this->assertSame( SWS_URL . 'build/gpu/particle-field.js?ver=' . SWS_VERSION, $effect['module_url'], 'built-in modules carry the plugin version' );
+		$ids = array_column( $effect['presets'], 'id' );
+		$this->assertSame( array( 'orbital-mist', 'vortex-ribbons', 'ember-drift', 'radiant-pulse' ), $ids );
+		foreach ( $effect['presets'] as $preset ) {
+			$this->assertSame( array(), \SW\Slider\Domain\EffectSchema::validate( $effect['schema'], $preset['params'] ), $preset['id'] );
+		}
+	}
+
+	public function test_invalid_presets_are_skipped_and_reported(): void {
+		$root = get_temp_dir() . 'sws-fx-' . wp_generate_uuid4() . '/';
+		wp_mkdir_p( $root . 'schemas/effects' );
+		file_put_contents(
+			$root . 'schemas/effects/sparkle.json',
+			(string) wp_json_encode(
+				array(
+					'type'          => 'sparkle',
+					'label'         => 'Sparkle',
+					'schemaVersion' => 1,
+					'module'        => 'sparkle.js',
+					'schema'        => array(
+						'type'       => 'object',
+						'properties' => array(
+							'n' => array(
+								'type'    => 'integer',
+								'minimum' => 1,
+								'maximum' => 5,
+							),
+						),
+					),
+					'presets'       => array(
+						array(
+							'id'     => 'ok',
+							'name'   => 'Fine',
+							'params' => array( 'n' => 3 ),
+						),
+						array(
+							'id'     => 'too-big',
+							'params' => array( 'n' => 99 ),
+						),
+						array(
+							'id'     => 'Bad Id',
+							'params' => array(),
+						),
+						'not a preset',
+					),
+				)
+			)
+		);
+		$registry = new EffectRegistry( $root, 'https://example.org/p/', '1.0.0' );
+		$this->assertSame( array( 'ok' ), array_column( $registry->descriptor( 'sparkle' )['presets'], 'id' ) );
+		$problems = implode( ' | ', $registry->problems() );
+		$this->assertStringContainsString( 'preset "too-big" rejected', $problems );
+		$this->assertStringContainsString( 'preset "Bad Id" rejected', $problems );
 	}
 }

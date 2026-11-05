@@ -346,7 +346,8 @@ const clone = <T>(value: T): T =>
   value === undefined ? value : (JSON.parse(JSON.stringify(value)) as T);
 
 /**
- * Fills omitted optional values from the schema's `default`s (stored parameters may be partial;
+ * Fills omitted optional values from the schema's `default`s, including optional object groups whose
+ * members have defaults (stored parameters may be partial;
  * presets only override declared values). Returns a new value; the input is never modified.
  */
 export function withDefaults(schema: unknown, value: unknown): unknown {
@@ -364,8 +365,13 @@ export function withDefaults(schema: unknown, value: unknown): unknown {
     for (const [key, entry] of Object.entries(value))
       out[key] = key in properties ? withDefaults(properties[key], entry) : clone(entry);
     for (const [key, child] of Object.entries(properties)) {
-      if (!(key in out) && isObject(child) && 'default' in child)
-        out[key] = withDefaults(child, child.default);
+      if (key in out || !isObject(child)) continue;
+      if ('default' in child) out[key] = withDefaults(child, child.default);
+      else if (child.type === 'object') {
+        // An optional group whose members have defaults exists with those defaults.
+        const filled = withDefaults(child, {}) as Json;
+        if (Object.keys(filled).length > 0) out[key] = filled;
+      }
     }
     return out;
   }

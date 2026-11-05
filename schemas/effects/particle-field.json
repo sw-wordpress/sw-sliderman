@@ -1,0 +1,728 @@
+{
+  "type": "particle-field",
+  "label": "Partikelfeld",
+  "description": "GPU-simulierte Partikel: Formen, Strömungen, Wirbel, Zeigerkräfte.",
+  "category": "particles",
+  "schemaVersion": 1,
+  "continuous": true,
+  "module": "particle-field.js",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "count": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 200000,
+        "default": 20000
+      },
+      "spawn": {
+        "type": "object",
+        "properties": {
+          "shape": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "point",
+              "disc",
+              "ring",
+              "sphere-surface",
+              "sphere-volume",
+              "box",
+              "line"
+            ],
+            "default": "sphere-volume"
+          },
+          "radius": {
+            "type": "number",
+            "minimum": 0.01,
+            "maximum": 50,
+            "default": 1.2
+          },
+          "size": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0.01,
+              "maximum": 100
+            },
+            "minItems": 3,
+            "maxItems": 3,
+            "default": [
+              2,
+              2,
+              2
+            ]
+          },
+          "position": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": -50,
+              "maximum": 50
+            },
+            "minItems": 3,
+            "maxItems": 3,
+            "default": [
+              0,
+              0,
+              0
+            ]
+          },
+          "velocity": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "maxLength": 24,
+                "enum": [
+                  "none",
+                  "radial",
+                  "tangential",
+                  "random"
+                ],
+                "default": "none"
+              },
+              "speed": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 20,
+                "default": 0
+              }
+            }
+          }
+        }
+      },
+      "lifecycle": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "persistent",
+              "emitter"
+            ],
+            "default": "persistent"
+          },
+          "minSeconds": {
+            "type": "number",
+            "minimum": 0.2,
+            "maximum": 60,
+            "default": 2
+          },
+          "maxSeconds": {
+            "type": "number",
+            "minimum": 0.2,
+            "maximum": 60,
+            "default": 6
+          }
+        }
+      },
+      "operators": {
+        "type": "array",
+        "maxItems": 8,
+        "items": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "maxLength": 16,
+                  "const": "drag"
+                },
+                "amount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10,
+                  "default": 0.4,
+                  "x-unit": "1/s"
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "maxLength": 16,
+                  "const": "spring-home"
+                },
+                "stiffness": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 50,
+                  "default": 2
+                },
+                "damping": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10,
+                  "default": 0.6
+                },
+                "maxForce": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 200,
+                  "default": 30
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "maxLength": 16,
+                  "const": "vortex"
+                },
+                "axis": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": -1,
+                    "maximum": 1
+                  },
+                  "minItems": 3,
+                  "maxItems": 3,
+                  "default": [
+                    0,
+                    1,
+                    0
+                  ]
+                },
+                "center": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": -50,
+                    "maximum": 50
+                  },
+                  "minItems": 3,
+                  "maxItems": 3,
+                  "default": [
+                    0,
+                    0,
+                    0
+                  ]
+                },
+                "strength": {
+                  "type": "number",
+                  "minimum": -20,
+                  "maximum": 20,
+                  "default": 1
+                },
+                "pull": {
+                  "type": "number",
+                  "minimum": -20,
+                  "maximum": 20,
+                  "default": 0.2
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "maxLength": 16,
+                  "const": "flow-field"
+                },
+                "frequency": {
+                  "type": "number",
+                  "minimum": 0.01,
+                  "maximum": 10,
+                  "default": 0.8
+                },
+                "amplitude": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 20,
+                  "default": 1
+                },
+                "speed": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 5,
+                  "default": 0.3
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "maxLength": 16,
+                  "const": "gravity-wells"
+                },
+                "wells": {
+                  "type": "array",
+                  "maxItems": 3,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "position": {
+                        "type": "array",
+                        "items": {
+                          "type": "number",
+                          "minimum": -50,
+                          "maximum": 50
+                        },
+                        "minItems": 3,
+                        "maxItems": 3,
+                        "default": [
+                          0,
+                          0,
+                          0
+                        ]
+                      },
+                      "mass": {
+                        "type": "number",
+                        "minimum": -50,
+                        "maximum": 50,
+                        "default": 1
+                      }
+                    },
+                    "required": [
+                      "position",
+                      "mass"
+                    ]
+                  },
+                  "default": []
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "maxLength": 16,
+                  "const": "speed-limit"
+                },
+                "max": {
+                  "type": "number",
+                  "minimum": 0.05,
+                  "maximum": 50,
+                  "default": 6
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "maxLength": 16,
+                  "const": "bounds"
+                },
+                "mode": {
+                  "type": "string",
+                  "maxLength": 24,
+                  "enum": [
+                    "wrap",
+                    "bounce",
+                    "respawn"
+                  ],
+                  "default": "wrap"
+                },
+                "radius": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 100,
+                  "default": 4
+                }
+              },
+              "required": [
+                "type"
+              ]
+            }
+          ],
+          "discriminator": "type"
+        },
+        "default": []
+      },
+      "appearance": {
+        "type": "object",
+        "properties": {
+          "style": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "soft-disc",
+              "glow",
+              "pixel"
+            ],
+            "default": "soft-disc"
+          },
+          "sizeMin": {
+            "type": "number",
+            "minimum": 0.5,
+            "maximum": 64,
+            "default": 1.5
+          },
+          "sizeMax": {
+            "type": "number",
+            "minimum": 0.5,
+            "maximum": 64,
+            "default": 3.5
+          },
+          "colorMode": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "solid",
+              "speed",
+              "life",
+              "palette",
+              "image"
+            ],
+            "default": "solid"
+          },
+          "color": {
+            "type": "string",
+            "maxLength": 7,
+            "format": "color",
+            "default": "#78b9ff"
+          },
+          "color2": {
+            "type": "string",
+            "maxLength": 7,
+            "format": "color",
+            "default": "#ffffff"
+          },
+          "palette": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "type": "string",
+              "maxLength": 7,
+              "format": "color",
+              "default": "#ffffff"
+            },
+            "default": [
+              "#78b9ff",
+              "#ffffff"
+            ]
+          },
+          "blend": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "additive",
+              "normal"
+            ],
+            "default": "additive"
+          },
+          "opacity": {
+            "type": "number",
+            "minimum": 0.01,
+            "maximum": 1,
+            "default": 0.8
+          },
+          "depthFade": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.3
+          }
+        }
+      },
+      "camera": {
+        "type": "object",
+        "properties": {
+          "projection": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "perspective",
+              "orthographic"
+            ],
+            "default": "perspective"
+          },
+          "distance": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 5.5
+          },
+          "fov": {
+            "type": "number",
+            "minimum": 10,
+            "maximum": 120,
+            "default": 50
+          },
+          "orbitSpeed": {
+            "type": "number",
+            "minimum": -2,
+            "maximum": 2,
+            "default": 0
+          },
+          "tilt": {
+            "type": "number",
+            "minimum": -1.5,
+            "maximum": 1.5,
+            "default": 0
+          }
+        }
+      },
+      "interaction": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "none",
+              "repel",
+              "attract",
+              "swirl"
+            ],
+            "default": "none"
+          },
+          "radius": {
+            "type": "number",
+            "minimum": 0.05,
+            "maximum": 10,
+            "default": 0.8
+          },
+          "strength": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 50,
+            "default": 4
+          }
+        }
+      }
+    },
+    "required": [
+      "count"
+    ]
+  },
+  "presets": [
+    {
+      "id": "orbital-mist",
+      "name": "Orbitnebel",
+      "description": "Weicher, rotierender Partikelschwarm mit kugelförmiger Silhouette.",
+      "seed": 7319,
+      "params": {
+        "count": 20000,
+        "spawn": {
+          "shape": "sphere-volume",
+          "radius": 1.3
+        },
+        "operators": [
+          {
+            "type": "spring-home",
+            "stiffness": 0.35,
+            "damping": 0.5
+          },
+          {
+            "type": "vortex",
+            "axis": [
+              0,
+              1,
+              0
+            ],
+            "strength": 1.4,
+            "pull": 0.0
+          },
+          {
+            "type": "drag",
+            "amount": 0.2
+          }
+        ],
+        "appearance": {
+          "style": "soft-disc",
+          "sizeMin": 1.2,
+          "sizeMax": 3,
+          "color": "#78b9ff",
+          "color2": "#ffffff",
+          "colorMode": "speed",
+          "opacity": 0.7
+        },
+        "camera": {
+          "orbitSpeed": 0.12,
+          "tilt": 0.25
+        },
+        "interaction": {
+          "mode": "repel",
+          "radius": 0.9,
+          "strength": 6
+        }
+      }
+    },
+    {
+      "id": "vortex-ribbons",
+      "name": "Wirbelbänder",
+      "description": "Spiralförmige Strömungen um eine zentrale Achse.",
+      "seed": 4242,
+      "params": {
+        "count": 24000,
+        "spawn": {
+          "shape": "disc",
+          "radius": 2.2,
+          "velocity": {
+            "mode": "tangential",
+            "speed": 0.8
+          }
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "axis": [
+              0,
+              0,
+              1
+            ],
+            "strength": 2.2,
+            "pull": 0.5
+          },
+          {
+            "type": "speed-limit",
+            "max": 3.5
+          },
+          {
+            "type": "drag",
+            "amount": 0.15
+          }
+        ],
+        "appearance": {
+          "style": "glow",
+          "sizeMin": 1,
+          "sizeMax": 2.6,
+          "colorMode": "speed",
+          "color": "#7c5cff",
+          "color2": "#5cf2ff",
+          "opacity": 0.55
+        },
+        "camera": {
+          "orbitSpeed": 0.05,
+          "tilt": 0.5
+        }
+      }
+    },
+    {
+      "id": "ember-drift",
+      "name": "Glutfunken",
+      "description": "Warme Partikel steigen mit Turbulenz auf und verlöschen.",
+      "seed": 913,
+      "params": {
+        "count": 9000,
+        "spawn": {
+          "shape": "disc",
+          "radius": 1.4,
+          "position": [
+            0,
+            -1.8,
+            0
+          ],
+          "velocity": {
+            "mode": "random",
+            "speed": 0.4
+          }
+        },
+        "lifecycle": {
+          "mode": "emitter",
+          "minSeconds": 1.5,
+          "maxSeconds": 4.5
+        },
+        "operators": [
+          {
+            "type": "flow-field",
+            "frequency": 0.9,
+            "amplitude": 1.8,
+            "speed": 0.4
+          },
+          {
+            "type": "gravity-wells",
+            "wells": [
+              {
+                "position": [
+                  0,
+                  6,
+                  0
+                ],
+                "mass": 0.8
+              }
+            ]
+          },
+          {
+            "type": "drag",
+            "amount": 0.6
+          }
+        ],
+        "appearance": {
+          "style": "glow",
+          "sizeMin": 1,
+          "sizeMax": 3.2,
+          "colorMode": "life",
+          "color": "#ffd27a",
+          "color2": "#ff3d1f",
+          "opacity": 0.9,
+          "depthFade": 0.1
+        }
+      }
+    },
+    {
+      "id": "radiant-pulse",
+      "name": "Strahlenimpuls",
+      "description": "Radialer Ausstoß (Impuls auslösen), danach Abbremsen und Sammeln.",
+      "seed": 2718,
+      "params": {
+        "count": 16000,
+        "spawn": {
+          "shape": "sphere-surface",
+          "radius": 0.6
+        },
+        "operators": [
+          {
+            "type": "spring-home",
+            "stiffness": 1.6,
+            "damping": 1.1
+          },
+          {
+            "type": "drag",
+            "amount": 0.8
+          }
+        ],
+        "appearance": {
+          "style": "soft-disc",
+          "sizeMin": 1.4,
+          "sizeMax": 3.4,
+          "colorMode": "speed",
+          "color": "#9ff0ff",
+          "color2": "#ffffff",
+          "opacity": 0.75
+        },
+        "camera": {
+          "orbitSpeed": 0.08
+        },
+        "interaction": {
+          "mode": "attract",
+          "radius": 1.1,
+          "strength": 8
+        }
+      }
+    }
+  ]
+}

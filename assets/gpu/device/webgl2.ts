@@ -74,7 +74,7 @@ export class ResourceScope {
   }
 
   buffer(
-    data: BufferSource | number,
+    data: BufferSource | ArrayBufferView | number,
     usage: number = this.gl.STATIC_DRAW,
     target: number = this.gl.ARRAY_BUFFER,
   ): WebGLBuffer {
@@ -83,7 +83,7 @@ export class ResourceScope {
     if (!buffer) throw new GpuError('Could not create a buffer.');
     gl.bindBuffer(target, buffer);
     if (typeof data === 'number') gl.bufferData(target, data, usage);
-    else gl.bufferData(target, data, usage);
+    else gl.bufferData(target, data as BufferSource, usage);
     return this.track(buffer, (g, b) => g.deleteBuffer(b));
   }
 

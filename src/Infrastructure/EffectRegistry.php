@@ -161,6 +161,7 @@ final class EffectRegistry implements EffectCatalog {
 			$reject( 'module_url must be a same-origin .js/.mjs file below wp-content and needs a version string' );
 			return;
 		}
+		$presets                = $this->presets( $data['presets'] ?? array(), $schema, $type );
 		$this->effects[ $type ] = array(
 			'type'           => $type,
 			'label'          => $label,
@@ -169,9 +170,39 @@ final class EffectRegistry implements EffectCatalog {
 			'continuous'     => ! isset( $data['continuous'] ) || false !== $data['continuous'],
 			'schema_version' => $schema_version,
 			'schema'         => $schema,
+			'presets'        => $presets,
 			'module_url'     => $module_url,
 			'builtin'        => $builtin,
 		);
+	}
+
+	/**
+	 * Presets (`id`, `name`, `description`, optional `seed`, partial `params`) whose parameters satisfy
+	 * the schema; invalid ones are skipped and reported.
+	 *
+	 * @param mixed    $raw    Raw preset list.
+	 * @param stdClass $schema Checked parameter schema.
+	 *
+	 * @return list<array{id: string, name: string, description: string, seed: int, params: mixed}>
+	 */
+	private function presets( mixed $raw, stdClass $schema, string $type ): array {
+		$presets = array();
+		foreach ( is_array( $raw ) ? $raw : array() as $preset ) {
+			$params = is_array( $preset ) ? json_decode( (string) wp_json_encode( $preset['params'] ?? null ), false ) : null;
+			$id     = is_array( $preset ) && is_string( $preset['id'] ?? null ) ? $preset['id'] : '';
+			if ( 1 !== preg_match( '/^[a-z0-9][a-z0-9-]{0,63}$/D', $id ) || ! $params instanceof stdClass || array() !== EffectSchema::validate( $schema, $params ) ) {
+				$this->problems[] = sprintf( 'Effect "%s": preset "%s" rejected', $type, $id );
+				continue;
+			}
+			$presets[] = array(
+				'id'          => $id,
+				'name'        => is_string( $preset['name'] ?? null ) ? mb_substr( $preset['name'], 0, 80, 'UTF-8' ) : $id,
+				'description' => is_string( $preset['description'] ?? null ) ? mb_substr( $preset['description'], 0, 300, 'UTF-8' ) : '',
+				'seed'        => is_int( $preset['seed'] ?? null ) ? $preset['seed'] : 0,
+				'params'      => $params,
+			);
+		}
+		return $presets;
 	}
 
 	/**

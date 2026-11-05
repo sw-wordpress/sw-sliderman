@@ -105,6 +105,21 @@ describe('withDefaults', () => {
     expect(result.operators).toEqual([{ type: 'magic' }]);
   });
 
+  it('creates optional object groups that have member defaults, but not empty ones', () => {
+    const result = withDefaults(schema, { count: 5, spawn: { shape: 'ring' } }) as Record<
+      string,
+      unknown
+    >;
+    expect(result.appearance).toEqual({ color: '#78b9ff', blend: 'additive' });
+    const bare = {
+      type: 'object',
+      properties: {
+        group: { type: 'object', properties: { n: { type: 'number', minimum: 0, maximum: 1 } } },
+      },
+    };
+    expect(withDefaults(bare, {})).toEqual({});
+  });
+
   it('tolerates a non-object schema', () => {
     expect(withDefaults(null, { a: 1 })).toEqual({ a: 1 });
   });

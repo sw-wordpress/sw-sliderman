@@ -1,6 +1,6 @@
 # GPU-Effekte (M10)
 
-Stand: Phase G0–G3 (Kern, Dokument/PHP und Browser-Plattform fertig; Partikelmodul folgt mit G4). Entscheidungen: [ADR 0005](adr/0005-gpu-effects.md). Fortschritt: [TODO.md](../TODO.md) (M10).
+Stand: Phase G0–G4 (Kern, Dokument/PHP, Browser-Plattform und Partikelmodul; Bildrekonstruktion und Editor folgen mit G5/G6). Entscheidungen: [ADR 0005](adr/0005-gpu-effects.md). Fortschritt: [TODO.md](../TODO.md) (M10).
 
 ## Überblick
 
@@ -102,3 +102,36 @@ Eine Moduldatei exportiert `export default (api) => EffectModule`. `api.core` li
 
 - `tests/unit/gpu-device.test.ts`, `gpu-stage.test.ts`, `gpu-controller.test.ts`, `gpu-entry.test.ts`, Runtime-Anbindung in `runtime.test.ts`; Coverage `gpu/device` 100 %, `gpu/stage` 98 %.
 - `tests/e2e/gpu-platform.mjs` (echtes Chromium mit WebGL2/SwiftShader, 9 Prüfungen): echter Shader zeichnet; nur sichtbarer Slide läuft; Slide-Wechsel, Pause-Schalter ohne Autoplay, Start erst beim Einscrollen; Reduced Motion ohne GPU; Kontextverlust und Wiederherstellung; zwei unabhängige Mounts, Resize, Dispose ohne Canvas/Kontext/Frame-Schleife; Rückfälle ohne WebGL2, mit defektem Modul und ohne Bundle; 60 Bilder/s bei einem trivialen Effekt mit Software-Rendering. Aussagen zu realen GPUs und Mobilgeräten gibt es noch nicht (Benchmark-Protokoll in G7).
+
+## Modul `particle-field` (G4)
+
+Quelle für PHP, Editor und Modul ist `schemas/effects/particle-field.json` (Beschreibung, Schema, Presets); `EffectRegistry` prüft die Presets gegen das Schema und meldet ungültige.
+
+**Simulation (GPU):** Position/Alter und Geschwindigkeit/Lebensdauer liegen in Ping-Pong-Buffern; ein Vertex-Shader aktualisiert sie per Transform Feedback (kein Readback, keine CPU-Arbeit pro Partikel). Gezeichnet wird instanziert aus denselben Buffern; additives oder normales Blending mit vormultipliziertem Alpha. Zufall kommt aus dem PCG-Hash von `(seed, index, stream, step)`, daher reproduzierbar und auf CPU und GPU identisch.
+
+| Bereich | Umfang |
+| --- | --- |
+| Spawn | Punkt, Scheibe, Ring, Kugeloberfläche, Kugelvolumen, Quader, Linie; Startgeschwindigkeit keine/radial/tangential/zufällig |
+| Lebenszyklus | dauerhaft oder Emitter (Wiedergeburt nach Lebensdauer) |
+| Operatoren | `drag`, `spring-home`, `vortex`, `flow-field` (Curl-Noise), `gravity-wells` (bis 3, auch negative Masse), `speed-limit`, `bounds` (wrap/bounce/respawn); jeder Typ höchstens einmal, der letzte gewinnt |
+| Erscheinungsbild | Weicher Kreis, Glow, Pixel; Größe min/max; Farbe fest/Geschwindigkeit/Lebensdauer/Palette/Bild; Tiefenausblendung |
+| Kamera | perspektivisch/orthografisch, Orbit, Neigung |
+| Interaktion | Zeiger: abstoßen, anziehen, wirbeln (Ebene durch den Ursprung zur Kamera) |
+| Ereignisse | `burst`/`strike` (abklingender radialer Impuls), `reset`; `transitionTo` blendet Parameter, Strukturänderungen (Zahl, Spawn, Lebenszyklus) bauen die Partikel neu auf, ohne Ressourcen zu verlieren |
+| Qualität | Zahl der simulierten/gezeichneten Partikel je Stufe (25/50/100 %), DPR-Grenze, 30-Hz-Simulation auf `low` |
+
+Presets: Orbitnebel, Wirbelbänder, Glutfunken, Strahlenimpuls (weitere folgen mit G5/G8). Der Build erzeugt je Modul `build/gpu/<name>.js` (`vite.gpu-modules.config.ts`, Budget 25 KiB gzip; `particle-field` 11 KiB).
+
+**Leistungsregeln im Code:** Uniform-Werte (Operatoren, Farben, Palette) werden nur bei Parameteränderung berechnet, nicht pro Frame; Uniform-Orte sind gecacht; keine Allokation im Frame-Loop außer den Aufrufen der WebGL-API selbst.
+
+## Nachweise (G4)
+
+- `tests/unit/gpu-particles.test.ts` (31 Tests: Beschreibung/Presets, Spawn-Referenz, Uniforms, CPU-Integrator, Kamera, Instanzlogik gegen ein GL-Double). Coverage des Moduls 99 %.
+- `tests/e2e/gpu-particles.mjs` (echtes WebGL2, 8 Prüfungen):
+  - **GPU gegen CPU-Referenz** (Feder, Wirbel, Gravitation, Tempolimit, Drag, 90 Schritte): Abweichung Position 4·10⁻⁶, Geschwindigkeit 2·10⁻⁴.
+  - **GLSL-Spawnformen gegen TypeScript** (alle 7, mehrere Generationen): Abweichung höchstens 3·10⁻⁴ (float32).
+  - Gleicher Seed → identische Bewegung (auch mit GPU-Rauschen), anderer Seed → andere.
+  - Extremwerte (Nullachse, fast singuläre Wells, Impuls 50, Wirbel ±20) bleiben endlich und innerhalb der Grenzen.
+  - Alle Presets laufen, zeichnen sichtbar und bleiben endlich; Kamera zentriert; Qualitätsstufen skalieren die Zahl; der Zeiger stößt Partikel ab.
+  - Übergänge, Neuaufbau ohne Leck, `dispose` gibt alle GPU-Objekte frei.
+- **Durchsatz:** In dieser Umgebung gibt es nur Software-Rendering (CPU): 20.000 Partikel 0,39 s/Frame, 100.000 Partikel 2,0 s/Frame. Das sagt **nichts** über reale GPUs aus; die Messung auf echter Hardware und das Protokoll folgen in G7.
