@@ -32,6 +32,7 @@ $sws_required = array(
 	'build/editor/editor.js',
 	'build/editor/editor.css',
 	'build/runtime/runtime.js',
+	'build/runtime/effects.js',
 	'build/runtime/runtime.css',
 	'fonts/catalog.json',
 	'schemas/defaults/new-slider.json',

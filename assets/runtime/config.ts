@@ -1,5 +1,12 @@
 import { ANIMATION_PRESETS, EASINGS } from '@shared/types';
-import type { AnimationPhase, Breakpoints, ExitAnimation, LayerAnimation, TransitionType } from '@shared/types';
+import type {
+  AnimationPhase,
+  Breakpoints,
+  ExitAnimation,
+  LayerAnimation,
+  TransitionType,
+  SlideEffects,
+} from '@shared/types';
 import type { TimedSlide } from '@shared/schedule';
 
 /**
@@ -8,6 +15,7 @@ import type { TimedSlide } from '@shared/schedule';
  */
 export interface RuntimeSlide extends TimedSlide {
   readonly id: string;
+  readonly effects?: SlideEffects;
   readonly transition: { readonly type: TransitionType; readonly durationMs: number };
 }
 
@@ -29,7 +37,9 @@ function num(value: unknown, fallback: number): number {
 }
 
 function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
-  return typeof value === 'string' && (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
+  return typeof value === 'string' && (allowed as readonly string[]).includes(value)
+    ? (value as T)
+    : fallback;
 }
 
 function phase(value: unknown): AnimationPhase {
@@ -46,13 +56,16 @@ function phase(value: unknown): AnimationPhase {
 function animation(value: unknown): LayerAnimation {
   const raw = isObject(value) ? value : {};
   const exitRaw = isObject(raw.exit) ? raw.exit : {};
-  const exit: ExitAnimation = exitRaw.mode === 'timed' ? { mode: 'timed', ...phase(exitRaw) } : { mode: 'slide-end' };
+  const exit: ExitAnimation =
+    exitRaw.mode === 'timed' ? { mode: 'timed', ...phase(exitRaw) } : { mode: 'slide-end' };
   return { enter: phase(raw.enter), exit };
 }
 
 function breakpoints(value: unknown): Breakpoints | null {
   if (!isObject(value)) return null;
-  const read = (name: string): { minWidth: number; stageWidth: number; stageHeight: number } | null => {
+  const read = (
+    name: string,
+  ): { minWidth: number; stageWidth: number; stageHeight: number } | null => {
     const bp = value[name];
     if (!isObject(bp)) return null;
     const stageWidth = num(bp.stageWidth, 0);
@@ -78,9 +91,11 @@ export function parseConfig(text: string): RuntimeConfig | null {
   if (!bps) return null;
   const slides: RuntimeSlide[] = raw.slides.filter(isObject).map((slide) => {
     const transition = isObject(slide.transition) ? slide.transition : {};
+    const effects = isObject(slide.effects) ? slide.effects : {};
     return {
       id: typeof slide.id === 'string' ? slide.id : '',
       durationMs: Math.max(1000, num(slide.durationMs, 6000)),
+      effects: { cinematic: effects.cinematic === true, lightSweep: effects.lightSweep === true },
       transition: {
         type: oneOf(transition.type, ['cut', 'fade', 'slide'] as const, 'fade'),
         durationMs: num(transition.durationMs, 0),

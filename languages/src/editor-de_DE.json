@@ -373,5 +373,11 @@
   "“%1$s” on “%2$s” (%3$s)": "„%1$s“ auf „%2$s“ (%3$s)",
   "“%s” was deleted permanently.": "„%s“ wurde endgültig gelöscht.",
   "“%s” was moved to the trash.": "„%s“ wurde in den Papierkorb gelegt.",
-  "“%s” was restored.": "„%s“ wurde wiederhergestellt."
+  "“%s” was restored.": "„%s“ wurde wiederhergestellt.",
+  "Effects": "Effekte",
+  "Cinematic depth": "Filmische Tiefe",
+  "Light sweep": "Lichtreflex",
+  "Masked reveal from left": "Maskierte Einblendung von links",
+  "Circular reveal": "Kreisförmige Einblendung",
+  "Use Preview to play effects. Reduced motion shows static content.": "Effekte über die Vorschau abspielen. Bei reduzierter Bewegung werden statische Inhalte angezeigt."
 }

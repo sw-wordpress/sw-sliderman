@@ -373,7 +373,7 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 
 **Status:** Produktbacklog mit Einzelfreigabe je Effekt.
 
-- [ ] M9.01 Häufig tatsächlich benötigte Effekte aus Stefans Einsatzfällen auswählen.
+- [x] M9.01 Erstes Effektpaket freigegeben: filmische Tiefe, Lichtreflex, maskierte Einblendungen (Auftrag vom 05.11.2026).
 - [ ] M9.02 Scroll-/Parallax-/Pointer-Verhalten inklusive Konflikten mit Timeline und mobilen Geräten spezifizieren.
 - [ ] M9.03 Effekte als optionale Module laden und Reduced-Motion-Fallback je Effekt definieren.
 - [ ] M9.04 Zusätzliche Übergänge oder Textanimationen mit Fontmessung und DOM-Grenzen prüfen.
@@ -381,6 +381,12 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 - [ ] M9.06 PHP-Hooks, Filter und typisierte Registries für Ebenentypen/Provider dokumentieren.
 - [ ] M9.07 Kompatibilitätsversionen und Deaktivierungsverhalten für Erweiterungen definieren.
 - [ ] M9.08 Je Effekt Browser-, Leistungs-, Zugänglichkeits- und Import/Export-Nachweise erbringen.
+
+**Erstes Paket (05.11.2026):** Slide-Schalter für Tiefe/Lichtreflex und zwei Maskenpresets umgesetzt; gemeinsamer Player in Vorschau/Frontend, separates optionales Frontend-Bundle, Reduced-Motion-Abbruch. Vertrag und praktische Prüfschritte: [Effekte](docs/effects.md). Automatisierte Nachweise: gemeinsame PHP-/TS-Fixtures, Editor-Historie/Speichern, WordPress-Veröffentlichung, Chromium bei 1180/820/375 px. M9.02–M9.08 bleiben wegen weiterem Umfang, Browsermatrix, Import/Export und praktischer Abnahme offen.
+
+CI-Korrektur: Der WordPress-Effekttest erzeugt sein Bundle als temporäre Fixture und funktioniert auch ohne Frontend-Build (57 Tests; PHP-Coverage 84,54 %).
+
+Review-Korrektur: Auch der dynamische Editor-Effektimport erhält die zentrale Pluginversion als URL-Parameter; Bundlecheck und nativer Browser-Request-Test sichern das Lazy Loading ab.
 
 **Abnahmekriterium:** Jeder Effekt hat messbaren Nutzen und bleibt optional; Slider ohne Effekt tragen keine zugehörige Laufzeitlast.
 

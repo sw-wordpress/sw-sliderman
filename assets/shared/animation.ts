@@ -2,9 +2,9 @@ import type { AnimationPreset } from './types';
 import type { ScheduledPhase } from './schedule';
 
 /**
- * Keyframes for the limited 1.0 presets (PLAN.md 7.1), shared by editor preview and runtime.
+ * Keyframes for the base and M9 masked presets (PLAN.md 7.1), shared by editor preview and runtime.
  *
- * Keyframes only touch `opacity` and `transform` of the dedicated animation wrapper
+ * Keyframes only touch `opacity`, `transform` and optional `clipPath` of the dedicated animation wrapper
  * (`.sws-layer__anim`); layout position and user rotation live on other elements, so the
  * transforms never compete (CODE-STYLE 13).
  *
@@ -15,6 +15,7 @@ import type { ScheduledPhase } from './schedule';
 export type AnimationKeyframe = {
   readonly opacity: number;
   readonly transform: string;
+  readonly clipPath?: string;
 };
 
 function hiddenState(preset: AnimationPreset, distancePx: number): AnimationKeyframe {
@@ -36,6 +37,10 @@ function hiddenState(preset: AnimationPreset, distancePx: number): AnimationKeyf
       return { opacity: 0, transform: 'scale(0.6)' };
     case 'zoom-out':
       return { opacity: 0, transform: 'scale(1.4)' };
+    case 'reveal-left':
+      return { opacity: 1, transform: 'none', clipPath: 'inset(0 100% 0 0)' };
+    case 'reveal-circle':
+      return { opacity: 1, transform: 'none', clipPath: 'circle(0% at 50% 50%)' };
     case 'rotate':
       return { opacity: 0, transform: 'rotate(-12deg)' };
     default: {
@@ -45,18 +50,26 @@ function hiddenState(preset: AnimationPreset, distancePx: number): AnimationKeyf
   }
 }
 
-const VISIBLE: AnimationKeyframe = { opacity: 1, transform: 'none' };
+function visibleState(preset: AnimationPreset): AnimationKeyframe {
+  const visible = { opacity: 1, transform: 'none' };
+  if (preset === 'reveal-left') return { ...visible, clipPath: 'inset(0 0% 0 0)' };
+  if (preset === 'reveal-circle') return { ...visible, clipPath: 'circle(71% at 50% 50%)' };
+  return visible;
+}
 
 export function enterKeyframes(phase: ScheduledPhase, scale: number): AnimationKeyframe[] {
-  return [hiddenState(phase.preset, phase.distance * scale), VISIBLE];
+  return [hiddenState(phase.preset, phase.distance * scale), visibleState(phase.preset)];
 }
 
 export function exitKeyframes(phase: ScheduledPhase, scale: number): AnimationKeyframe[] {
   // Exits move in the opposite direction of the matching enter preset.
-  return [VISIBLE, hiddenState(phase.preset, -phase.distance * scale)];
+  return [visibleState(phase.preset), hiddenState(phase.preset, -phase.distance * scale)];
 }
 
-export function phaseTiming(phase: ScheduledPhase, kind: 'enter' | 'exit'): KeyframeAnimationOptions {
+export function phaseTiming(
+  phase: ScheduledPhase,
+  kind: 'enter' | 'exit',
+): KeyframeAnimationOptions {
   return {
     delay: phase.delayMs,
     duration: phase.durationMs,

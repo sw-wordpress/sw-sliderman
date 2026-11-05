@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { HeroPlayback } from '../../../browser/heroEffects';
 import { prepareImages } from '../../../browser/images';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { enterKeyframes, exitKeyframes, phaseTiming } from '@shared/animation';
@@ -309,8 +310,28 @@ const handles: Handle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
 // ---------- animation preview ----------
 const running: Animation[] = [];
 let previewResources = new AbortController();
+let hero: HeroPlayback | null = null;
+let removeMotionListener: (() => void) | undefined;
+onMounted(() => {
+  const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const changed = (): void => {
+    if (motion.matches) cancelPreview();
+  };
+  const hidden = (): void => {
+    if (document.hidden) cancelPreview();
+  };
+  motion.addEventListener('change', changed);
+  document.addEventListener('visibilitychange', hidden);
+  removeMotionListener = () => {
+    motion.removeEventListener('change', changed);
+    document.removeEventListener('visibilitychange', hidden);
+  };
+});
+onBeforeUnmount(() => removeMotionListener?.());
 let previewTimer: number | null = null;
 function cancelPreview(): void {
+  hero?.dispose();
+  hero = null;
   if (previewTimer !== null) window.clearTimeout(previewTimer);
   previewTimer = null;
   previewResources.abort();
@@ -325,11 +346,24 @@ watch(
     const slide = editor.slide;
     if (!slide || !stageEl.value || window.matchMedia('(prefers-reduced-motion: reduce)').matches)
       return;
-    await Promise.all([
+    const [effectsModule] = await Promise.all([
+      slide.effects?.cinematic || slide.effects?.lightSweep
+        ? import('../../../browser/heroEffects').catch(() => null)
+        : Promise.resolve(null),
       prepareImages(scroller.value ?? stageEl.value, signal),
       readyFor(editor.document?.fontRefs ?? [], signal),
     ]);
-    if (signal.aborted || !stageEl.value) return;
+    if (
+      signal.aborted ||
+      !stageEl.value ||
+      document.hidden ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    )
+      return;
+    const slideEl = stageEl.value.closest<HTMLElement>('.sws-slide');
+    if (effectsModule && slideEl && slide.effects) {
+      hero = effectsModule.playHeroEffects(slideEl, slide.effects, scheduleSlide(slide).durationMs);
+    }
     for (const layer of scheduleSlide(slide).layers) {
       const el = stageEl.value.querySelector<HTMLElement>(
         `[data-sws-layer="${CSS.escape(layer.layerId)}"] .sws-layer__anim`,
@@ -347,7 +381,7 @@ watch(
     previewTimer = window.setTimeout(cancelPreview, scheduleSlide(slide).durationMs + 100);
   },
 );
-watch(() => [editor.slide?.id, editor.device], cancelPreview);
+watch(() => [editor.slide, editor.device], cancelPreview);
 
 const deviceLabel = computed(
   () => ({ desktop: __('Desktop'), tablet: __('Tablet'), mobile: __('Mobile') })[editor.device],

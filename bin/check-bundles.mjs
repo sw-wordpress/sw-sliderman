@@ -27,14 +27,15 @@ function files(dir) {
 
 const runtimeJs = readFileSync(join(root, 'build/runtime/runtime.js'));
 const runtimeCss = readFileSync(join(root, 'build/runtime/runtime.css'));
-const jsGzip = gzipSync(runtimeJs).length;
+const effectsJs = readFileSync(join(root, 'build/runtime/effects.js'));
+const jsGzip = gzipSync(runtimeJs).length + gzipSync(effectsJs).length;
 const cssGzip = gzipSync(runtimeCss).length;
-console.log(`runtime.js  ${kib(runtimeJs.length)} KiB (${kib(jsGzip)} KiB gzip, budget 60)`);
+console.log(`runtime + optional effects  ${kib(runtimeJs.length + effectsJs.length)} KiB (${kib(jsGzip)} KiB gzip, budget 60)`);
 console.log(`runtime.css ${kib(runtimeCss.length)} KiB (${kib(cssGzip)} KiB gzip, budget 25)`);
 if (jsGzip > 60 * 1024) failures.push('runtime.js exceeds 60 KiB gzip');
 if (cssGzip > 25 * 1024) failures.push('runtime.css exceeds 25 KiB gzip');
 
-const runtimeText = runtimeJs.toString('utf8');
+const runtimeText = runtimeJs.toString('utf8') + effectsJs.toString('utf8');
 for (const marker of ['__VUE', 'createApp', 'defineStore', 'pinia', 'quasar']) {
   if (runtimeText.includes(marker)) failures.push(`runtime.js contains editor code marker "${marker}"`);
 }
@@ -46,6 +47,14 @@ for (const file of [...files(join(root, 'build/runtime')), ...files(join(root, '
   if (remoteFont.test(text)) failures.push(`${file} references a remote font host`);
   if (file.endsWith('.css') && /@import/i.test(text)) failures.push(`${file} uses @import`);
 }
+
+// The lazy effects import must use the central plugin version, including in production output.
+const editorJs = files(join(root, 'build/editor'))
+  .filter((file) => file.endsWith('.js'))
+  .map((file) => readFileSync(file, 'utf8'))
+  .join('\n');
+const versionedEffectsImport = /import\(["'][^"']*heroEffects[^"']*\?ver=["']\s*\+\s*encodeURIComponent\(window\.swsEditorConfig\.version\)\)/;
+if (!versionedEffectsImport.test(editorJs)) failures.push('editor effects import lacks the central plugin version');
 
 // Editor CSS: every top-level selector must be scoped (keyframes and font-face excluded).
 const editorCss = readFileSync(join(root, 'build/editor/editor.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');

@@ -563,16 +563,22 @@ function validateLayer(ctx: Context, value: unknown, path: string, fontRefs: Set
 }
 
 function validateSlide(ctx: Context, value: unknown, path: string, fontRefs: Set<string>): void {
-  const slide = object(ctx, value, path, [
-    'id',
-    'name',
-    'enabled',
-    'durationMs',
-    'background',
-    'transition',
-    'layers',
-  ]);
+  const slide = object(
+    ctx,
+    value,
+    path,
+    ['id', 'name', 'enabled', 'durationMs', 'background', 'transition', 'layers'],
+    ['effects'],
+  );
   if (!slide) return;
+  if (present(slide, 'effects')) {
+    const at = `${path}/effects`;
+    const effects = object(ctx, slide.effects, at, [], ['cinematic', 'lightSweep']);
+    if (effects) {
+      bool(ctx, effects, 'cinematic', at);
+      bool(ctx, effects, 'lightSweep', at);
+    }
+  }
   id(ctx, slide, 'id', path, true);
   str(ctx, slide, 'name', path, 0, LIMITS.nameLength);
   bool(ctx, slide, 'enabled', path);

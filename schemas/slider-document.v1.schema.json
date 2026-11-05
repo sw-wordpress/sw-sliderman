@@ -752,7 +752,9 @@
                                 "slide-right",
                                 "zoom-in",
                                 "zoom-out",
-                                "rotate"
+                                "rotate",
+                                "reveal-left",
+                                "reveal-circle"
                               ]
                             },
                             "startMs": {
@@ -820,7 +822,9 @@
                                     "slide-right",
                                     "zoom-in",
                                     "zoom-out",
-                                    "rotate"
+                                    "rotate",
+                                    "reveal-left",
+                                    "reveal-circle"
                                   ]
                                 },
                                 "startMs": {
@@ -1372,7 +1376,9 @@
                                 "slide-right",
                                 "zoom-in",
                                 "zoom-out",
-                                "rotate"
+                                "rotate",
+                                "reveal-left",
+                                "reveal-circle"
                               ]
                             },
                             "startMs": {
@@ -1440,7 +1446,9 @@
                                     "slide-right",
                                     "zoom-in",
                                     "zoom-out",
-                                    "rotate"
+                                    "rotate",
+                                    "reveal-left",
+                                    "reveal-circle"
                                   ]
                                 },
                                 "startMs": {
@@ -1967,7 +1975,9 @@
                                 "slide-right",
                                 "zoom-in",
                                 "zoom-out",
-                                "rotate"
+                                "rotate",
+                                "reveal-left",
+                                "reveal-circle"
                               ]
                             },
                             "startMs": {
@@ -2035,7 +2045,9 @@
                                     "slide-right",
                                     "zoom-in",
                                     "zoom-out",
-                                    "rotate"
+                                    "rotate",
+                                    "reveal-left",
+                                    "reveal-circle"
                                   ]
                                 },
                                 "startMs": {
@@ -2539,7 +2551,9 @@
                                 "slide-right",
                                 "zoom-in",
                                 "zoom-out",
-                                "rotate"
+                                "rotate",
+                                "reveal-left",
+                                "reveal-circle"
                               ]
                             },
                             "startMs": {
@@ -2607,7 +2621,9 @@
                                     "slide-right",
                                     "zoom-in",
                                     "zoom-out",
-                                    "rotate"
+                                    "rotate",
+                                    "reveal-left",
+                                    "reveal-circle"
                                   ]
                                 },
                                 "startMs": {
@@ -2661,6 +2677,19 @@
                   }
                 }
               ]
+            }
+          },
+          "effects": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Optional M9 effects; absent switches are off.",
+            "properties": {
+              "cinematic": {
+                "type": "boolean"
+              },
+              "lightSweep": {
+                "type": "boolean"
+              }
             }
           }
         }

@@ -28,6 +28,7 @@ use SW\Slider\Infrastructure\UploadPaths;
 final class Assets {
 
 	public const RUNTIME = 'sws-runtime';
+	public const EFFECTS = 'sws-effects';
 
 	/** @var array<string, true> Style handles already printed or enqueued. */
 	private array $used = array();
@@ -51,7 +52,19 @@ final class Assets {
 	}
 
 	public function register_runtime(): void {
-		$version = $this->asset_version( 'build/runtime/runtime.js' );
+		$version = $this->version;
+		if ( is_readable( $this->plugin_dir . 'build/runtime/effects.js' ) ) {
+			wp_register_script(
+				self::EFFECTS,
+				$this->plugin_url . 'build/runtime/effects.js',
+				array(),
+				$version,
+				array(
+					'in_footer' => true,
+					'strategy'  => 'defer',
+				)
+			);
+		}
 		wp_register_style( self::RUNTIME, $this->plugin_url . 'build/runtime/runtime.css', array(), $version );
 		wp_register_script(
 			self::RUNTIME,
@@ -72,10 +85,6 @@ final class Assets {
 		return array_merge( $resources, $this->font_preloads );
 	}
 
-	private function asset_version( string $relative ): string {
-		$file = $this->plugin_dir . $relative;
-		return is_readable( $file ) ? $this->version . '-' . filemtime( $file ) : $this->version;
-	}
 
 	/** Prepares sliders of a shortcode in the main queried post before `<head>` is printed. */
 	public function prepare_queried_post(): void {
@@ -129,6 +138,17 @@ final class Assets {
 	private function enqueue( PublishedSnapshot $published, array $document, string $scope ): array {
 		if ( ! wp_script_is( self::RUNTIME, 'registered' ) ) {
 			$this->register_runtime();
+		}
+		foreach ( $document['slides'] as $slide ) {
+			$effects = $slide['effects'] ?? array();
+			if ( $slide['enabled'] && ( true === ( $effects['cinematic'] ?? false ) || true === ( $effects['lightSweep'] ?? false ) ) ) {
+				// Add the dependency before footer printing, including sliders embedded late.
+				$runtime = wp_scripts()->query( self::RUNTIME, 'registered' );
+				if ( wp_script_is( self::EFFECTS, 'registered' ) && $runtime instanceof \_WP_Dependency && ! in_array( self::EFFECTS, $runtime->deps, true ) ) {
+					$runtime->deps[] = self::EFFECTS;
+				}
+				break;
+			}
 		}
 		wp_enqueue_script( self::RUNTIME );
 		$handles = array( self::RUNTIME );

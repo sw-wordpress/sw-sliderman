@@ -29,16 +29,16 @@ final class DocumentValidator {
 	public const COLOR_PATTERN = '/^#[0-9a-fA-F]{6}$/D';
 	public const LINK_PATTERN  = '~^(?:https?://[^\x00-\x20\x7F<>"]+|mailto:[^\x00-\x20\x7F<>"]+|tel:[0-9+().\- ]+|/(?!/)[^\x00-\x20\x7F<>"]*|#[^\x00-\x20\x7F<>"]*)$~iD';
 
-	private const ANIMATION_PRESETS = array( 'none', 'fade', 'slide-up', 'slide-down', 'slide-left', 'slide-right', 'zoom-in', 'zoom-out', 'rotate' );
-	private const EASINGS           = array( 'linear', 'ease', 'ease-in', 'ease-out', 'ease-in-out' );
-	private const TEXT_TAGS         = array( 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div' );
-	private const LAYOUT_KEYS       = array( 'x', 'y', 'width', 'height', 'anchorX', 'anchorY', 'rotation', 'visible' );
-	private const STYLE_KEYS        = array( 'fontRef', 'fontSize', 'lineHeight', 'letterSpacing', 'color', 'textAlign', 'backgroundColor', 'borderRadius', 'paddingX', 'paddingY', 'opacity' );
-	private const BUTTON_STATE_KEYS = array( 'hoverBackgroundColor', 'hoverColor', 'focusOutlineColor' );
-	private const SHAPE_KINDS       = array( 'rectangle', 'circle' );
-	private const LAYER_TYPES       = array( 'text', 'image', 'button', 'shape' );
+	private const ANIMATION_PRESETS   = array( 'none', 'fade', 'slide-up', 'slide-down', 'slide-left', 'slide-right', 'zoom-in', 'zoom-out', 'rotate', 'reveal-left', 'reveal-circle' );
+	private const EASINGS             = array( 'linear', 'ease', 'ease-in', 'ease-out', 'ease-in-out' );
+	private const TEXT_TAGS           = array( 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div' );
+	private const LAYOUT_KEYS         = array( 'x', 'y', 'width', 'height', 'anchorX', 'anchorY', 'rotation', 'visible' );
+	private const STYLE_KEYS          = array( 'fontRef', 'fontSize', 'lineHeight', 'letterSpacing', 'color', 'textAlign', 'backgroundColor', 'borderRadius', 'paddingX', 'paddingY', 'opacity' );
+	private const BUTTON_STATE_KEYS   = array( 'hoverBackgroundColor', 'hoverColor', 'focusOutlineColor' );
+	private const SHAPE_KINDS         = array( 'rectangle', 'circle' );
+	private const LAYER_TYPES         = array( 'text', 'image', 'button', 'shape' );
 	private const OPTIONAL_STYLE_KEYS = array( 'borderWidth', 'borderColor', 'shadowX', 'shadowY', 'shadowBlur', 'shadowColor', 'shadowOpacity' );
-	private const PHASE_KEYS        = array( 'preset', 'startMs', 'durationMs', 'easing', 'distance' );
+	private const PHASE_KEYS          = array( 'preset', 'startMs', 'durationMs', 'easing', 'distance' );
 
 	/** Style keys that may be overridden per breakpoint (types.ts OVERRIDABLE_STYLE_KEYS). */
 	public const OVERRIDABLE_STYLE_KEYS = array( 'fontSize', 'lineHeight', 'letterSpacing', 'textAlign', 'paddingX', 'paddingY' );
@@ -697,9 +697,17 @@ final class DocumentValidator {
 	 * @param array<string, true> $font_refs Known font reference IDs.
 	 */
 	private function validate_slide( mixed $value, string $path, array $font_refs ): void {
-		$slide = $this->object( $value, $path, array( 'id', 'name', 'enabled', 'durationMs', 'background', 'transition', 'layers' ) );
+		$slide = $this->object( $value, $path, array( 'id', 'name', 'enabled', 'durationMs', 'background', 'transition', 'layers' ), array( 'effects' ) );
 		if ( null === $slide ) {
 			return;
+		}
+		if ( property_exists( $slide, 'effects' ) ) {
+			$at      = $path . '/effects';
+			$effects = $this->object( $slide->effects, $at, array(), array( 'cinematic', 'lightSweep' ) );
+			if ( null !== $effects ) {
+				$this->bool( $effects, 'cinematic', $at );
+				$this->bool( $effects, 'lightSweep', $at );
+			}
 		}
 		$this->id( $slide, 'id', $path, true );
 		$this->str( $slide, 'name', $path, 0, Limits::NAME_LENGTH );

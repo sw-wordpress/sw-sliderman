@@ -17,6 +17,7 @@ window.matchMedia = vi
   .fn()
   .mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() });
 window.scrollTo = vi.fn();
+vi.stubGlobal('CSS', { escape: (value: string) => value, supports: () => false });
 // jsdom has no layout; ProseMirror measures ranges when it scrolls the cursor into view.
 const emptyRects = (): DOMRectList =>
   Object.assign([], { item: () => null }) as unknown as DOMRectList;
@@ -339,6 +340,45 @@ describe('editor UI', () => {
     await settle();
     const image = editor.selectedLayers[0];
     expect(image?.type === 'image' ? image.content.focalX : null).toBe(30);
+  });
+  it('edits hero effects, previews them and clears decorations when editing resumes', async () => {
+    const editor = useEditorStore();
+    editor.clearSelection();
+    await settle();
+    const toggle = (label: string) =>
+      [...document.querySelectorAll<HTMLElement>('[role="checkbox"], [role="switch"]')].find((el) =>
+        el.textContent?.includes(label),
+      );
+    const depth = toggle('Cinematic depth');
+    const sweep = toggle('Light sweep');
+    if (!depth || !sweep) throw new Error('effect controls');
+    depth.click();
+    sweep.click();
+    await settle();
+    expect(editor.slide?.effects).toEqual({ cinematic: true, lightSweep: true });
+    const cancel = vi.fn();
+    HTMLElement.prototype.animate = vi.fn().mockReturnValue({
+      cancel,
+      finished: new Promise(() => {}),
+      play: vi.fn(),
+      pause: vi.fn(),
+    });
+    editor.playPreview();
+    await settle();
+    await vi.waitFor(
+      () => expect(document.querySelector('.sws-canvas__frame .sws-light-sweep')).not.toBeNull(),
+      { timeout: 4000 },
+    );
+    expect(HTMLElement.prototype.animate).toHaveBeenCalled();
+    const slideId = editor.slide?.id;
+    if (!slideId) throw new Error('slide');
+    editor.updateSlide(slideId, (slide) => {
+      slide.effects = { cinematic: false, lightSweep: false };
+    });
+    await settle();
+    expect(document.querySelector('.sws-light-sweep')).toBeNull();
+    expect(cancel).toHaveBeenCalled();
+    editor.cancelAutosave();
   });
   it('drags a layer on the canvas as one undo step, snaps to the grid and cancels with Escape', async () => {
     window.location.hash = '#/sliders/7';

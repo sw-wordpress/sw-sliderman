@@ -23,6 +23,8 @@ Overlay and focal point: slide `background` may carry `overlayColor` (hex or `nu
 
 Per layer an entrance phase and either `slide-end` (visible until the slide ends) or a timed exit that starts at or after the entrance end. The effective slide duration is the maximum of the configured duration and all mandatory animation ends (`Schedule` in TS and PHP). Layout, user rotation (`.sws-layer__body`) and animation (`.sws-layer__anim`) use separate elements.
 
+Slide `effects` is an optional object with optional boolean `cinematic` / `lightSweep` switches; absent means off. Layer phase `preset` also accepts `reveal-left` and `reveal-circle`. These v1 additions require no migration for existing documents; older plugin versions reject documents containing the new fields/presets. See [effects](effects.md) for playback, loading and acceptance limits.
+
 ## Storage
 
 - Draft: canonical JSON in `post_content` of `sw_slider` (revisions included), ASCII-only with `<>&'"` and backslashes escaped so WordPress save filters (KSES, emoji encoding, `wp_kses_no_null`) cannot alter it.
