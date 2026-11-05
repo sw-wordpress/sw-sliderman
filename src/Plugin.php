@@ -16,6 +16,7 @@ use SW\Slider\Domain\DocumentValidator;
 use SW\Slider\Fonts\DownloadPolicy;
 use SW\Slider\Fonts\FontCatalog;
 use SW\Slider\Fonts\CatalogUpdater;
+use SW\Slider\Infrastructure\WpArtifactGuard;
 use SW\Slider\Infrastructure\WpFontJobs;
 use SW\Slider\Integration\The7;
 use SW\Slider\Infrastructure\UploadPaths;
@@ -75,6 +76,7 @@ final class Plugin {
 		};
 		$installer       = new FontInstaller( $catalog, $provider, $font_repo, $font_storage, static fn (): string => $system->now_gmt(), $current_offline );
 		$library         = new FontLibrary( $font_repo, $font_storage, static fn (): iterable => $sliders->all_documents(), static fn ( \Closure $operation ): mixed => \SW\Slider\Infrastructure\ResourceGuard::run( $wpdb, $operation ) );
+		$guard           = new WpArtifactGuard( $wpdb );
 		$service         = new SliderService(
 			$sliders,
 			new DocumentValidator(),
@@ -82,13 +84,15 @@ final class Plugin {
 			new UploadsArtifactStore(),
 			new CssArtifactBuilder(),
 			$system,
-			$template
+			$template,
+			new \SW\Slider\Domain\DocumentMigrator(),
+			$guard
 		);
 		$assets          = new Assets( $sliders, $font_repo, SWS_URL, SWS_DIR, SWS_VERSION );
 
 		( new Translations( SWS_DIR . 'languages' ) )->register();
 		( new Lifecycle() )->register();
-		( new ArtifactCleanup( $wpdb ) )->register();
+		( new ArtifactCleanup( $wpdb, new WpArtifactGuard( $wpdb, 0 ) ) )->register();
 		( new PostTypes() )->register();
 		( new SliderWriteScope() )->register();
 		$assets->register();

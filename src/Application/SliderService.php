@@ -31,7 +31,8 @@ final class SliderService {
 		private readonly ArtifactBuilder $builder,
 		private readonly SystemPorts $system,
 		private readonly string $template_json,
-		private readonly \SW\Slider\Domain\DocumentMigrator $migrator = new \SW\Slider\Domain\DocumentMigrator()
+		private readonly \SW\Slider\Domain\DocumentMigrator $migrator = new \SW\Slider\Domain\DocumentMigrator(),
+		private readonly ?ArtifactGuard $guard = null
 	) {
 	}
 
@@ -125,17 +126,22 @@ final class SliderService {
 			throw new InvalidDocument( $missing );
 		}
 
-		$hash       = CanonicalJson::hash( $stored->document_json );
-		$version    = $this->builder->renderer_version();
-		$css        = $this->builder->build_stylesheet( $document, substr( $hash, 0, 12 ) );
-		$stylesheet = $this->artifacts->store_stylesheet( substr( $hash, 0, 16 ) . '-r' . $version . '.css', $css );
-		if ( null === $stylesheet ) {
-			throw new StorageFailure( 'Could not store the complete publication artifact.' ); }
-		$fonts = array_values( array_unique( array_map( static fn ( array $ref ): string => (string) $ref['installationId'], $document['fontRefs'] ) ) );
+		$hash    = CanonicalJson::hash( $stored->document_json );
+		$version = $this->builder->renderer_version();
+		$css     = $this->builder->build_stylesheet( $document, substr( $hash, 0, 12 ) );
+		$fonts   = array_values( array_unique( array_map( static fn ( array $ref ): string => (string) $ref['installationId'], $document['fontRefs'] ) ) );
 
-		$snapshot = new PublishedSnapshot( $expected_version, $hash, $version, $this->system->now_gmt(), $stored->document_json, $stylesheet, $fonts, $stored->title );
-		$this->repository->activate_snapshot( $id, $expected_version, $snapshot );
-		return $snapshot;
+		// A reused artifact must not be deleted by a cleanup between storing it and activating the snapshot.
+		$store_and_activate = function () use ( $id, $expected_version, $hash, $version, $css, $stored, $fonts ): PublishedSnapshot {
+			$stylesheet = $this->artifacts->store_stylesheet( substr( $hash, 0, 16 ) . '-r' . $version . '.css', $css );
+			if ( null === $stylesheet ) {
+				throw new StorageFailure( 'Could not store the complete publication artifact.' );
+			}
+			$snapshot = new PublishedSnapshot( $expected_version, $hash, $version, $this->system->now_gmt(), $stored->document_json, $stylesheet, $fonts, $stored->title );
+			$this->repository->activate_snapshot( $id, $expected_version, $snapshot );
+			return $snapshot;
+		};
+		return null === $this->guard ? $store_and_activate() : $this->guard->run( $store_and_activate );
 	}
 
 	public function migrate_draft( int $id, int $expected_version ): int {

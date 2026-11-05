@@ -9,7 +9,9 @@ declare(strict_types=1);
 
 namespace SW\Slider\Infrastructure;
 
+use SW\Slider\Application\ArtifactGuard;
 use SW\Slider\Application\ArtifactRetention;
+use SW\Slider\Application\RepositoryBusy;
 
 /**
  * Daily WP-Cron task. References come from the active snapshots in the database; a snapshot that
@@ -21,7 +23,7 @@ final class ArtifactCleanup {
 	public const HOOK   = 'sws_cleanup_artifacts';
 	public const OPTION = 'sws_artifact_unreferenced';
 
-	public function __construct( private readonly \wpdb $db ) {
+	public function __construct( private readonly \wpdb $db, private readonly ?ArtifactGuard $guard = null ) {
 	}
 
 	public function register(): void {
@@ -44,9 +46,23 @@ final class ArtifactCleanup {
 	}
 
 	/**
+	 * Runs one pass under the artifact guard: references are read, planned and deleted while no
+	 * publication can reuse a file in between. A busy guard skips the pass until the next run.
+	 *
 	 * @return int Number of deleted files.
 	 */
 	public function run( ?int $now = null ): int {
+		if ( null === $this->guard ) {
+			return $this->pass( $now );
+		}
+		try {
+			return $this->guard->run( fn (): int => $this->pass( $now ) );
+		} catch ( RepositoryBusy ) {
+			return 0;
+		}
+	}
+
+	private function pass( ?int $now ): int {
 		$referenced = $this->referenced();
 		$directory  = UploadPaths::base_dir() . '/artifacts';
 		if ( null === $referenced || ! is_dir( $directory ) ) {

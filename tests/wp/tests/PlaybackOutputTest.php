@@ -277,4 +277,133 @@ final class PlaybackOutputTest extends WP_UnitTestCase {
 		$this->assertLessThan( strpos( $html, '<section' ), strpos( $html, 'sws-runtime' ), 'styles precede the slider markup' );
 		$this->assertTrue( wp_script_is( 'sws-runtime', 'enqueued' ), 'runtime script is printed in the footer' );
 	}
+
+	/** A second database connection, i.e. another PHP process. */
+	private function second_connection(): wpdb {
+		global $wpdb;
+		$other = new wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+		$other->set_prefix( $wpdb->prefix );
+		return $other;
+	}
+
+	/**
+	 * Slider service whose artifact store runs `$during_publish` between storing (or reusing) the
+	 * stylesheet and activating the snapshot, like a cleanup running in another process.
+	 */
+	private function service( ?\SW\Slider\Application\ArtifactGuard $guard, callable $during_publish ): \SW\Slider\Application\SliderService {
+		global $wpdb;
+		$fonts    = new \SW\Slider\Fonts\WpFontRepository();
+		$storage  = new \SW\Slider\Fonts\UploadsFontStorage();
+		$store    = new \SW\Slider\Infrastructure\UploadsArtifactStore();
+		$observed = new class( $store, $during_publish ) implements \SW\Slider\Application\ArtifactStore {
+			/** @param callable(): void $hook Runs after the artifact is stored. */
+			public function __construct( private readonly \SW\Slider\Application\ArtifactStore $inner, private $hook ) {
+			}
+
+			public function store_stylesheet( string $name, string $css ): ?string {
+				$path = $this->inner->store_stylesheet( $name, $css );
+				( $this->hook )();
+				return $path;
+			}
+		};
+		return new \SW\Slider\Application\SliderService(
+			new \SW\Slider\Infrastructure\WpSliderRepository( $wpdb ),
+			new \SW\Slider\Domain\DocumentValidator(),
+			new \SW\Slider\Infrastructure\WpResourceChecker( $fonts, $storage ),
+			$observed,
+			new \SW\Slider\Rendering\CssArtifactBuilder(),
+			new \SW\Slider\Infrastructure\WpSystemPorts(),
+			(string) file_get_contents( SWS_DIR . 'schemas/defaults/new-slider.json' ), // phpcs:ignore WordPress.WP.AlternativeFunctions
+			new \SW\Slider\Domain\DocumentMigrator(),
+			$guard
+		);
+	}
+
+	/**
+	 * Publishes A, then B (A's artifact becomes unreferenced for 30 days), and republishes A: the
+	 * artifact of A is reused. `$cleanup_during_publish` runs the cleanup inside that last publication.
+	 *
+	 * @return array{file: string, deleted: int|null, active: string} Reused file, cleanup result, active stylesheet.
+	 */
+	private function republish_with_concurrent_cleanup( bool $guarded ): array {
+		global $wpdb;
+		$this->isolate_uploads();
+		$other_db = $this->second_connection();
+		$cleanup  = new ArtifactCleanup( $other_db, new \SW\Slider\Infrastructure\WpArtifactGuard( $other_db, 0 ) );
+		$deleted  = null;
+		$running  = false;
+		$service  = $this->service(
+			$guarded ? new \SW\Slider\Infrastructure\WpArtifactGuard( $wpdb ) : null,
+			function () use ( &$deleted, &$running, $cleanup ): void {
+				if ( $running ) {
+					$deleted = $cleanup->run( time() );
+				}
+			}
+		);
+		$id    = $service->create_slider( 'Race' );
+		$label = static function ( \SW\Slider\Application\StoredSlider $stored, string $text ): object {
+			$document                 = json_decode( $stored->document_json );
+			$document->settings->label = $text;
+			return $document;
+		};
+		$version = $service->save_draft( $id, 'Race', $label( $service->get_draft( $id ), 'A' ), 1 );
+		$first   = $service->publish( $id, $version );
+		$version = $service->save_draft( $id, 'Race', $label( $service->get_draft( $id ), 'B' ), $version );
+		$service->publish( $id, $version );
+		$reused  = $first->stylesheet;
+		$this->assertNotNull( $reused );
+		$this->assertFileExists( UploadPaths::path( $reused ) );
+
+		// A's artifact has been unreferenced for 30 days: the cleanup considers it deletable.
+		update_option( ArtifactCleanup::OPTION, array( basename( $reused ) => time() - 30 * DAY_IN_SECONDS ), false );
+		$version = $service->save_draft( $id, 'Race', $label( $service->get_draft( $id ), 'A' ), $version );
+		$running = true;
+		$active  = $service->publish( $id, $version );
+		$this->assertSame( $reused, $active->stylesheet, 'identical content reuses the existing artifact' );
+		return array(
+			'file'    => $reused,
+			'deleted' => $deleted,
+			'active'  => (string) $active->stylesheet,
+		);
+	}
+
+	public function test_cleanup_cannot_delete_an_artifact_reused_by_a_concurrent_publication(): void {
+		$result = $this->republish_with_concurrent_cleanup( true );
+		$this->assertSame( 0, $result['deleted'], 'cleanup is excluded while the publication holds the guard' );
+		$this->assertFileExists( (string) UploadPaths::path( $result['file'] ), 'the active snapshot keeps its stylesheet' );
+	}
+
+	public function test_without_the_guard_the_same_interleaving_loses_the_artifact(): void {
+		// Documents the race the guard prevents: this is why publication and cleanup share it.
+		$result = $this->republish_with_concurrent_cleanup( false );
+		$this->assertSame( 1, $result['deleted'] );
+		$this->assertFileDoesNotExist( (string) UploadPaths::path( $result['file'] ) );
+	}
+
+	public function test_publication_reports_busy_while_a_cleanup_holds_the_guard(): void {
+		global $wpdb;
+		$other_db = $this->second_connection();
+		$guard    = new \SW\Slider\Infrastructure\WpArtifactGuard( $other_db );
+		$service  = $this->service( new \SW\Slider\Infrastructure\WpArtifactGuard( $wpdb, 0 ), static function (): void {} );
+		$id       = $service->create_slider( 'Busy' );
+		$this->expectException( \SW\Slider\Application\RepositoryBusy::class );
+		$guard->run( static fn () => $service->publish( $id, 1 ) );
+	}
+
+	public function test_a_cleanup_pass_skips_when_publication_holds_the_guard(): void {
+		global $wpdb;
+		$this->isolate_uploads();
+		$dir = UploadPaths::base_dir() . '/artifacts';
+		wp_mkdir_p( $dir );
+		$old = $dir . '/aaaaaaaaaaaaaaaa-r1.css';
+		file_put_contents( $old, 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->created[] = $old;
+		update_option( ArtifactCleanup::OPTION, array( basename( $old ) => time() - 30 * DAY_IN_SECONDS ), false );
+		$other_db = $this->second_connection();
+		$cleanup  = new ArtifactCleanup( $wpdb, new \SW\Slider\Infrastructure\WpArtifactGuard( $wpdb, 0 ) );
+		$held     = ( new \SW\Slider\Infrastructure\WpArtifactGuard( $other_db ) )->run( fn () => $cleanup->run() );
+		$this->assertSame( 0, $held );
+		$this->assertFileExists( $old, 'skipped, not deleted' );
+		$this->assertSame( 1, $cleanup->run(), 'the next pass proceeds' );
+	}
 }
