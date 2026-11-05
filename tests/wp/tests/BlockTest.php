@@ -62,6 +62,34 @@ final class BlockTest extends WP_UnitTestCase {
 		$this->assertSame( SWS_VERSION, wp_scripts()->query( $type->editor_script_handles[0], 'registered' )->ver );
 	}
 
+	public function test_block_directory_prefers_the_shipped_build_and_falls_back_to_the_sources(): void {
+		$root = get_temp_dir() . 'sws-plugin-' . wp_generate_uuid4() . '/';
+		$make = static function ( string $relative ) use ( $root ): void {
+			wp_mkdir_p( $root . $relative );
+			file_put_contents( $root . $relative . '/block.json', '{}' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		};
+		$block = new Block( $this->renderer(), $root );
+		$this->assertNull( $block->directory() );
+		$block->register_block(); // Nothing to register; must not fail.
+
+		$make( 'assets/block' );
+		$this->assertSame( $root . 'assets/block', $block->directory(), 'source checkout without a build' );
+		$make( 'build/block' );
+		$this->assertSame( $root . 'build/block', $block->directory(), 'the shipped build wins' );
+	}
+
+	public function test_the_plugin_registers_the_block_from_a_directory_that_exists_in_the_release_zip(): void {
+		$type = WP_Block_Type_Registry::get_instance()->get_registered( Block::NAME );
+		$this->assertNotNull( $type );
+		$release_excludes = (string) file_get_contents( SWS_DIR . 'bin/build-zip.sh' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->assertStringContainsString( "\n/assets\n", $release_excludes, 'the ZIP ships no assets/ directory' );
+		$block = ( new Block( $this->renderer(), SWS_DIR ) )->directory();
+		$this->assertNotNull( $block );
+		if ( is_readable( SWS_DIR . 'build/block/block.json' ) ) {
+			$this->assertSame( SWS_DIR . 'build/block', $block );
+		}
+	}
+
 	public function test_editor_strings_are_handed_to_the_script_json_safely(): void {
 		$type   = WP_Block_Type_Registry::get_instance()->get_registered( Block::NAME );
 		$before = wp_scripts()->get_data( $type->editor_script_handles[0], 'before' );

@@ -26,9 +26,26 @@ final class Block {
 		add_filter( self::FILTER, array( $this, 'filter' ), 10, 2 );
 	}
 
+	/**
+	 * Directory with `block.json`: the shipped `build/block` (the release ZIP contains no `assets/`),
+	 * or the sources in `assets/block` in a checkout that was not built yet.
+	 */
+	public function directory(): ?string {
+		foreach ( array( 'build/block', 'assets/block' ) as $relative ) {
+			if ( is_readable( $this->plugin_dir . $relative . '/block.json' ) ) {
+				return $this->plugin_dir . $relative;
+			}
+		}
+		return null;
+	}
+
 	public function register_block(): void {
+		$directory = $this->directory();
+		if ( null === $directory ) {
+			return;
+		}
 		$type = register_block_type(
-			$this->plugin_dir . 'assets/block',
+			$directory,
 			array( 'render_callback' => array( $this, 'render' ) )
 		);
 		if ( $type instanceof \WP_Block_Type && array() !== $type->editor_script_handles ) {
