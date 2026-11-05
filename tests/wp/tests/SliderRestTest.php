@@ -282,45 +282,55 @@ final class SliderRestTest extends WP_UnitTestCase {
 
 	public function test_optional_effects_survive_publication_and_load_only_when_enabled(): void {
 		global $wpdb;
-		$assets = new \SW\Slider\Rendering\Assets( new \SW\Slider\Infrastructure\WpSliderRepository( $wpdb ), new \SW\Slider\Fonts\WpFontRepository(), SWS_URL, SWS_DIR, SWS_VERSION );
+		$bundle_dir = get_temp_dir() . 'sws-effects-test-' . wp_generate_uuid4() . '/';
+		wp_mkdir_p( $bundle_dir . 'build/runtime' );
+		file_put_contents( $bundle_dir . 'build/runtime/effects.js', '/* test effects bundle */' );
+		$assets = new \SW\Slider\Rendering\Assets( new \SW\Slider\Infrastructure\WpSliderRepository( $wpdb ), new \SW\Slider\Fonts\WpFontRepository(), SWS_URL, $bundle_dir, SWS_VERSION );
 		wp_deregister_script( $assets::RUNTIME );
 		wp_deregister_script( $assets::EFFECTS );
-		$assets->register_runtime();
-		$detail = $this->create( 'Effects' );
-		$doc    = $this->with_text_layer( $this->document_of( $detail ), 'Shiny hero' );
-		$this->assertNotContains( $assets::EFFECTS, wp_scripts()->registered[ $assets::RUNTIME ]->deps );
-		$this->assertSame( SWS_VERSION, wp_scripts()->registered[ $assets::EFFECTS ]->ver );
-		$doc['slides'][0]['effects']                                   = array(
-			'cinematic'  => true,
-			'lightSweep' => true,
-		);
-		$doc['slides'][0]['layers'][0]['animation']['enter']['preset'] = 'reveal-left';
-		$saved = $this->request(
-			'PUT',
-			'/sliders/' . $detail['id'],
-			array(
-				'title'           => 'Effects',
-				'expectedVersion' => 1,
-				'document'        => $doc,
-			)
-		);
-		$this->assertSame( 200, $saved->get_status() );
-		$this->assertSame( 200, $this->request( 'POST', '/sliders/' . $detail['id'] . '/publish', array( 'version' => 2 ) )->get_status() );
-		$renderer = new \SW\Slider\Rendering\SliderRenderer( new \SW\Slider\Infrastructure\WpSliderRepository( $wpdb ), $assets );
-		$html     = $renderer->render( $detail['id'] );
-		preg_match( '~<script type="application/json" class="sws-config">(.*?)</script>~s', $html, $matches );
-		$config = json_decode( $matches[1], true );
-		$this->assertSame( $doc['slides'][0]['effects'], $config['slides'][0]['effects'] );
-		$this->assertSame( 'reveal-left', $config['slides'][0]['layers'][0]['animation']['enter']['preset'] );
-		$this->assertContains( $assets::EFFECTS, wp_scripts()->registered[ $assets::RUNTIME ]->deps );
-		$this->assertStringContainsString( 'Shiny hero', $html );
-		$this->assertStringNotContainsString( 'sws-light-sweep', $html, 'decorative markup is added only while playing' );
-		$read = $this->request( 'GET', '/sliders/' . $detail['id'] )->get_data();
-		$this->assertEquals( (object) $doc['slides'][0]['effects'], $read['document']->slides[0]->effects );
-		// Leave the shared script registry clean for following tests.
-		wp_deregister_script( $assets::RUNTIME );
-		wp_deregister_script( $assets::EFFECTS );
-		$assets->register_runtime();
+		try {
+			$assets->register_runtime();
+			$detail = $this->create( 'Effects' );
+			$doc    = $this->with_text_layer( $this->document_of( $detail ), 'Shiny hero' );
+			$this->assertNotContains( $assets::EFFECTS, wp_scripts()->registered[ $assets::RUNTIME ]->deps );
+			$this->assertSame( SWS_VERSION, wp_scripts()->registered[ $assets::EFFECTS ]->ver );
+			$doc['slides'][0]['effects']                                   = array(
+				'cinematic'  => true,
+				'lightSweep' => true,
+			);
+			$doc['slides'][0]['layers'][0]['animation']['enter']['preset'] = 'reveal-left';
+			$saved = $this->request(
+				'PUT',
+				'/sliders/' . $detail['id'],
+				array(
+					'title'           => 'Effects',
+					'expectedVersion' => 1,
+					'document'        => $doc,
+				)
+			);
+			$this->assertSame( 200, $saved->get_status() );
+			$this->assertSame( 200, $this->request( 'POST', '/sliders/' . $detail['id'] . '/publish', array( 'version' => 2 ) )->get_status() );
+			$renderer = new \SW\Slider\Rendering\SliderRenderer( new \SW\Slider\Infrastructure\WpSliderRepository( $wpdb ), $assets );
+			$html     = $renderer->render( $detail['id'] );
+			preg_match( '~<script type="application/json" class="sws-config">(.*?)</script>~s', $html, $matches );
+			$config = json_decode( $matches[1], true );
+			$this->assertSame( $doc['slides'][0]['effects'], $config['slides'][0]['effects'] );
+			$this->assertSame( 'reveal-left', $config['slides'][0]['layers'][0]['animation']['enter']['preset'] );
+			$this->assertContains( $assets::EFFECTS, wp_scripts()->registered[ $assets::RUNTIME ]->deps );
+			$this->assertStringContainsString( 'Shiny hero', $html );
+			$this->assertStringNotContainsString( 'sws-light-sweep', $html, 'decorative markup is added only while playing' );
+			$read = $this->request( 'GET', '/sliders/' . $detail['id'] )->get_data();
+			$this->assertEquals( (object) $doc['slides'][0]['effects'], $read['document']->slides[0]->effects );
+		} finally {
+			// Leave the shared script registry clean for following tests.
+			wp_deregister_script( $assets::RUNTIME );
+			wp_deregister_script( $assets::EFFECTS );
+			wp_delete_file( $bundle_dir . 'build/runtime/effects.js' );
+			rmdir( $bundle_dir . 'build/runtime' );
+			rmdir( $bundle_dir . 'build' );
+			rmdir( $bundle_dir );
+			$assets->register_runtime();
+		}
 	}
 
 	public function test_published_output_is_static_escaped_and_independent_of_later_drafts(): void {

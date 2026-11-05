@@ -384,6 +384,8 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 
 **Erstes Paket (05.11.2026):** Slide-Schalter für Tiefe/Lichtreflex und zwei Maskenpresets umgesetzt; gemeinsamer Player in Vorschau/Frontend, separates optionales Frontend-Bundle, Reduced-Motion-Abbruch. Vertrag und praktische Prüfschritte: [Effekte](docs/effects.md). Automatisierte Nachweise: gemeinsame PHP-/TS-Fixtures, Editor-Historie/Speichern, WordPress-Veröffentlichung, Chromium bei 1180/820/375 px. M9.02–M9.08 bleiben wegen weiterem Umfang, Browsermatrix, Import/Export und praktischer Abnahme offen.
 
+CI-Korrektur: Der WordPress-Effekttest erzeugt sein Bundle als temporäre Fixture und funktioniert auch ohne Frontend-Build (57 Tests; PHP-Coverage 84,54 %).
+
 **Abnahmekriterium:** Jeder Effekt hat messbaren Nutzen und bleibt optional; Slider ohne Effekt tragen keine zugehörige Laufzeitlast.
 
 ## Definition of Done pro Funktion
