@@ -8,6 +8,7 @@ import type {
   SlideEffects,
 } from '@shared/types';
 import type { TimedSlide } from '@shared/schedule';
+import type { EffectEntry } from '../browser/gpuHost';
 
 /**
  * Public runtime configuration printed by src/Rendering/SliderRenderer.php::config_json().
@@ -24,6 +25,8 @@ export interface RuntimeConfig {
   readonly loop: boolean;
   readonly breakpoints: Breakpoints;
   readonly slides: readonly RuntimeSlide[];
+  /** GPU effect layers the server found startable (empty on pages without effects). */
+  readonly effects: readonly EffectEntry[];
 }
 
 type Json = Record<string, unknown>;
@@ -79,6 +82,37 @@ function breakpoints(value: unknown): Breakpoints | null {
   return desktop && tablet && mobile ? { desktop, tablet, mobile } : null;
 }
 
+const QUALITIES = ['auto', 'low', 'medium', 'high', 'ultra'] as const;
+
+function effectEntries(value: unknown): EffectEntry[] {
+  if (!Array.isArray(value)) return [];
+  const entries: EffectEntry[] = [];
+  for (const raw of value.slice(0, 32)) {
+    if (!isObject(raw)) continue;
+    const { layerId, type, module } = raw;
+    if (typeof layerId !== 'string' || typeof type !== 'string' || typeof module !== 'string')
+      continue;
+    const assets: Record<string, { url: string; width: number; height: number }> = {};
+    for (const [key, asset] of Object.entries(isObject(raw.assets) ? raw.assets : {})) {
+      if (isObject(asset) && typeof asset.url === 'string') {
+        assets[key] = { url: asset.url, width: num(asset.width, 0), height: num(asset.height, 0) };
+      }
+    }
+    entries.push({
+      layerId,
+      type,
+      schemaVersion: Math.max(1, num(raw.schemaVersion, 1)),
+      seed: num(raw.seed, 0),
+      quality: oneOf(raw.quality, QUALITIES, 'auto'),
+      continuous: raw.continuous !== false,
+      module,
+      params: isObject(raw.params) ? raw.params : {},
+      assets,
+    });
+  }
+  return entries;
+}
+
 export function parseConfig(text: string): RuntimeConfig | null {
   let raw: unknown;
   try {
@@ -108,5 +142,11 @@ export function parseConfig(text: string): RuntimeConfig | null {
         : [],
     };
   });
-  return { autoplay: raw.autoplay === true, loop: raw.loop !== false, breakpoints: bps, slides };
+  return {
+    autoplay: raw.autoplay === true,
+    loop: raw.loop !== false,
+    breakpoints: bps,
+    slides,
+    effects: effectEntries(raw.effects),
+  };
 }

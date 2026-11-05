@@ -42,6 +42,8 @@ export interface FrameInput {
   /** Simulation time in seconds since start (paused time does not advance). */
   readonly time: number;
   readonly deltaSeconds: number;
+  /** Length of one simulation step in seconds (1/60, or 1/30 on the `low` tier). */
+  readonly stepSeconds: number;
   readonly viewport: Viewport;
   readonly pointer: PointerSample | null;
   /** Scroll progress of the effect area through the viewport, 0..1. */

@@ -280,3 +280,7 @@
   height: 100%;
   pointer-events: none;
 }
+/* The live canvas replaces the fallback image; on pause the last frame stays, on loss/error the image returns. */
+.sws-slider .sws-fx.sws-fx--live .sws-fx__fallback {
+  visibility: hidden;
+}
