@@ -42,7 +42,7 @@ M2 local-font browser/acceptance checks: [font-testing.md](font-testing.md).
 
 ## Coverage
 
-`npm run coverage` misst alle produktiven TS-/Vue-Dateien und erzwingt mehr als 80 % Zeilenabdeckung. PHP: `composer coverage`, danach WordPress-PHPUnit mit `--coverage-clover coverage/wordpress.xml` (vom Projektroot); `php tests/coverage/merge.php coverage/unit.xml coverage/wordpress.xml` vereinigt beide Berichte und erzwingt ebenfalls > 80 %. PHP benötigt PCOV oder Xdebug, CI verwendet Xdebug. Kein produktiver Bereich ist ausgenommen. SonarQube erhält PHP-Clover und JS-LCOV aus CI-Artefakten.
+`npm run coverage` misst alle produktiven TS-/Vue-/JS-Dateien (auch das buildfreie Block-Skript `assets/block/editor.js`) und erzwingt mehr als 80 % Zeilenabdeckung. PHP: `composer coverage`, danach WordPress-PHPUnit mit `--coverage-clover coverage/wordpress.xml` (vom Projektroot); `php tests/coverage/merge.php coverage/unit.xml coverage/wordpress.xml` vereinigt beide Berichte und erzwingt ebenfalls > 80 %. PHP benötigt PCOV oder Xdebug, CI verwendet Xdebug. Kein produktiver Bereich ist ausgenommen. SonarQube erhält PHP-Clover und JS-LCOV aus CI-Artefakten.
 
 ## CI
 

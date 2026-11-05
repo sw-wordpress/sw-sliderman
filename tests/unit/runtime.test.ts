@@ -338,6 +338,88 @@ describe('focus handling (M4.19)', () => {
   });
 });
 
+describe('deferred focus hand-over during a transition', () => {
+  let releases: Array<() => void> = [];
+  function fadeSetup() {
+    const root = markup(3, false);
+    const cfg = config(false);
+    const slides = cfg.slides.map((slide) => ({
+      ...slide,
+      transition: { type: 'fade' as const, durationMs: 400 },
+    }));
+    releases = [];
+    HTMLElement.prototype.animate = vi.fn().mockImplementation(() => {
+      let release: () => void = () => undefined;
+      const finished = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      releases.push(release);
+      return { finished, cancel: vi.fn(), play: vi.fn(), pause: vi.fn() };
+    });
+    return { root, instance: SliderInstance.create(root, { ...cfg, slides }) };
+  }
+  const finishTransition = async () => {
+    releases.forEach((release) => release());
+    await vi.advanceTimersByTimeAsync(0);
+  };
+
+  it('hands focus lost to <body> over to the new slide after the transition', async () => {
+    const { root, instance } = fadeSetup();
+    await vi.advanceTimersByTimeAsync(0);
+    const link = root.querySelector('a') as HTMLAnchorElement;
+    link.focus();
+    instance.goTo(1, true);
+    await vi.advanceTimersByTimeAsync(0);
+    link.blur(); // what `inert` does to the focused element of the leaving slide
+    await finishTransition();
+    expect(document.activeElement).toBe(root.querySelectorAll('.sws-slide')[1]);
+    instance.destroy();
+  });
+
+  it('keeps a control the user focused during the transition', async () => {
+    const { root, instance } = fadeSetup();
+    await vi.advanceTimersByTimeAsync(0);
+    (root.querySelector('a') as HTMLAnchorElement).focus();
+    instance.goTo(1, true);
+    await vi.advanceTimersByTimeAsync(0);
+    const dot = root.querySelector('.sws-dot') as HTMLButtonElement;
+    dot.focus();
+    await finishTransition();
+    expect(document.activeElement).toBe(dot);
+    instance.destroy();
+  });
+
+  it('keeps focus the user moved outside the slider during the transition', async () => {
+    const { root, instance } = fadeSetup();
+    await vi.advanceTimersByTimeAsync(0);
+    const outside = document.createElement('button');
+    document.body.append(outside);
+    (root.querySelector('a') as HTMLAnchorElement).focus();
+    instance.goTo(1, true);
+    await vi.advanceTimersByTimeAsync(0);
+    outside.focus();
+    await finishTransition();
+    expect(document.activeElement).toBe(outside);
+    instance.destroy();
+  });
+
+  it('drops a pending hand-over when the transition is superseded', async () => {
+    const { root, instance } = fadeSetup();
+    await vi.advanceTimersByTimeAsync(0);
+    (root.querySelector('a') as HTMLAnchorElement).focus();
+    instance.goTo(1, true);
+    await vi.advanceTimersByTimeAsync(0);
+    document.dispatchEvent(new Event('visibilitychange'));
+    const next = root.querySelector('.sws-next') as HTMLButtonElement;
+    next.focus();
+    instance.goTo(2, false);
+    await vi.advanceTimersByTimeAsync(0);
+    await finishTransition();
+    expect(document.activeElement).toBe(next);
+    instance.destroy();
+  });
+});
+
 describe('touch swipe', () => {
   function pointer(target: Element, type: string, x: number, y: number, kind = 'touch'): void {
     target.dispatchEvent(

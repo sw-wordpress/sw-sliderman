@@ -374,8 +374,13 @@ export class SliderInstance {
     incoming.inert = false;
     if (this.rescueFocus) {
       this.rescueFocus = false;
-      incoming.tabIndex = -1;
-      incoming.focus({ preventScroll: true });
+      // Only hand over focus that is still stranded: lost to <body> by `inert`, or still inside the
+      // leaving slide. A control or page element the user focused during the transition keeps it.
+      const current = document.activeElement;
+      if (!current || current === document.body || outgoing.contains(current)) {
+        incoming.tabIndex = -1;
+        incoming.focus({ preventScroll: true });
+      }
     }
     this.setPhase('ready');
     this.prepared.splice(0).forEach((animation) => animation.play());
@@ -462,6 +467,7 @@ export class SliderInstance {
     this.resources.abort();
     this.resources = new AbortController();
     this.cancelLayers();
+    this.rescueFocus = false;
     this.setPhase('ready');
     if (this.timer !== null) {
       window.clearTimeout(this.timer);
