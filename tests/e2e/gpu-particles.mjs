@@ -63,7 +63,7 @@ await tab.route('http://sws.test/**', (route) =>
 await tab.goto('http://sws.test/');
 await tab.addScriptTag({ content: bundle });
 await tab.evaluate(
-  ([schema]) => {
+  ([schema, presets]) => {
     const h = window.__h;
     window.__schema = schema;
     /** Creates a device and an instance with defaults applied for `patch`. */
@@ -101,6 +101,71 @@ await tab.evaluate(
     window.__run = (instance, steps, extra) => {
       for (let i = 0; i < steps; i++) instance.update(input(i / 60, extra), 1);
     };
+    /** Test image: left half red, right half blue, transparent stripe in the middle. */
+    window.__testImage = () => {
+      const c = document.createElement('canvas');
+      c.width = 80;
+      c.height = 40;
+      const g = c.getContext('2d');
+      g.fillStyle = '#ff0000';
+      g.fillRect(0, 0, 38, 40);
+      g.fillStyle = '#0000ff';
+      g.fillRect(42, 0, 38, 40);
+      return c.toDataURL('image/png');
+    };
+    /** Creates the effect through the module (as the platform does), with an image asset. */
+    window.__makeImage = async (
+      patch,
+      { seed = 1, size = [400, 200], url = window.__testImage() } = {},
+    ) => {
+      const canvas = document.createElement('canvas');
+      canvas.style.cssText = 'position:fixed;left:0;top:0';
+      document.body.append(canvas);
+      const device = h.GpuDevice.create(canvas);
+      device.resize(size[0], size[1], 1);
+      const params = h.withDefaults(schema, patch);
+      const instance = await h.particleField.create(
+        {
+          device,
+          backend: 'webgl2',
+          seed,
+          quality: 'high',
+          reducedMotion: false,
+          assets: { url: (key) => (key === 'image' ? url : null) },
+          viewport: { width: size[0], height: size[1], pixelRatio: 1 },
+        },
+        params,
+      );
+      instance.resize({ width: size[0], height: size[1], pixelRatio: 1 });
+      return { device, instance, canvas, params };
+    };
+    /** Colour of the canvas at a relative position (un-premultiplied by the 2D copy). */
+    window.__pixel = (canvas, rx, ry) => {
+      const copy = document.createElement('canvas');
+      copy.width = canvas.width;
+      copy.height = canvas.height;
+      const ctx = copy.getContext('2d');
+      ctx.drawImage(canvas, 0, 0);
+      const x = Math.round(rx * canvas.width),
+        y = Math.round(ry * canvas.height);
+      let r = 0,
+        g = 0,
+        b = 0,
+        a = 0,
+        n = 0;
+      for (let dy = -3; dy <= 3; dy++)
+        for (let dx = -3; dx <= 3; dx++) {
+          const d = ctx.getImageData(x + dx, y + dy, 1, 1).data;
+          r += d[0];
+          g += d[1];
+          b += d[2];
+          a += d[3];
+          n++;
+        }
+      return { r: r / n, g: g / n, b: b / n, a: a / n };
+    };
+    window.__preset = presets.find((p) => p.id === 'photo-grains');
+    window.__magnet = presets.find((p) => p.id === 'magnetic-canvas');
     window.__input = input;
     window.__draw = (instance, device) => {
       instance.render({ target: device, input: input(0), alpha: 0 });
@@ -135,7 +200,7 @@ await tab.evaluate(
       };
     };
   },
-  [descriptor.schema],
+  [descriptor.schema, descriptor.presets],
 );
 let done = 0;
 const pass = (name) => console.log(`✓ ${name}`) || done++;
@@ -456,6 +521,222 @@ try {
     assert.equal(r.left, 0, 'dispose releases every GPU object');
     pass(
       'parameter transitions blend smoothly; count changes rebuild without leaks; dispose frees everything',
+    );
+  }
+
+  // Image reconstruction: the picture is recognisable, the transparent stripe stays empty.
+  {
+    const r = await tab.evaluate(async () => {
+      const { device, instance, canvas } = await window.__makeImage({
+        count: 60000,
+        image: { enabled: true, assemble: 'rest', scale: 0.95 },
+        appearance: {
+          colorMode: 'image',
+          blend: 'normal',
+          opacity: 1,
+          sizeMin: 1.5,
+          sizeMax: 2.5,
+          depthFade: 0,
+        },
+        camera: { projection: 'orthographic' },
+      });
+      window.__run(instance, 1);
+      window.__draw(instance, device);
+      const out = {
+        left: window.__pixel(canvas, 0.25, 0.5),
+        right: window.__pixel(canvas, 0.75, 0.5),
+        gap: window.__pixel(canvas, 0.5, 0.5),
+        count: instance.activeParticleCount,
+      };
+      instance.dispose();
+      device.dispose();
+      canvas.remove();
+      return out;
+    });
+    assert.ok(
+      r.left.r > 150 && r.left.g < 60 && r.left.b < 60,
+      `left half is red: ${JSON.stringify(r.left)}`,
+    );
+    assert.ok(
+      r.right.b > 150 && r.right.r < 60 && r.right.g < 60,
+      `right half is blue: ${JSON.stringify(r.right)}`,
+    );
+    assert.ok(r.gap.a < 30, `the transparent stripe stays empty: ${JSON.stringify(r.gap)}`);
+    pass('an image becomes thousands of coloured particles; transparent areas stay empty');
+  }
+
+  // Scatter: particles start spread out and assemble into the picture.
+  {
+    const r = await tab
+      .evaluate(async () => {
+        const preset = window.__preset;
+        const { device, instance, canvas } = await window.__makeImage(
+          {
+            ...preset.params,
+            count: 30000,
+            appearance: { ...preset.params.appearance, sizeMin: 1.5, sizeMax: 2.5 },
+          },
+          { seed: preset.seed },
+        );
+        const speed = () => {
+          const { velocity } = instance.readState(3000);
+          let sum = 0;
+          for (let i = 0; i < 3000; i++)
+            sum += Math.hypot(velocity[i * 4], velocity[i * 4 + 1], velocity[i * 4 + 2]);
+          return sum / 3000;
+        };
+        const spread0 = (() => {
+          const { position } = instance.readState(3000);
+          let max = 0;
+          for (let i = 0; i < 3000; i++)
+            max = Math.max(
+              max,
+              Math.hypot(position[i * 4], position[i * 4 + 1], position[i * 4 + 2]),
+            );
+          return max;
+        })();
+        window.__run(instance, 1);
+        const speedEarly = speed();
+        window.__run(instance, 420);
+        const speedLate = speed();
+        window.__draw(instance, device);
+        const out = {
+          spread0,
+          speedEarly,
+          speedLate,
+          left: window.__pixel(canvas, 0.25, 0.5),
+          right: window.__pixel(canvas, 0.75, 0.5),
+        };
+        instance.dispose();
+        device.dispose();
+        canvas.remove();
+        return out;
+      })
+      .catch((e) => ({ error: String(e) }));
+    assert.equal(r.error, undefined, r.error);
+    assert.ok(r.spread0 > 1.5, `particles start scattered (${r.spread0})`);
+    assert.ok(
+      r.speedLate < r.speedEarly * 0.05 + 0.01,
+      `they settle (${r.speedEarly} -> ${r.speedLate})`,
+    );
+    assert.ok(
+      r.left.r > 120 && r.left.r > r.left.b * 2,
+      `assembled picture, left red: ${JSON.stringify(r.left)}`,
+    );
+    assert.ok(
+      r.right.b > 120 && r.right.b > r.right.r * 2,
+      `assembled picture, right blue: ${JSON.stringify(r.right)}`,
+    );
+    pass('scattered particles spring into the picture (photo-grains preset)');
+  }
+
+  // Magnet: the pointer pulls particles out of the picture locally; they return when it leaves.
+  {
+    const r = await tab
+      .evaluate(async () => {
+        const preset = window.__magnet;
+        const { device, instance } = await window.__makeImage(
+          { ...preset.params, count: 20000 },
+          { seed: preset.seed },
+        );
+        const N = 20000;
+        window.__run(instance, 1);
+        const rest = Array.from(instance.readState(N).position);
+        const pointerAt = (x) => ({ x, y: 100, inside: true, down: false, dx: 4, dy: 0 });
+        for (let i = 0; i < 40; i++)
+          instance.update(window.__input(i / 60, { pointer: pointerAt(120 + i * 4) }), 1);
+        const moved = Array.from(instance.readState(N).position);
+        const displacement = (i) =>
+          Math.hypot(
+            moved[i * 4] - rest[i * 4],
+            moved[i * 4 + 1] - rest[i * 4 + 1],
+            moved[i * 4 + 2] - rest[i * 4 + 2],
+          );
+        // World x of the pointer path: ndc = x / 400 * 2 - 1, orthographic half height 2.33 -> half width 4.66.
+        const worldX = (px) => ((px / 400) * 2 - 1) * 4.663;
+        let near = 0,
+          nearMoved = 0,
+          far = 0,
+          farMoved = 0,
+          maxNear = 0;
+        for (let i = 0; i < N; i++) {
+          const x = rest[i * 4],
+            y = rest[i * 4 + 1];
+          const dx = Math.max(0, worldX(120) - x, x - worldX(280));
+          const distance = Math.hypot(dx, y);
+          const d = displacement(i);
+          if (distance < 0.5) {
+            near++;
+            if (d > 0.05) nearMoved++;
+            maxNear = Math.max(maxNear, d);
+          } else if (distance > 2.2) {
+            far++;
+            if (d > 0.01) farMoved++;
+          }
+        }
+        for (let i = 40; i < 340; i++)
+          instance.update(window.__input(i / 60, { pointer: null }), 1);
+        const back = Array.from(instance.readState(N).position);
+        let worstReturn = 0;
+        for (let i = 0; i < N; i++)
+          worstReturn = Math.max(
+            worstReturn,
+            Math.hypot(
+              back[i * 4] - rest[i * 4],
+              back[i * 4 + 1] - rest[i * 4 + 1],
+              back[i * 4 + 2] - rest[i * 4 + 2],
+            ),
+          );
+        instance.dispose();
+        device.dispose();
+        return { near, nearMoved, far, farMoved, maxNear, worstReturn };
+      })
+      .catch((e) => ({ error: String(e) }));
+    assert.equal(r.error, undefined, r.error);
+    assert.ok(
+      r.near > 200 && r.nearMoved / r.near > 0.4,
+      `particles near the pointer are pulled out (${r.nearMoved}/${r.near}, max ${r.maxNear.toFixed(2)})`,
+    );
+    assert.ok(r.maxNear > 0.15, 'displacement is clearly visible');
+    assert.ok(
+      r.far > 500 && r.farMoved === 0,
+      `the disturbance stays local (${r.farMoved}/${r.far} far particles moved)`,
+    );
+    assert.ok(
+      r.worstReturn < 0.03,
+      `every particle returns to its home (worst ${r.worstReturn.toFixed(4)})`,
+    );
+    pass(
+      'magnetic pointer disturbs the picture locally and the particles return (magnetic-canvas preset)',
+    );
+  }
+
+  // Failures: unreadable image rejects (stage shows the fallback), a missing asset just runs without a picture.
+  {
+    const r = await tab.evaluate(async () => {
+      const out = {};
+      try {
+        await window.__makeImage(
+          { count: 100, image: { enabled: true } },
+          { url: 'http://sws.test/missing.png' },
+        );
+        out.broken = 'resolved';
+      } catch {
+        out.broken = 'rejected';
+      }
+      const { instance, device } = await window.__makeImage(
+        { count: 100, image: { enabled: true } },
+        { url: null },
+      );
+      window.__run(instance, 5);
+      out.withoutAsset = instance.readState(10).position.every(Number.isFinite);
+      instance.dispose();
+      device.dispose();
+      return out;
+    });
+    assert.deepEqual(r, { broken: 'rejected', withoutAsset: true });
+    pass(
+      'an unreadable image rejects creation (fallback image shown); a missing asset runs without a picture',
     );
   }
 

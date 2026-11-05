@@ -55,5 +55,20 @@ export interface ParticleParams {
     orbitSpeed: number;
     tilt: number;
   };
-  interaction: { mode: 'none' | 'repel' | 'attract' | 'swirl'; radius: number; strength: number };
+  interaction: {
+    mode: 'none' | 'repel' | 'attract' | 'swirl' | 'magnet';
+    radius: number;
+    strength: number;
+    polarity: number;
+    speedBoost: number;
+  };
+  image: {
+    enabled: boolean;
+    fit: 'contain' | 'cover';
+    scale: number;
+    sampling: 'uniform' | 'luminance' | 'inverse-luminance';
+    depth: number;
+    assemble: 'rest' | 'scatter';
+    colorBoost: number;
+  };
 }

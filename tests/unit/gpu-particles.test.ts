@@ -382,7 +382,11 @@ function glDouble() {
   };
 }
 
-function instance(patch: Record<string, unknown> = {}, quality: 'low' | 'high' = 'high') {
+function instance(
+  patch: Record<string, unknown> = {},
+  quality: 'low' | 'high' = 'high',
+  image: { home: Float32Array; color: Float32Array } | null = null,
+) {
   const { gl, calls } = glDouble();
   const canvas = document.createElement('canvas');
   canvas.getContext = (() => gl) as never;
@@ -396,6 +400,7 @@ function instance(patch: Record<string, unknown> = {}, quality: 'low' | 'high' =
     quality,
     type: 'particle-field',
     schemaVersion: 1,
+    image,
   });
   particles.resize({ width: 400, height: 300, pixelRatio: 1 });
   return { particles, device, calls, params };
@@ -411,6 +416,11 @@ const frame = (time: number, extra: Record<string, unknown> = {}) => ({
   reducedMotion: false,
   ...extra,
 });
+/** Arguments (after the location) of the `uniform4f` calls for one uniform, found by name. */
+const named = (calls: Array<[string, unknown[]]>, name: string): number[][] =>
+  calls
+    .filter(([n, a]) => n === 'uniform4f' && (a[0] as { name?: string })?.name === name)
+    .map(([, a]) => a.slice(1) as number[]);
 const count = (calls: Array<[string, unknown[]]>, name: string) =>
   calls.filter(([n]) => n === name).length;
 
@@ -486,7 +496,7 @@ describe('ParticleInstance', () => {
     const before = device.resourceCount;
     particles.handleEvent({ type: 'burst', intensity: 2 });
     particles.update(frame(0), 1);
-    const impulses = calls.filter(([n]) => n === 'uniform4f').map(([, a]) => (a as number[])[4]);
+    const impulses = named(calls, 'uImpulse').map((a) => a[3]);
     expect(impulses).toContain(16);
     particles.handleEvent({ type: 'strike', x: 1, y: 1 });
     particles.handleEvent({ type: 'reset' });
@@ -498,27 +508,14 @@ describe('ParticleInstance', () => {
     const pointer = { x: 200, y: 150, inside: true, down: false, dx: 0, dy: 0 };
     const active = instance({ interaction: { mode: 'repel', radius: 1, strength: 5 } });
     active.particles.update(frame(0, { pointer }), 1);
-    const on = active.calls
-      .filter(([n]) => n === 'uniform4f')
-      .map(([, a]) => a as number[])
-      .some((a) => a[4] === 1);
+    const on = named(active.calls, 'uPointer').some((a) => a[3] === 1);
     expect(on).toBe(true);
     const outside = instance({ interaction: { mode: 'repel', radius: 1, strength: 5 } });
     outside.particles.update(frame(0, { pointer: { ...pointer, inside: false } }), 1);
-    expect(
-      outside.calls
-        .filter(([n]) => n === 'uniform4f')
-        .map(([, a]) => a as number[])
-        .some((a) => a[4] === 1),
-    ).toBe(false);
+    expect(named(outside.calls, 'uPointer').some((a) => a[3] === 1)).toBe(false);
     const off = instance();
     off.particles.update(frame(0, { pointer }), 1);
-    expect(
-      off.calls
-        .filter(([n]) => n === 'uniform4f')
-        .map(([, a]) => a as number[])
-        .some((a) => a[4] === 1),
-    ).toBe(false);
+    expect(named(off.calls, 'uPointer').some((a) => a[3] === 1)).toBe(false);
   });
 
   it('draws with the blend mode of the appearance', () => {
@@ -563,5 +560,87 @@ describe('ParticleInstance', () => {
     expect(created.captureState()).toMatchObject({ type: 'particle-field', seed: 5 });
     created.dispose();
     vi.restoreAllMocks();
+  });
+});
+
+describe('image targets and the magnetic pointer in the instance', () => {
+  const targets = (count: number) => {
+    const home = new Float32Array(count * 4);
+    const color = new Float32Array(count * 4).fill(0.5);
+    for (let i = 0; i < count; i++) home.set([i + 10, i + 20, i + 30, 0], i * 4);
+    return { home, color };
+  };
+  const uploaded = (calls: Array<[string, unknown[]]>): Float32Array[] =>
+    calls
+      .filter(([n, a]) => n === 'bufferData' && (a as unknown[])[1] instanceof Float32Array)
+      .map(([, a]) => (a as unknown[])[1] as Float32Array);
+
+  it('starts assembled ("rest"): positions equal the image homes, colours are uploaded', () => {
+    const image = targets(4);
+    const { calls } = instance(
+      { count: 4, image: { enabled: true, assemble: 'rest' } },
+      'high',
+      image,
+    );
+    const [position, velocity, home, color] = uploaded(calls);
+    expect(Array.from(position?.slice(0, 3) ?? [])).toEqual([10, 20, 30]);
+    expect(Array.from(home?.slice(0, 3) ?? [])).toEqual([10, 20, 30]);
+    expect(Array.from(color?.slice(0, 4) ?? [])).toEqual([0.5, 0.5, 0.5, 0.5]);
+    expect(velocity?.length).toBe(16);
+  });
+
+  it('scatters from the spawn shape when asked, but still keeps the image as home', () => {
+    const image = targets(4);
+    const { calls } = instance(
+      {
+        count: 4,
+        spawn: { shape: 'sphere-volume', radius: 2 },
+        image: { enabled: true, assemble: 'scatter' },
+      },
+      'high',
+      image,
+    );
+    const [position, , home] = uploaded(calls);
+    expect(Array.from(home?.slice(0, 3) ?? [])).toEqual([10, 20, 30]);
+    expect(
+      Math.hypot(position?.[0] ?? 99, position?.[1] ?? 99, position?.[2] ?? 99),
+    ).toBeLessThanOrEqual(2 + 1e-6);
+  });
+
+  it('feeds the magnet mode with polarity, a motion-following axis and speed-boosted strength', () => {
+    const { particles, calls } = instance({
+      interaction: { mode: 'magnet', radius: 1, strength: 10, polarity: -1, speedBoost: 2 },
+    });
+    const at = (x: number) => ({ x, y: 150, inside: true, down: false, dx: 0, dy: 0 });
+    particles.update(frame(0, { pointer: at(200) }), 1);
+    particles.update(frame(1 / 60, { pointer: at(260) }), 1);
+    const params = named(calls, 'uPointerParams');
+    expect(params).toHaveLength(2);
+    expect(params[0]?.[2]).toBe(10); // first sample: no motion yet
+    expect(params[1]?.[2]).toBeGreaterThan(10); // moving pointer pulls harder
+    expect(params[1]?.[3]).toBe(-1); // polarity
+    const axis = calls
+      .filter(([n]) => n === 'uniform3fv')
+      .map(([, a]) => a as unknown[])
+      .filter((a) => a[1] instanceof Array && (a[1] as number[]).length === 3);
+    expect(axis.length).toBeGreaterThan(0);
+    // The last sent axis follows the motion to the right in the view plane (non-zero, normalised).
+    const last = calls
+      .filter(([n]) => n === 'uniform3fv')
+      .map(([, a]) => (a as unknown[])[1] as ArrayLike<number>)
+      .filter((v) => v.length === 3)
+      .at(-1);
+    expect(Math.hypot(last?.[0] ?? 0, last?.[1] ?? 0, last?.[2] ?? 0)).toBeCloseTo(1, 5);
+  });
+
+  it('does not boost other pointer modes', () => {
+    const { particles, calls } = instance({
+      interaction: { mode: 'repel', radius: 1, strength: 10, speedBoost: 5 },
+    });
+    const at = (x: number) => ({ x, y: 150, inside: true, down: false, dx: 0, dy: 0 });
+    particles.update(frame(0, { pointer: at(200) }), 1);
+    particles.update(frame(1 / 60, { pointer: at(300) }), 1);
+    const strengths = named(calls, 'uPointerParams').map((a) => a[2]);
+    expect(strengths).toEqual([10, 10]);
   });
 });

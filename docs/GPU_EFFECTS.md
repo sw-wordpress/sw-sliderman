@@ -1,6 +1,6 @@
 # GPU-Effekte (M10)
 
-Stand: Phase G0–G4 (Kern, Dokument/PHP, Browser-Plattform und Partikelmodul; Bildrekonstruktion und Editor folgen mit G5/G6). Entscheidungen: [ADR 0005](adr/0005-gpu-effects.md). Fortschritt: [TODO.md](../TODO.md) (M10).
+Stand: Phase G0–G5 (Kern, Dokument/PHP, Browser-Plattform, Partikelmodul mit Bildrekonstruktion und Magnetfeld; der Editor folgt mit G6). Entscheidungen: [ADR 0005](adr/0005-gpu-effects.md). Fortschritt: [TODO.md](../TODO.md) (M10).
 
 ## Überblick
 
@@ -116,7 +116,7 @@ Quelle für PHP, Editor und Modul ist `schemas/effects/particle-field.json` (Bes
 | Operatoren | `drag`, `spring-home`, `vortex`, `flow-field` (Curl-Noise), `gravity-wells` (bis 3, auch negative Masse), `speed-limit`, `bounds` (wrap/bounce/respawn); jeder Typ höchstens einmal, der letzte gewinnt |
 | Erscheinungsbild | Weicher Kreis, Glow, Pixel; Größe min/max; Farbe fest/Geschwindigkeit/Lebensdauer/Palette/Bild; Tiefenausblendung |
 | Kamera | perspektivisch/orthografisch, Orbit, Neigung |
-| Interaktion | Zeiger: abstoßen, anziehen, wirbeln (Ebene durch den Ursprung zur Kamera) |
+| Interaktion | Zeiger: abstoßen, anziehen, wirbeln, Magnet (Ebene durch den Ursprung zur Kamera) |
 | Ereignisse | `burst`/`strike` (abklingender radialer Impuls), `reset`; `transitionTo` blendet Parameter, Strukturänderungen (Zahl, Spawn, Lebenszyklus) bauen die Partikel neu auf, ohne Ressourcen zu verlieren |
 | Qualität | Zahl der simulierten/gezeichneten Partikel je Stufe (25/50/100 %), DPR-Grenze, 30-Hz-Simulation auf `low` |
 
@@ -135,3 +135,22 @@ Presets: Orbitnebel, Wirbelbänder, Glutfunken, Strahlenimpuls (weitere folgen m
   - Alle Presets laufen, zeichnen sichtbar und bleiben endlich; Kamera zentriert; Qualitätsstufen skalieren die Zahl; der Zeiger stößt Partikel ab.
   - Übergänge, Neuaufbau ohne Leck, `dispose` gibt alle GPU-Objekte frei.
 - **Durchsatz:** In dieser Umgebung gibt es nur Software-Rendering (CPU): 20.000 Partikel 0,39 s/Frame, 100.000 Partikel 2,0 s/Frame. Das sagt **nichts** über reale GPUs aus; die Messung auf echter Hardware und das Protokoll folgen in G7.
+
+## Bildrekonstruktion und Magnetfeld (G5)
+
+**Bild (`image.enabled`):** Das Bild der Ebene (Medium `image` unter „Medien“, gleiche Herkunft, höchstens 512 px Kantenlänge beim Abtasten) wird per `buildTargets` (rein, geseedet) in Zielpositionen und Farben übersetzt:
+
+- Verteilung gleichmäßig oder nach Helligkeit (`luminance`, `inverse-luminance`); transparente Pixel erhalten nie Partikel.
+- Farbe bilinear mit Alpha-Gewichtung (transparente Nachbarn dunkeln Kanten nicht ab); `colorBoost` mit Obergrenze 1; optional Tiefe (`depth`) aus der Helligkeit.
+- `fit` (`contain`/`cover`) und `scale` beziehen sich auf den sichtbaren Bereich der Kamera und das Seitenverhältnis der Ebene bei der Erzeugung.
+- `assemble: rest` startet fertig zusammengesetzt, `scatter` startet an der Spawnform und fügt sich per `spring-home` zusammen. `colorMode: image` färbt jeden Punkt mit seiner Pixelfarbe.
+- Fehlt das Bild (kein Medium gewählt), läuft der Effekt ohne Motiv; ist es nicht lesbar (404, anderer Ursprung ohne CORS, kein Bild), schlägt die Erzeugung fehl und die Ebene zeigt das statische Fallbackbild.
+
+**Magnet (`interaction.mode: magnet`):** Der Zeiger ist ein weich begrenzter Dipol, `B = (3(m·r̂)r̂ − m)/r³`. Die Achse `m` folgt der Zeigerbewegung (ruhender Zeiger behält die letzte Achse), schnelle Bewegung zieht stärker (`speedBoost`), `polarity` kehrt die Richtung um. Teilchen werden entlang gekrümmter Feldlinien aus dem Motiv gezogen und kehren per Feder zurück; die Wirkung bleibt innerhalb des Radius.
+
+Presets `photo-grains` („Bildstaub“, scatter + Wirbel) und `magnetic-canvas` („Magnetfläche“, rest + Magnet).
+
+### Nachweise (G5)
+
+- `tests/unit/gpu-image.test.ts` (Sampling: Farben, leere Bereiche, Seed-Reproduzierbarkeit, contain/cover/scale, Helligkeitsgewichtung, Tiefe, vollständig transparentes Bild, Laden/Skalieren/Fehler) und neue Fälle in `gpu-particles.test.ts` (Zielpositionen, Magnetparameter).
+- `tests/e2e/gpu-particles.mjs` mit echtem WebGL2: das Testbild (links rot, rechts blau, transparenter Streifen) ist erkennbar, der Streifen bleibt leer; verstreute Teilchen setzen sich zu dem Bild zusammen; der Magnet verschiebt Teilchen nahe dem Zeiger (> 40 % bewegt, Verschiebung > 0,15), entfernte Teilchen bleiben unverändert (0 von > 500), nach dem Verlassen kehren **alle** auf 0,03 genau zurück; nicht lesbares Bild lehnt die Erzeugung ab.

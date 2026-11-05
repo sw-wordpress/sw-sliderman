@@ -85,6 +85,8 @@ export interface EffectContext<TDevice = unknown> {
   readonly quality: QualityTier;
   readonly reducedMotion: boolean;
   readonly assets: AssetResolver;
+  /** Size of the effect area at creation (CSS pixels); modules may fit content to its aspect ratio. */
+  readonly viewport?: Viewport;
 }
 
 export interface RenderFrame<TTarget = unknown> {

@@ -52,6 +52,7 @@ uniform vec2 uBounds;
 uniform vec4 uPointer;      // xyz world position, w active
 uniform vec4 uPointerParams; // x mode (1 repel, 2 attract, 3 swirl), y radius, z strength
 uniform vec3 uPointerN;
+uniform vec3 uPointerDir;   // unit direction of the pointer's motion (magnet dipole axis)
 uniform vec4 uImpulse;      // xyz centre, w strength
 
 vec3 shapePosition(int shape, float u1, float u2, float u3) {
@@ -129,7 +130,15 @@ void main() {
     vec3 dir = d / (dist + 1e-4);
     if (uPointerParams.x < 1.5) f += dir * uPointerParams.z * fall;
     else if (uPointerParams.x < 2.5) f -= dir * uPointerParams.z * fall;
-    else f += cross(uPointerN, dir) * uPointerParams.z * fall;
+    else if (uPointerParams.x < 3.5) f += cross(uPointerN, dir) * uPointerParams.z * fall;
+    else {
+      // Softened dipole field: B = (3 (m.r) r - m) / r^3 drives particles along curved field lines.
+      float s = uPointerParams.y;
+      vec3 m = uPointerDir;
+      float d2 = dist * dist + 0.25 * s * s;
+      vec3 B = (3.0 * dot(m, dir) * dir - m) * (s * s * s) / (d2 * sqrt(d2));
+      f += B * uPointerParams.z * uPointerParams.w * fall;
+    }
   }
   if (uImpulse.w > 0.0) {
     vec3 d = p - uImpulse.xyz;

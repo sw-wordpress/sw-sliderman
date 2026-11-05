@@ -167,6 +167,7 @@ export class EffectStage {
           quality: this.tier,
           reducedMotion: false,
           assets: { url: (key) => assets[key]?.url ?? null },
+          viewport: { width: this.cssWidth, height: this.cssHeight, pixelRatio: this.pixelRatio },
         },
         resolved.params,
       );

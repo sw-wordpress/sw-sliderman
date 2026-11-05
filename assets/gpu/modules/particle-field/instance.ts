@@ -32,7 +32,7 @@ import {
 const FLOATS = 4;
 const STYLE_ID = { 'soft-disc': 0, glow: 1, pixel: 2 } as const;
 const COLOR_MODE_ID = { solid: 0, speed: 1, life: 2, palette: 3, image: 4 } as const;
-const POINTER_MODE_ID = { none: 0, repel: 1, attract: 2, swirl: 3 } as const;
+const POINTER_MODE_ID = { none: 0, repel: 1, attract: 2, swirl: 3, magnet: 4 } as const;
 const IMPULSE_DECAY = 3;
 
 type Params = ParticleParams;
@@ -138,6 +138,9 @@ export class ParticleInstance implements EffectInstance<Params> {
     easing: Parameters<typeof ease>[0];
   } | null = null;
   private pointerWorld: Vec3 | null = null;
+  private lastPointerWorld: Vec3 | null = null;
+  private pointerDir: Vec3 = [1, 0, 0];
+  private pointerBoost = 1;
   private uniformLocations = new Map<string, WebGLUniformLocation | null>();
   private image: ImageTarget | null;
 
@@ -271,11 +274,13 @@ export class ParticleInstance implements EffectInstance<Params> {
       const h: Vec3 = target
         ? [target.home[k] ?? p[0], target.home[k + 1] ?? p[1], target.home[k + 2] ?? p[2]]
         : p;
+      // An image either starts assembled ("rest") or scatters from the spawn shape and springs home.
+      const start = target && this.params.image.assemble === 'rest' ? h : p;
       position.set(
         [
-          p[0],
-          p[1],
-          p[2],
+          start[0],
+          start[1],
+          start[2],
           lifecycle.mode === 'emitter' ? life * unit(this.seed, i, STREAM.age, 0) : 0,
         ],
         k,
@@ -341,6 +346,7 @@ export class ParticleInstance implements EffectInstance<Params> {
     const camera = cameraAt(this.params.camera, this.time, aspect);
     this.pointerWorld = null;
     const pointer = input.pointer;
+    const previousWorld = this.lastPointerWorld;
     if (pointer?.inside && this.params.interaction.mode !== 'none') {
       const ndcX = (pointer.x / Math.max(this.viewport.width, 1)) * 2 - 1;
       const ndcY = 1 - (pointer.y / Math.max(this.viewport.height, 1)) * 2;
@@ -353,7 +359,9 @@ export class ParticleInstance implements EffectInstance<Params> {
         this.params.camera.fov,
         this.params.camera.distance,
       );
+      this.trackPointerMotion(previousWorld, this.pointerWorld, input.deltaSeconds);
     }
+    this.lastPointerWorld = this.pointerWorld;
     this.camera = camera;
     this.runSteps(input.stepSeconds, steps, camera.normal);
     this.impulse *= Math.exp(-IMPULSE_DECAY * input.deltaSeconds);
@@ -447,6 +455,22 @@ export class ParticleInstance implements EffectInstance<Params> {
     return this.uniformLocations.get(key) ?? null;
   }
 
+  /** The dipole axis follows the pointer's motion; a stationary pointer keeps the last axis. */
+  private trackPointerMotion(previous: Vec3 | null, current: Vec3, deltaSeconds: number): void {
+    if (!previous) {
+      this.pointerBoost = 1;
+      return;
+    }
+    const dx = current[0] - previous[0];
+    const dy = current[1] - previous[1];
+    const dz = current[2] - previous[2];
+    const length = Math.hypot(dx, dy, dz);
+    if (length > 1e-5) this.pointerDir = [dx / length, dy / length, dz / length];
+    const speed = length / Math.max(deltaSeconds, 1e-3);
+    // Faster movement pulls harder (world units per second, softened and capped).
+    this.pointerBoost = 1 + this.params.interaction.speedBoost * Math.min(speed / 4, 2);
+  }
+
   private runSteps(stepSeconds: number, steps: number, normal: Vec3): void {
     const gl = this.gl;
     if (steps <= 0) return;
@@ -486,10 +510,11 @@ export class ParticleInstance implements EffectInstance<Params> {
       u('uPointerParams'),
       POINTER_MODE_ID[p.interaction.mode],
       p.interaction.radius,
-      p.interaction.strength,
-      0,
+      p.interaction.strength * (p.interaction.mode === 'magnet' ? this.pointerBoost : 1),
+      p.interaction.polarity,
     );
     gl.uniform3fv(u('uPointerN'), normal);
+    gl.uniform3fv(u('uPointerDir'), this.pointerDir);
     gl.uniform4f(
       u('uImpulse'),
       this.impulseCenter[0],

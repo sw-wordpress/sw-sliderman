@@ -495,7 +495,8 @@
               "none",
               "repel",
               "attract",
-              "swirl"
+              "swirl",
+              "magnet"
             ],
             "default": "none"
           },
@@ -508,8 +509,75 @@
           "strength": {
             "type": "number",
             "minimum": 0,
-            "maximum": 50,
+            "maximum": 200,
             "default": 4
+          },
+          "polarity": {
+            "type": "number",
+            "minimum": -1,
+            "maximum": 1,
+            "default": 1
+          },
+          "speedBoost": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10,
+            "default": 2
+          }
+        }
+      },
+      "image": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "fit": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "contain",
+              "cover"
+            ],
+            "default": "contain"
+          },
+          "scale": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 2,
+            "default": 0.9
+          },
+          "sampling": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "uniform",
+              "luminance",
+              "inverse-luminance"
+            ],
+            "default": "uniform"
+          },
+          "depth": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3,
+            "default": 0
+          },
+          "assemble": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "rest",
+              "scatter"
+            ],
+            "default": "rest"
+          },
+          "colorBoost": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3,
+            "default": 1
           }
         }
       }
@@ -721,6 +789,108 @@
           "mode": "attract",
           "radius": 1.1,
           "strength": 8
+        }
+      }
+    },
+    {
+      "id": "photo-grains",
+      "name": "Bildstaub",
+      "description": "Das Bild entsteht aus Tausenden farbigen Punkten; der Zeiger wirbelt sie auf, sie setzen sich wieder zusammen. Bild unter „Medien“ wählen.",
+      "seed": 8128,
+      "params": {
+        "count": 70000,
+        "spawn": {
+          "shape": "sphere-volume",
+          "radius": 2.5
+        },
+        "image": {
+          "enabled": true,
+          "fit": "contain",
+          "scale": 0.92,
+          "sampling": "uniform",
+          "assemble": "scatter",
+          "depth": 0.25
+        },
+        "operators": [
+          {
+            "type": "spring-home",
+            "stiffness": 6,
+            "damping": 2.4,
+            "maxForce": 60
+          },
+          {
+            "type": "drag",
+            "amount": 0.9
+          }
+        ],
+        "appearance": {
+          "style": "soft-disc",
+          "sizeMin": 1.1,
+          "sizeMax": 2.1,
+          "colorMode": "image",
+          "blend": "normal",
+          "opacity": 1,
+          "depthFade": 0
+        },
+        "camera": {
+          "projection": "orthographic",
+          "distance": 5,
+          "fov": 50
+        },
+        "interaction": {
+          "mode": "swirl",
+          "radius": 0.8,
+          "strength": 14
+        }
+      }
+    },
+    {
+      "id": "magnetic-canvas",
+      "name": "Magnetfläche",
+      "description": "Der Zeiger zieht Bildpunkte in bogenartigen Feldlinien aus dem Motiv; sie kehren zurück. Bild unter „Medien“ wählen.",
+      "seed": 3141,
+      "params": {
+        "count": 60000,
+        "image": {
+          "enabled": true,
+          "fit": "contain",
+          "scale": 0.92,
+          "sampling": "luminance",
+          "assemble": "rest",
+          "depth": 0
+        },
+        "operators": [
+          {
+            "type": "spring-home",
+            "stiffness": 5,
+            "damping": 2.2,
+            "maxForce": 60
+          },
+          {
+            "type": "drag",
+            "amount": 0.6
+          }
+        ],
+        "appearance": {
+          "style": "soft-disc",
+          "sizeMin": 1,
+          "sizeMax": 1.8,
+          "colorMode": "image",
+          "blend": "normal",
+          "opacity": 1,
+          "depthFade": 0
+        },
+        "camera": {
+          "projection": "orthographic",
+          "distance": 5,
+          "fov": 50
+        },
+        "interaction": {
+          "mode": "magnet",
+          "radius": 1.1,
+          "strength": 6,
+          "polarity": 1,
+          "speedBoost": 3
         }
       }
     }

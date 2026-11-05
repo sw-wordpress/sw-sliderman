@@ -402,7 +402,7 @@ final class EffectLayerTest extends WP_UnitTestCase {
 		$this->assertTrue( $effect['continuous'] );
 		$this->assertSame( SWS_URL . 'build/gpu/particle-field.js?ver=' . SWS_VERSION, $effect['module_url'], 'built-in modules carry the plugin version' );
 		$ids = array_column( $effect['presets'], 'id' );
-		$this->assertSame( array( 'orbital-mist', 'vortex-ribbons', 'ember-drift', 'radiant-pulse' ), $ids );
+		$this->assertSame( array( 'orbital-mist', 'vortex-ribbons', 'ember-drift', 'radiant-pulse', 'photo-grains', 'magnetic-canvas' ), $ids );
 		foreach ( $effect['presets'] as $preset ) {
 			$this->assertSame( array(), \SW\Slider\Domain\EffectSchema::validate( $effect['schema'], $preset['params'] ), $preset['id'] );
 		}
