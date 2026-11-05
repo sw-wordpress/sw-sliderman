@@ -373,7 +373,10 @@ final class SliderRestTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( '<script>alert', $html );
 		$this->assertStringNotContainsString( 'Draft only', $html, 'drafts are never public' );
 		$this->assertSame( 2, substr_count( $html, 'data-sws-slider' ), 'two instances' );
-		$this->assertMatchesRegularExpression( '/id="sws-' . $detail['id'] . '-1".*id="sws-' . $detail['id'] . '-2"/s', $html, 'unique instance ids' );
+		// The instance counter lives as long as the renderer (the request), so only uniqueness and order are fixed.
+		preg_match_all( '/<section [^>]*id="sws-' . $detail['id'] . '-(\d+)"/', $html, $instances );
+		$this->assertCount( 2, $instances[1], 'two instance ids' );
+		$this->assertGreaterThan( (int) $instances[1][0], (int) $instances[1][1], 'unique, increasing instance ids' );
 		$this->assertMatchesRegularExpression( '/<div class="sws-slide [^"]*sws-is-active"[^>]*role="group"/', $html, 'first slide visible' );
 		$this->assertMatchesRegularExpression( '/<div class="sws-slide sws-sl-second"[^>]*hidden inert>/', $html, 'later slides hidden and inert' );
 		$this->assertTrue( wp_style_is( 'sws-runtime', 'enqueued' ) );

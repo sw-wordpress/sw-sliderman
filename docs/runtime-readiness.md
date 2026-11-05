@@ -11,3 +11,12 @@ Image sizing buttons use the selected image's media dimensions (falling back to 
 ## Regression checks
 
 Run `npm test` for deterministic lifecycle and sizing tests. After `npm run build`, run `node tests/e2e/runtime-regressions.mjs` for Chromium's native image decoding and Web Animations. The browser check serves an intercepted HTML fixture with a delayed image; it needs an installed Playwright Chromium but makes no WordPress writes. It verifies readiness, no visible entrance frame before animation, transition/entrance clock ordering, autoplay, hover pause and looping.
+
+## State, artifacts and images (M4.05, M4.15, M4.16)
+
+The root carries `data-sws-state`: `loading`, `ready`, `transitioning`, `playing`, `paused` or `error` (`assets/runtime/state.ts`). `error` means an image failed or timed out; the slide stays readable. A new successful navigation clears it.
+
+Stylesheet artifacts are named by document hash and renderer version. A snapshot built by another renderer version is not loaded; its CSS is recalculated inline. The daily task `sws_cleanup_artifacts` deletes files that no active snapshot references and that are older than seven days (temporary files: one day). An unreadable snapshot aborts the run.
+
+The first slide's background image (else its first image layer) is loaded eagerly with `fetchpriority="high"`; all later images are lazy and promoted by the runtime before their slide is shown.
+

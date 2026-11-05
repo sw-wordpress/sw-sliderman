@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "sw-sliderman/slider",
+  "title": "SW SliderMan",
+  "category": "media",
+  "icon": "images-alt2",
+  "description": "Displays a published SW SliderMan slider.",
+  "keywords": ["slider", "hero", "carousel"],
+  "textdomain": "sw-sliderman",
+  "attributes": {
+    "sliderId": { "type": "integer", "default": 0 }
+  },
+  "supports": { "html": false, "multiple": true },
+  "editorScript": "file:./editor.js"
+}

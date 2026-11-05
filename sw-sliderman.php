@@ -63,3 +63,22 @@ register_activation_hook( __FILE__, array( \SW\Slider\Infrastructure\Lifecycle::
 register_deactivation_hook( __FILE__, array( \SW\Slider\Infrastructure\Lifecycle::class, 'deactivate' ) );
 
 ( new \SW\Slider\Plugin() )->boot();
+
+if ( ! function_exists( 'sws_render_slider' ) ) {
+	/**
+	 * Template helper: renders a published slider (same renderer as shortcode and block).
+	 *
+	 * @param int  $slider_id Slider ID.
+	 * @param bool $display   Echo the markup (default) or only return it.
+	 *
+	 * @return string Slider markup (already escaped by the renderer); '' for visitors when unavailable.
+	 */
+	function sws_render_slider( int $slider_id, bool $display = true ): string {
+		$html = apply_filters( \SW\Slider\Rendering\Block::FILTER, '', $slider_id );
+		$html = is_string( $html ) ? $html : '';
+		if ( $display ) {
+			echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by SliderRenderer.
+		}
+		return $html;
+	}
+}

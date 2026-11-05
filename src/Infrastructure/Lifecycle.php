@@ -21,14 +21,15 @@ final class Lifecycle {
 	public const VERSION_OPTION = 'sws_db_version';
 
 	/** Data/upgrade version, independent of the plugin version. */
-	public const DATA_VERSION = 1;
+	public const DATA_VERSION = 2;
 
 	public static function activate(): void {
 		self::upgrade();
 	}
 
 	public static function deactivate(): void {
-		// No scheduled tasks exist yet; sliders, fonts and revisions are intentionally kept.
+		// Sliders, fonts and revisions are intentionally kept; only the cleanup task is removed.
+		ArtifactCleanup::unschedule();
 	}
 
 	public function register(): void {
@@ -43,6 +44,7 @@ final class Lifecycle {
 
 	private static function upgrade(): void {
 		Capabilities::grant_defaults();
+		ArtifactCleanup::schedule();
 		update_option( self::VERSION_OPTION, self::DATA_VERSION, true );
 	}
 }

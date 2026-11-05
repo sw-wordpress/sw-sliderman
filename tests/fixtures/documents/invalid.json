@@ -1376,6 +1376,159 @@
           "code": "type"
         }
       ]
+    },
+    {
+      "name": "animation start must not be negative",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/animation/enter/startMs",
+          "value": -1
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/animation/enter/startMs",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "animation duration is bounded",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/animation/enter/durationMs",
+          "value": 99999999
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/animation/enter/durationMs",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "animation easing must be a known curve",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/animation/enter/easing",
+          "value": "bounce"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/animation/enter/easing",
+          "code": "enum"
+        }
+      ]
+    },
+    {
+      "name": "animation preset must be a known preset",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/animation/enter/preset",
+          "value": "spin"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/animation/enter/preset",
+          "code": "enum"
+        }
+      ]
+    },
+    {
+      "name": "slide duration has a minimum",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/durationMs",
+          "value": 10
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/durationMs",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "transition type must be cut, fade or slide",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/transition/type",
+          "value": "flip"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/transition/type",
+          "code": "enum"
+        }
+      ]
+    },
+    {
+      "name": "transition duration is bounded",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/transition/durationMs",
+          "value": 99999
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/transition/durationMs",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "timed exit must not start before the entrance ends",
+      "base": "basic",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/animation/enter/startMs",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/animation/enter/durationMs",
+          "value": 500
+        },
+        {
+          "op": "set",
+          "path": "/slides/0/layers/0/animation/exit",
+          "value": {
+            "mode": "timed",
+            "preset": "fade",
+            "startMs": 100,
+            "durationMs": 300,
+            "easing": "ease",
+            "distance": 0
+          }
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/0/animation/exit/startMs",
+          "code": "animation_order"
+        }
+      ]
     }
   ]
 }

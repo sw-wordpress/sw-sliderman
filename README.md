@@ -31,7 +31,7 @@ English, German.
 2. Open **Sliderman → Sliders**, click **New slider**, enter a name and click **Create and edit**.
 3. Use **Add slide** and **Add layer** (Text, Image, Button), switch between **Desktop**, **Tablet** and **Mobile**
    to fine-tune the layout, then click **Save** and **Publish**.
-4. Click **Copy embed code** in the slider list and paste the shortcode into a page, e.g. `[sw_slider id="123"]`.
+4. Click **Copy embed code** in the slider list and paste the shortcode into a page, e.g. `[sw_slider id="123"]`. Alternatives with the same renderer: the block **SW SliderMan** (`sw-sliderman/slider`, slider picker in the block sidebar) and, in theme templates, `sws_render_slider( 123 );` (`sws_render_slider( 123, false )` only returns the markup). Only published sliders are rendered; editors see a note for unavailable ones, visitors nothing.
    Several sliders per page are fine; drafts are never shown.
 
 ## Configuration

@@ -235,24 +235,24 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 
 ### Animation und Navigation
 
-- [ ] M4.01 Gemeinsame Zeitplanberechnung und begrenzte Presets für Eintritt/Austritt implementieren.
-- [ ] M4.02 Startzeit, Dauer, Easing, Sichtbarphase und Slide-Dauer validieren.
-- [ ] M4.03 Layouttransformationen von Animationstransformationen trennen.
-- [ ] M4.04 Cut-, Fade- und Slide-Übergang ergänzen.
-- [ ] M4.05 Zustandsautomat für Laden, Bereit, Übergang, Abspielen, Pause und Fehler implementieren.
-- [ ] M4.06 Schnelle Navigation, unterbrochene Übergänge und Ressourcen-Timeouts behandeln.
-- [ ] M4.07 Pfeile, Punkte, Touch-Wischen und Schleifensteuerung ergänzen.
-- [ ] M4.08 Autoplay standardmäßig deaktivieren; Pause/Start, Hover-/Fokus-/Tab-/Sichtbarkeitspause umsetzen.
-- [ ] M4.09 Manuelle Pause gegenüber automatischer Fortsetzung priorisieren.
+- [x] M4.01 Gemeinsame Zeitplanberechnung und begrenzte Presets für Eintritt/Austritt implementieren. `assets/shared/schedule.ts`/`animation.ts`, `src/Domain/Schedule.php`; Nachweis: `tests/unit/animation.test.ts` (alle Presets, Parität mit dem PHP-Validator), `tests/fixtures/schedule`.
+- [x] M4.02 Startzeit, Dauer, Easing, Sichtbarphase und Slide-Dauer validieren. Gemeinsame Negativfälle in `tests/fixtures/documents/invalid.json` (Start, Dauer, Easing, Preset, Slide-Dauer, Übergang, Austrittsreihenfolge) für PHP und TS.
+- [x] M4.03 Layouttransformationen von Animationstransformationen trennen. Getrennte Wrapper `.sws-layer` → `__anim` → `__body`; `PlaybackOutputTest::test_layers_keep_…`, Keyframes nur `opacity`/`transform`/`clip-path` (`animation.test.ts`).
+- [x] M4.04 Cut-, Fade- und Slide-Übergang ergänzen. `animation.test.ts` (Cut, Fade, Slide inkl. Richtung), `tests/e2e/runtime-regressions.mjs`.
+- [x] M4.05 Zustandsautomat für Laden, Bereit, Übergang, Abspielen, Pause und Fehler implementieren. `assets/runtime/state.ts`, `data-sws-state` (loading, ready, transitioning, playing, paused, error); `runtime.test.ts` „playback state“.
+- [x] M4.06 Schnelle Navigation, unterbrochene Übergänge und Ressourcen-Timeouts behandeln. Generationszähler, Bild-/Font-Wartefrist 1200 ms, Fehlerzustand bei Bildfehler/Timeout; `runtime.test.ts`, `runtime-regressions.mjs`.
+- [x] M4.07 Pfeile, Punkte, Touch-Wischen und Schleifensteuerung ergänzen. Pfeile, Punkte, Tastatur, Schleife und Wischgesten; `runtime.test.ts` („touch swipe“, „without loop“).
+- [x] M4.08 Autoplay standardmäßig deaktivieren; Pause/Start, Hover-/Fokus-/Tab-/Sichtbarkeitspause umsetzen. Autoplay standardmäßig aus; Pause/Start, Hover-/Fokus-/Tab-/Viewport-Pause; `runtime.test.ts`.
+- [x] M4.09 Manuelle Pause gegenüber automatischer Fortsetzung priorisieren. Nutzerpause wird nie automatisch fortgesetzt; `runtime.test.ts`.
 ### Ausgabe und Integration
 
-- [ ] M4.10 Semantischen PHP-Renderer mit statischem Fallback und lokaler Konfiguration erstellen.
-- [ ] M4.11 Shortcode, dynamischen Gutenberg-Block und PHP-Funktion auf denselben Renderer führen.
+- [x] M4.10 Semantischen PHP-Renderer mit statischem Fallback und lokaler Konfiguration erstellen. `SliderRenderer` mit statischem ersten Slide und JSON-Konfiguration; `SliderRestTest`, `PlaybackOutputTest`.
+- [x] M4.11 Shortcode, dynamischen Gutenberg-Block und PHP-Funktion auf denselben Renderer führen. Nachweis: `src/Rendering/Block.php`, `sws_render_slider()`, `tests/wp/tests/BlockTest.php` (identisches Markup, Fehlerfälle, Head-Erkennung inkl. verschachtelter Blöcke). Der Block-Editor-Skript ist ein buildfreies Skript mit WordPress-Globals (keine zweite React-Kopie).
 - [ ] M4.12 Blockauswahl und sichere Vorschau integrieren; WordPress-eigene React-Laufzeit verwenden.
-- [ ] M4.13 Assets nur bei Einbindung ausgeben; auch späte PHP-Template-Einbindungen unterstützen.
-- [ ] M4.14 Instanzkennungen, mehrere Slider und wiederholte Einbindung desselben Sliders prüfen.
-- [ ] M4.15 Veröffentlichte Artefakte cachen, bei Rendererwechsel erneuern und alte Referenzen sicher bereinigen.
-- [ ] M4.16 Responsive Bilder, reservierte Höhe und Lazy Loading späterer Slides ergänzen.
+- [x] M4.13 Assets nur bei Einbindung ausgeben; auch späte PHP-Template-Einbindungen unterstützen. Assets nur bei Einbindung; frühe Erkennung (Shortcode, Block, verschachtelt) und spätes Einbinden mit Inline-Fallback; `BlockTest`, `PlaybackOutputTest::test_late_embedding_…`.
+- [x] M4.14 Instanzkennungen, mehrere Slider und wiederholte Einbindung desselben Sliders prüfen. Eindeutige Instanz- und Element-IDs bei mehreren/wiederholten Sliderinstanzen, Runtime einmal geladen; `PlaybackOutputTest`.
+- [x] M4.15 Veröffentlichte Artefakte cachen, bei Rendererwechsel erneuern und alte Referenzen sicher bereinigen. Artefakte nach Hash+Rendererversion; fremde Rendererversion → sichere Neuberechnung statt Datei; tägliche Bereinigung (`ArtifactCleanup`, `ArtifactRetention`: 7 Tage Karenz, nur unreferenzierte Dateien, Abbruch bei beschädigtem Snapshot); `ArtifactRetentionTest`, `PlaybackOutputTest`.
+- [x] M4.16 Responsive Bilder, reservierte Höhe und Lazy Loading späterer Slides ergänzen. `srcset`/`sizes`/Breite/Höhe von WordPress, erstes Bild eager mit `fetchpriority=high` (Hintergrund hat Vorrang), spätere Slides lazy, reservierte Höhe per `aspect-ratio`; `PlaybackOutputTest`.
 - [x] M4.24 The7-Theme: Modus „SW SliderMan“ in den Seitenoptionen „Page Header → Slideshow“; Ausgabe über `presscore_do_header_slideshow` und den gemeinsamen Renderer (`src/Integration/The7.php`). Nachweis: `tests/wp/tests/The7IntegrationTest.php`, Browserprüfung der Metabox auf der Dev-Site. Praktische Frontend-Abnahme durch Stefan offen.
 
 ### Zugänglichkeit

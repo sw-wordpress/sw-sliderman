@@ -4,12 +4,14 @@ import { enterKeyframes, exitKeyframes, phaseTiming } from '@shared/animation';
 import { resolveStage } from '@shared/layout';
 import { scheduleSlide } from '@shared/schedule';
 import type { RuntimeConfig } from './config';
+import { derivePlaybackState } from './state';
 
 /**
  * One slider on the page (PLAN.md 5.3, 7.1, 12; CODE-STYLE 13).
  *
  * State model:
- * - `phase`: 'loading' | 'ready' | 'transitioning'. Every navigation increments `generation`; timers and
+ * - `phase`: 'loading' | 'ready' | 'transitioning'; together with pause reasons and resource errors it
+ *   yields the public state (`state.ts`, `data-sws-state`). Every navigation increments `generation`; timers and
  *   animation callbacks of an older generation are ignored, so fast navigation never produces
  *   overlapping states.
  * - Autoplay runs only while none of the pause reasons applies. A user pause has priority: no
@@ -40,6 +42,7 @@ export class SliderInstance {
   private hovered = false;
   private focused = false;
   private offscreen = false;
+  private resourceError = false;
   private reducedMotion: boolean;
   private destroyed = false;
 
@@ -69,6 +72,7 @@ export class SliderInstance {
     this.bindSwipe();
     this.updateNavigation();
     this.updateToggle();
+    this.updateState();
   }
 
   /** Creates the instance and starts the first-slide sequence (async work stays out of the constructor). */
@@ -93,7 +97,7 @@ export class SliderInstance {
     const generation = this.generation;
     const fonts = document.fonts?.ready ?? Promise.resolve();
     let timeout: number | undefined;
-    await Promise.all([
+    const [, imagesOk] = await Promise.all([
       Promise.race([
         fonts,
         new Promise((resolve) => {
@@ -104,7 +108,8 @@ export class SliderInstance {
     ]);
     window.clearTimeout(timeout);
     if (this.destroyed || generation !== this.generation) return;
-    this.phase = 'ready';
+    this.resourceError = imagesOk === false;
+    this.setPhase('ready');
     this.playLayers(0);
     this.schedule();
   }
@@ -203,6 +208,20 @@ export class SliderInstance {
     });
   }
 
+  private setPhase(phase: 'loading' | 'ready' | 'transitioning'): void {
+    this.phase = phase;
+    this.updateState();
+  }
+
+  private updateState(): void {
+    this.root.dataset.swsState = derivePlaybackState({
+      phase: this.phase,
+      resourceError: this.resourceError,
+      autoplayEnabled: this.config.autoplay && !this.reducedMotion && this.count > 1,
+      running: this.canAutoplay(),
+    });
+  }
+
   private canAutoplay(): boolean {
     return (
       this.config.autoplay &&
@@ -218,6 +237,7 @@ export class SliderInstance {
 
   /** (Re)starts the autoplay timer for the current slide, or stops it when a pause reason applies. */
   private schedule(): void {
+    this.updateState();
     if (this.phase === 'ready') {
       const paused =
         this.userPaused || this.hovered || this.focused || this.offscreen || document.hidden;
@@ -272,12 +292,19 @@ export class SliderInstance {
       return;
     }
     this.index = index;
-    this.phase = 'loading';
+    this.setPhase('loading');
     this.updateNavigation();
     if (user) this.announce();
     const ready = prepareImages(incoming, this.resources.signal);
-    if (ready) void ready.then(() => this.show(generation, outgoing, incoming, direction));
-    else this.show(generation, outgoing, incoming, direction);
+    if (ready) {
+      void ready.then((ok) => {
+        if (generation === this.generation) this.resourceError = !ok;
+        this.show(generation, outgoing, incoming, direction);
+      });
+    } else {
+      this.resourceError = false;
+      this.show(generation, outgoing, incoming, direction);
+    }
   }
 
   private show(
@@ -306,7 +333,7 @@ export class SliderInstance {
       this.finish(generation, outgoing, incoming);
       return;
     }
-    this.phase = 'transitioning';
+    this.setPhase('transitioning');
     const timing = { duration, easing: 'ease-in-out', fill: 'both' as const };
     const animations: Animation[] = [];
     if (type === 'fade') {
@@ -341,7 +368,7 @@ export class SliderInstance {
     });
     this.hide(outgoing);
     incoming.inert = false;
-    this.phase = 'ready';
+    this.setPhase('ready');
     this.prepared.splice(0).forEach((animation) => animation.play());
     this.schedule();
   }
@@ -426,7 +453,7 @@ export class SliderInstance {
     this.resources.abort();
     this.resources = new AbortController();
     this.cancelLayers();
-    this.phase = 'ready';
+    this.setPhase('ready');
     if (this.timer !== null) {
       window.clearTimeout(this.timer);
       this.timer = null;
@@ -466,5 +493,6 @@ export class SliderInstance {
     this.cancelAll();
     this.cleanups.splice(0).forEach((cleanup) => cleanup());
     this.root.classList.remove('sws-js');
+    delete this.root.dataset.swsState;
   }
 }
