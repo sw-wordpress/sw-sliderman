@@ -15,7 +15,7 @@ Lichtreflex: einmaliges transparentes Lichtband über dem Slide, nach höchstens
 
 Masken verändern nur den Animationswrapper und erzeugen keine zusätzlichen Textknoten: lokale Fontmessung, Links und Benutzerrotation bleiben erhalten. Die Tiefe wirkt auf Hintergrund/Bühne, getrennt von Ebenenanimation und Rotation.
 
-Frontend: WordPress lädt `build/runtime/effects.js` nur bei aktivierten Effekten auf mindestens einem eingeschalteten Slide, als Abhängigkeit vor dem Runtime-Script und mit Pluginversion. Fehlendes Bundle lässt die Ausgabe statisch bezüglich Tiefe/Lichtreflex. Die Editorvorschau lädt denselben Player dynamisch. Masken sind zusätzliche Presets im vorhandenen Player.
+Frontend: WordPress lädt `build/runtime/effects.js` nur bei aktivierten Effekten auf mindestens einem eingeschalteten Slide, als Abhängigkeit vor dem Runtime-Script und mit Pluginversion. Fehlendes Bundle lässt die Ausgabe statisch bezüglich Tiefe/Lichtreflex. Die Editorvorschau lädt denselben Player dynamisch; der Build ergänzt `?ver=` mit der zentralen Pluginversion aus `swsEditorConfig`. Der Bundlecheck und `node tests/e2e/editor-effects-version.mjs` prüfen diesen Import einschließlich URL-Kodierung. Masken sind zusätzliche Presets im vorhandenen Player.
 
 Reduced Motion: statischer lesbarer Endzustand, kein Lichtband, kein Autoplay; eine Änderung während der Wiedergabe bricht sofort ab. Navigation/Destroy/verborgener Tab bereinigen Effekte. Hover, Fokus, Unsichtbarkeit und manuelle Pause pausieren Tiefe/Lichtreflex; Fortsetzung spielt nur noch laufende Effekte weiter. In der Editorvorschau beenden Dokument-/Gerätewechsel, verborgener Tab oder Reduced Motion die Wiedergabe.
 

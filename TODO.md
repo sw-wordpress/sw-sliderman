@@ -386,6 +386,8 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 
 CI-Korrektur: Der WordPress-Effekttest erzeugt sein Bundle als temporäre Fixture und funktioniert auch ohne Frontend-Build (57 Tests; PHP-Coverage 84,54 %).
 
+Review-Korrektur: Auch der dynamische Editor-Effektimport erhält die zentrale Pluginversion als URL-Parameter; Bundlecheck und nativer Browser-Request-Test sichern das Lazy Loading ab.
+
 **Abnahmekriterium:** Jeder Effekt hat messbaren Nutzen und bleibt optional; Slider ohne Effekt tragen keine zugehörige Laufzeitlast.
 
 ## Definition of Done pro Funktion

@@ -48,6 +48,14 @@ for (const file of [...files(join(root, 'build/runtime')), ...files(join(root, '
   if (file.endsWith('.css') && /@import/i.test(text)) failures.push(`${file} uses @import`);
 }
 
+// The lazy effects import must use the central plugin version, including in production output.
+const editorJs = files(join(root, 'build/editor'))
+  .filter((file) => file.endsWith('.js'))
+  .map((file) => readFileSync(file, 'utf8'))
+  .join('\n');
+const versionedEffectsImport = /import\(["'][^"']*heroEffects[^"']*\?ver=["']\s*\+\s*encodeURIComponent\(window\.swsEditorConfig\.version\)\)/;
+if (!versionedEffectsImport.test(editorJs)) failures.push('editor effects import lacks the central plugin version');
+
 // Editor CSS: every top-level selector must be scoped (keyframes and font-face excluded).
 const editorCss = readFileSync(join(root, 'build/editor/editor.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 /** Splits a selector list at top-level commas (not inside :is()/:not() parentheses). */

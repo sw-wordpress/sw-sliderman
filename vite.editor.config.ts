@@ -4,6 +4,7 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { quasar, transformAssetUrls } from '@quasar/vite-plugin';
 import { swsScope } from './tools/postcssScope';
+import { versionedEffects } from './tools/versionedEffects';
 
 /** Ship only the woff2 icon font (all supported browsers); drops the legacy woff. */
 function woff2Only() {
@@ -23,7 +24,7 @@ function woff2Only() {
  */
 export default defineConfig({
   base: './',
-  plugins: [woff2Only(), vue({ template: { transformAssetUrls } }), quasar()],
+  plugins: [woff2Only(), versionedEffects(), vue({ template: { transformAssetUrls } }), quasar()],
   resolve: {
     alias: {
       '@shared': fileURLToPath(new URL('./assets/shared', import.meta.url)),
@@ -48,7 +49,9 @@ export default defineConfig({
         chunkFileNames: 'chunks/[name]-[hash].js',
         assetFileNames: (info) => {
           const names = info.names ?? (info.name ? [info.name] : []);
-          return names.some((n) => n.endsWith('.css')) ? 'editor.css' : 'assets/[name]-[hash][extname]';
+          return names.some((n) => n.endsWith('.css'))
+            ? 'editor.css'
+            : 'assets/[name]-[hash][extname]';
         },
       },
     },
