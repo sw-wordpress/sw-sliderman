@@ -108,6 +108,8 @@ const tagOf = (item: unknown): string => {
 const scalarItems = computed(
   () => variants.value.length === 0 && fieldKind(items.value) !== 'object',
 );
+const minItems = computed(() => Number(props.schema.minItems ?? 0));
+const canRemove = computed(() => list.value.length > minItems.value);
 const usedTags = computed(() => new Set(list.value.map(tagOf)));
 const addable = computed(() => variants.value.filter((v) => !usedTags.value.has(v.tag)));
 const canAdd = computed(
@@ -120,6 +122,7 @@ function add(tag: string | null): void {
   if (item !== null) form.set(props.path, [...list.value, item]);
 }
 function removeAt(index: number): void {
+  if (!canRemove.value) return;
   form.set(
     props.path,
     list.value.filter((_, i) => i !== index),
@@ -241,7 +244,7 @@ const addLabel = computed(() =>
             @input="(e) => setColor(index, (e.target as HTMLInputElement).value)"
           />
           <button
-            v-if="list.length > 1"
+            v-if="list.length > Math.max(1, minItems)"
             type="button"
             class="sws-fx-field__x"
             :aria-label="__('Remove')"
@@ -309,6 +312,7 @@ const addLabel = computed(() =>
               size="sm"
               icon="r_delete"
               :aria-label="__('Remove')"
+              :disable="!canRemove"
               @click="removeAt(index)"
             />
           </span>

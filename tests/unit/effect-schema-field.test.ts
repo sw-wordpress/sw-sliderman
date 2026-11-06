@@ -62,6 +62,48 @@ describe('SchemaField lists of plain values', () => {
   });
 });
 
+describe('SchemaField minItems', () => {
+  const numbers = { type: 'number', minimum: 0, maximum: 10, default: 1 };
+  const removeButtons = (wrapper: ReturnType<typeof mountField>['wrapper']) =>
+    wrapper.findAll('button[aria-label="Remove"]');
+
+  it('does not offer removing entries below the declared minimum', async () => {
+    const { wrapper, set } = mountField(
+      { type: 'array', minItems: 1, maxItems: 3, title: 'Weights', items: numbers },
+      [4],
+    );
+    const [only] = removeButtons(wrapper);
+    expect(only?.attributes('disabled')).toBeDefined();
+    await only?.trigger('click');
+    expect(set).not.toHaveBeenCalled();
+    wrapper.unmount();
+  });
+
+  it('removes entries again above the minimum, also for colour lists', async () => {
+    const { wrapper, set } = mountField(
+      { type: 'array', minItems: 1, maxItems: 3, title: 'Weights', items: numbers },
+      [4, 5],
+    );
+    const [first] = removeButtons(wrapper);
+    expect(first?.attributes('disabled')).toBeUndefined();
+    await first?.trigger('click');
+    expect(set).toHaveBeenCalledWith(['parts'], [5]);
+    wrapper.unmount();
+    const colours = mountField(
+      {
+        type: 'array',
+        minItems: 2,
+        maxItems: 4,
+        title: 'Colours',
+        items: { type: 'string', format: 'color' },
+      },
+      ['#ff0000', '#00ff00'],
+    );
+    expect(colours.wrapper.findAll('.sws-fx-field__x')).toHaveLength(0);
+    colours.wrapper.unmount();
+  });
+});
+
 describe('SchemaField with a custom discriminator', () => {
   it('shows the fields of an item and tracks used variants by the declared discriminator', () => {
     const values = ref<Record<string, unknown>>({ parts: [{ kind: 'glow', power: 3 }] });
