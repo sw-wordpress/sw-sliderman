@@ -108,6 +108,6 @@ export function spawnUniforms(params: ParticleParams, aspect = 16 / 9): SpawnUni
 }
 
 export function hexToRgb(hex: string): [number, number, number] {
-  const value = /^#[0-9a-fA-F]{6}$/.test(hex) ? parseInt(hex.slice(1), 16) : 0xffffff;
+  const value = /^#[0-9a-fA-F]{6}$/.test(hex) ? Number.parseInt(hex.slice(1), 16) : 0xffffff;
   return [((value >> 16) & 255) / 255, ((value >> 8) & 255) / 255, (value & 255) / 255];
 }

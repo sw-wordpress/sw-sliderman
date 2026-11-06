@@ -591,7 +591,7 @@ export class ParticleInstance implements EffectInstance<Params> {
       before.lifecycle.mode !== next.lifecycle.mode ||
       imageChanged;
     if (structural && final) {
-      if (imageChanged && this.options.rebuildImage)
+      if ((imageChanged || before.count !== next.count) && this.options.rebuildImage)
         this.image = this.options.rebuildImage(this.aspect, next);
       this.reinitialise();
     } else this.activeCount = this.countFor(this.tier);

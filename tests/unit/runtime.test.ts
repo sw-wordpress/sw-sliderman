@@ -371,8 +371,8 @@ describe('GPU effect layers (M10)', () => {
       [],
     );
     expect(
-      withEffects(Array.from({ length: 40 }, (_, i) => ({ ...entry, layerId: `l${i}` }))).effects,
-    ).toHaveLength(32);
+      withEffects(Array.from({ length: 200 }, (_, i) => ({ ...entry, layerId: `l${i}` }))).effects,
+    ).toHaveLength(150);
   });
 
   it('mounts after the first slide is ready and follows slide changes, the pause switch and reduced motion', async () => {

@@ -776,6 +776,13 @@ describe('image targets follow settings and area', () => {
     expect(rebuild.mock.calls[1]?.[1].image.enabled).toBe(false);
   });
 
+  it('builds the image targets again when the particle count changes', () => {
+    const { particles, rebuild } = withRebuild();
+    particles.setParams({ count: 40 } as never);
+    expect(rebuild).toHaveBeenCalledTimes(1);
+    expect(rebuild.mock.calls[0]?.[1].count).toBe(40);
+  });
+
   it('rebuilds only once at the end of a transition that changes the image', () => {
     const { particles, rebuild } = withRebuild();
     const state = particles.captureState();

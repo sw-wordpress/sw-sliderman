@@ -32,7 +32,7 @@ export class EffectRegistry<TDevice = unknown> {
   }
 
   types(): string[] {
-    return [...new Set([...this.modules.keys(), ...this.loaders.keys()])].sort();
+    return [...new Set([...this.modules.keys(), ...this.loaders.keys()])].sort((a, b) => a.localeCompare(b));
   }
 
   /** Loads (once) and returns the module. A failed load is not cached, so a retry can succeed. */

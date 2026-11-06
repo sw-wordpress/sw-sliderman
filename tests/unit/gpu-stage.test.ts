@@ -402,6 +402,17 @@ describe('EffectStage', () => {
     expect((call?.[0] as { stepSeconds: number }).stepSeconds).toBeCloseTo(1 / 30, 6);
   });
 
+  it('keeps real-time speed on the 30 Hz tier when every frame brings a single 1/60 s step', async () => {
+    const h = harness({ quality: 'low' });
+    await h.stage.start();
+    h.clock.frame(0);
+    for (let i = 1; i <= 10; i++) h.clock.frame(i * (1000 / 60));
+    const total = h.instances[0]?.update.mock.calls
+      .slice(1)
+      .reduce((sum, call) => sum + (call[1] as number), 0);
+    expect(total).toBe(5);
+  });
+
   it('stops on context loss, rebuilds the instance on restoration and gives up after repeated failures', async () => {
     const h = harness();
     await h.stage.start();

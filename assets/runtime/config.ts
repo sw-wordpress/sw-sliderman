@@ -87,7 +87,7 @@ const QUALITIES = ['auto', 'low', 'medium', 'high', 'ultra'] as const;
 function effectEntries(value: unknown): EffectEntry[] {
   if (!Array.isArray(value)) return [];
   const entries: EffectEntry[] = [];
-  for (const raw of value.slice(0, 32)) {
+  for (const raw of value.slice(0, 150)) {
     if (!isObject(raw)) continue;
     const { layerId, type, module } = raw;
     if (typeof layerId !== 'string' || typeof type !== 'string' || typeof module !== 'string')

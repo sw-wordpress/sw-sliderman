@@ -51,6 +51,7 @@ export class EffectStage {
   private intersection: IntersectionObserver | null = null;
   private offContext: (() => void) | null = null;
   private readonly stepper = new FixedStepper();
+  private pendingSteps = 0;
   private readonly adaptive = new AdaptiveQuality({ start: 'high' });
   private tier: QualityTier;
   private lastTime: number | null = null;
@@ -307,8 +308,14 @@ export class EffectStage {
       scroll: 0,
       reducedMotion: false,
     };
-    // The 30 Hz tier simulates every second 1/60 s step.
-    instance.update(input, profile.simHz === 30 ? Math.ceil(steps / 2) : steps);
+    // The 30 Hz tier simulates every second 1/60 s step; the odd one is carried to the next frame.
+    let simSteps = steps;
+    if (profile.simHz === 30) {
+      this.pendingSteps += steps;
+      simSteps = Math.floor(this.pendingSteps / 2);
+      this.pendingSteps -= simSteps * 2;
+    } else this.pendingSteps = 0;
+    instance.update(input, simSteps);
     instance.render({ target: device, input, alpha });
     if (this.stateValue === 'running') this.options.host.classList.add('sws-fx--live');
   }

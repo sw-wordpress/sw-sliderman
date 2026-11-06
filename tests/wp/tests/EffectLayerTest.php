@@ -339,6 +339,19 @@ final class EffectLayerTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'sws-diagnostic', $html );
 	}
 
+	public function test_publishing_rejects_effect_images_that_do_not_exist(): void {
+		$registry = $this->add_ons( array( $this->glow() ) );
+		foreach ( array( 'fallbackImageId' => 999999, 'assets' => array( 'image' => 999999 ) ) as $key => $value ) {
+			try {
+				$this->publish( $registry, array( $key => $value ) );
+				$this->fail( 'Publishing must fail for ' . $key );
+			} catch ( InvalidDocument $error ) {
+				$this->assertSame( 'missing_resource', $error->issues[0]->code );
+				$this->assertStringContainsString( 'fallbackImageId' === $key ? '/content/fallbackImageId' : '/content/assets/image', $error->issues[0]->path );
+			}
+		}
+	}
+
 	public function test_fallback_image_is_rendered_with_alt_text_and_priority_loading(): void {
 		$attachment = self::factory()->attachment->create_upload_object( dirname( __DIR__ ) . '/vendor/wp-phpunit/wp-phpunit/data/images/canola.jpg' );
 		$registry   = $this->add_ons( array( $this->glow() ) );

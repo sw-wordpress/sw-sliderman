@@ -25,7 +25,7 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 function mixColor(a: string, b: string, t: number): string {
-  const channel = (hex: string, at: number): number => parseInt(hex.slice(at, at + 2), 16);
+  const channel = (hex: string, at: number): number => Number.parseInt(hex.slice(at, at + 2), 16);
   let out = '#';
   for (const at of [1, 3, 5]) {
     const value = Math.round(channel(a, at) + (channel(b, at) - channel(a, at)) * t);
