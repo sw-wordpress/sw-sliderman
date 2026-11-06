@@ -342,6 +342,23 @@ describe('EffectStage', () => {
     expect(instance?.render).not.toHaveBeenCalled();
   });
 
+  it('shows the fallback and frees the GPU when a frame throws after the first successful one', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const h = harness();
+    await h.stage.start();
+    h.clock.frame(0);
+    expect(h.host.classList.contains('sws-fx--live')).toBe(true);
+    h.instances[0]?.render.mockImplementation(() => {
+      throw new Error('lost shader');
+    });
+    h.clock.frame(16);
+    expect(h.stage.state).toBe('fallback');
+    expect(h.host.classList.contains('sws-fx--live')).toBe(false);
+    expect(h.instances[0]?.dispose).toHaveBeenCalledTimes(1);
+    expect(h.scheduler.size).toBe(0);
+    expect(warn).toHaveBeenCalled();
+  });
+
   it('pauses for each reason and resumes only when all are cleared', async () => {
     const h = harness();
     await h.stage.start();

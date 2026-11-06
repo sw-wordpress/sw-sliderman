@@ -105,6 +105,17 @@ describe('schema tools', () => {
       ((prop('operators').items as Json).oneOf as Json[])[4]?.properties as Record<string, Json>
     ).wells as Json;
     expect(newItem(wells.items as Json, null)).toEqual({ position: [0, 0, 0], mass: 1 });
+    // Scalar entries start with a valid value of their declared type.
+    expect(newItem({ type: 'number', minimum: 2, maximum: 9 }, null)).toBe(2);
+    expect(newItem({ type: 'number', minimum: -5, maximum: -1 }, null)).toBe(-1);
+    expect(newItem({ type: 'number', maximum: 10 }, null)).toBe(0);
+    expect(newItem({ type: 'integer', minimum: 0.5, maximum: 9 }, null)).toBe(1);
+    expect(newItem({ type: 'number', default: 4 }, null)).toBe(4);
+    expect(newItem({ type: 'boolean' }, null)).toBe(false);
+    expect(newItem({ type: 'string', enum: ['a', 'b'] }, null)).toBe('a');
+    expect(newItem({ type: 'string', format: 'color' }, null)).toBe('#ffffff');
+    expect(newItem({ type: 'string', minLength: 2 }, null)).toBe('xx');
+    expect(newItem({ type: 'string' }, null)).toBe('');
     expect(branches({})).toEqual([]);
   });
 

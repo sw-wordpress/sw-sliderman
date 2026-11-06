@@ -301,7 +301,17 @@ export class EffectStage {
     }
   }
 
+  /** A throwing module must not leave a dead canvas: release the GPU and show the fallback image. */
   private frame(nowMs: number): void {
+    try {
+      this.runFrame(nowMs);
+    } catch (error) {
+      console.warn('sw-sliderman: effect frame failed, showing the static fallback', error);
+      this.fallback();
+    }
+  }
+
+  private runFrame(nowMs: number): void {
     const instance = this.instance;
     const device = this.device;
     if (!instance || !device || device.lost) return;

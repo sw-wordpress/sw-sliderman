@@ -104,7 +104,28 @@ export function newItem(items: Json, tag: string | null): unknown {
     const branch = branches(items).find((b) => b.tag === tag);
     return branch ? withDefaults(branch.schema, { [discriminator]: tag }) : null;
   }
-  return withDefaults(items, items.default ?? {});
+  return withDefaults(items, items.default ?? initialValue(items));
+}
+
+/** A valid starting value for a list entry of the declared type (objects start empty and get defaults). */
+function initialValue(schema: Json): unknown {
+  switch (schema.type) {
+    case 'integer':
+    case 'number': {
+      const min = typeof schema.minimum === 'number' ? schema.minimum : undefined;
+      const max = typeof schema.maximum === 'number' ? schema.maximum : undefined;
+      const start = Math.min(Math.max(0, min ?? 0), max ?? Number.MAX_SAFE_INTEGER);
+      return schema.type === 'integer' ? Math.ceil(start) : start;
+    }
+    case 'boolean':
+      return false;
+    case 'string':
+      if (Array.isArray(schema.enum) && schema.enum.length > 0) return schema.enum[0];
+      if (schema.format === 'color') return '#ffffff';
+      return 'x'.repeat(typeof schema.minLength === 'number' ? schema.minLength : 0);
+    default:
+      return {};
+  }
 }
 
 /** Order of the properties of an object schema, scalars first inside a group is not imposed: schema order wins. */
