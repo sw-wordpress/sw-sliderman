@@ -307,6 +307,25 @@ final class EffectLayerTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( '"params":{"strength":0.8}', $html );
 	}
 
+	public function test_nested_empty_parameter_objects_stay_objects_in_the_runtime_config(): void {
+		$glow     = $this->glow();
+		$glow['schema']['properties']['camera'] = array(
+			'type'       => 'object',
+			'properties' => array(
+				'distance' => array(
+					'type'    => 'number',
+					'minimum' => 1,
+					'maximum' => 9,
+					'default' => 5,
+				),
+			),
+		);
+		$registry = $this->add_ons( array( $glow ) );
+		$id       = $this->publish( $registry, array( 'params' => array( 'strength' => 0.8, 'camera' => new stdClass() ) ) );
+		$html     = $this->renderer( $registry )->render( $id );
+		$this->assertStringContainsString( '"params":{"strength":0.8,"camera":{}}', $html );
+	}
+
 	public function test_a_finite_effect_gets_no_pause_switch_and_empty_params_stay_an_object(): void {
 		$finite   = $this->glow( array( 'continuous' => false ) );
 		$registry = $this->add_ons( array( $finite ) );

@@ -105,7 +105,7 @@ final class SliderRenderer {
 			$html .= $this->slide( $slide, $index, $count, $instance );
 		}
 		$html .= '</div>';
-		$effects    = $this->effect_entries( $slides );
+		$effects    = $this->effect_entries( $slides, $published->document_json );
 		$continuous = array() !== array_filter( $effects, static fn ( array $entry ): bool => true === $entry['continuous'] );
 		// Continuous GPU motion always gets the pause switch (WCAG 2.2.2), also without autoplay or with one slide.
 		if ( $count > 1 || $continuous ) {
@@ -303,14 +303,16 @@ final class SliderRenderer {
 	 * Effect layers of the enabled slides that the runtime can start: the type is registered and its
 	 * schema version is not newer than the installed module. Everything else stays a static fallback.
 	 *
-	 * @param list<array<string, mixed>> $slides Enabled slides.
+	 * @param list<array<string, mixed>> $slides        Enabled slides.
+	 * @param string                     $document_json Validated document JSON (parameters keep `{}` and `[]` apart).
 	 *
 	 * @return list<array<string, mixed>> Runtime entries.
 	 */
-	private function effect_entries( array $slides ): array {
+	private function effect_entries( array $slides, string $document_json ): array {
 		if ( null === $this->effects ) {
 			return array();
 		}
+		$params_of = $this->effect_params( $document_json );
 		$entries = array();
 		foreach ( $slides as $slide ) {
 			foreach ( $slide['layers'] as $layer ) {
@@ -341,12 +343,33 @@ final class SliderRenderer {
 					'quality'       => $content['quality'],
 					'continuous'    => true === $descriptor['continuous'],
 					'module'        => $descriptor['module_url'],
-					'params'        => array() === $content['params'] ? new \stdClass() : $content['params'],
+					'params'        => $params_of[ $layer['id'] ] ?? new \stdClass(),
 					'assets'        => array() === $assets ? new \stdClass() : $assets,
 				);
 			}
 		}
 		return $entries;
+	}
+
+	/**
+	 * Effect parameters by layer id, decoded as objects so nested empty objects stay `{}`.
+	 *
+	 * @param string $document_json Validated document JSON.
+	 *
+	 * @return array<string, object> Parameter objects.
+	 */
+	private function effect_params( string $document_json ): array {
+		$document = json_decode( $document_json, false, 64 );
+		$found    = array();
+		foreach ( is_object( $document ) && is_array( $document->slides ?? null ) ? $document->slides : array() as $slide ) {
+			foreach ( is_object( $slide ) && is_array( $slide->layers ?? null ) ? $slide->layers : array() as $layer ) {
+				$content = is_object( $layer ) ? ( $layer->content ?? null ) : null;
+				if ( is_object( $layer ) && 'effect' === ( $layer->type ?? null ) && is_string( $layer->id ?? null ) && is_object( $content ) && is_object( $content->params ?? null ) ) {
+					$found[ $layer->id ] = $content->params;
+				}
+			}
+		}
+		return $found;
 	}
 
 	/**
