@@ -1,6 +1,6 @@
 # GPU-Effekte (M10)
 
-Stand: Phase G0–G5 (Kern, Dokument/PHP, Browser-Plattform, Partikelmodul mit Bildrekonstruktion und Magnetfeld; der Editor folgt mit G6). Entscheidungen: [ADR 0005](adr/0005-gpu-effects.md). Fortschritt: [TODO.md](../TODO.md) (M10).
+Stand: Phase G0–G6 (Kern, Dokument/PHP, Browser-Plattform, Partikelmodul mit Bildrekonstruktion und Magnetfeld, Editor). Entscheidungen: [ADR 0005](adr/0005-gpu-effects.md). Fortschritt: [TODO.md](../TODO.md) (M10).
 
 ## Überblick
 
@@ -111,7 +111,7 @@ Quelle für PHP, Editor und Modul ist `schemas/effects/particle-field.json` (Bes
 
 | Bereich | Umfang |
 | --- | --- |
-| Spawn | Punkt, Scheibe, Ring, Kugeloberfläche, Kugelvolumen, Quader, Linie; Startgeschwindigkeit keine/radial/tangential/zufällig |
+| Spawn | **Ganze Fläche (Standard)**, Punkt, Scheibe, Ring, Kugeloberfläche, Kugelvolumen, Quader, Linie; Startgeschwindigkeit keine/radial/tangential/zufällig |
 | Lebenszyklus | dauerhaft oder Emitter (Wiedergeburt nach Lebensdauer) |
 | Operatoren | `drag`, `spring-home`, `vortex`, `flow-field` (Curl-Noise), `gravity-wells` (bis 3, auch negative Masse), `speed-limit`, `bounds` (wrap/bounce/respawn); jeder Typ höchstens einmal, der letzte gewinnt |
 | Erscheinungsbild | Weicher Kreis, Glow, Pixel; Größe min/max; Farbe fest/Geschwindigkeit/Lebensdauer/Palette/Bild; Tiefenausblendung |
@@ -154,3 +154,37 @@ Presets `photo-grains` („Bildstaub“, scatter + Wirbel) und `magnetic-canvas`
 
 - `tests/unit/gpu-image.test.ts` (Sampling: Farben, leere Bereiche, Seed-Reproduzierbarkeit, contain/cover/scale, Helligkeitsgewichtung, Tiefe, vollständig transparentes Bild, Laden/Skalieren/Fehler) und neue Fälle in `gpu-particles.test.ts` (Zielpositionen, Magnetparameter).
 - `tests/e2e/gpu-particles.mjs` mit echtem WebGL2: das Testbild (links rot, rechts blau, transparenter Streifen) ist erkennbar, der Streifen bleibt leer; verstreute Teilchen setzen sich zu dem Bild zusammen; der Magnet verschiebt Teilchen nahe dem Zeiger (> 40 % bewegt, Verschiebung > 0,15), entfernte Teilchen bleiben unverändert (0 von > 500), nach dem Verlassen kehren **alle** auf 0,03 genau zurück; nicht lesbares Bild lehnt die Erzeugung ab.
+
+## Editor (G6)
+
+**Ebene anlegen:** *Ebene hinzufügen* → „Effekt: …“ (ein Eintrag je registriertem Effekttyp, deaktiviert ab drei Effekt-Ebenen je Slide). Die Ebene füllt die Bühne und startet mit dem ersten Preset; Position, Größe und Animation wie bei jeder Ebene.
+
+**Bedienfeld** (`features/effects/EffectProperties.vue`), alle Änderungen über den normalen Dokumentpfad (Undo/Redo, Autosave):
+
+- **Effekt:** Typ (bei mehreren), Presets als Schaltflächen (aktives Preset markiert; jede Parameteränderung löst die Markierung), Zufallswert mit „neuer Zufallswert“, Qualität, **Impuls auslösen**. Hinweise bei nicht verfügbarem Effekt (Plugin inaktiv), anderer Parameterversion („Aktuelle Version verwenden“) und ungültigen Parametern.
+- **Medien:** je Medien-Platz des Effekts (`assets` im Katalog, z. B. „Bild zum Nachbauen“) die Mediathek-Auswahl, dazu das **statische Bild** mit Alternativtext. Die Wahl des Bildes setzt das statische Bild gleich mit, wenn noch keines gesetzt ist.
+- **Parameter:** aus dem Schema erzeugt (`SchemaField.vue`): Zahlen als Schieberegler mit Eingabefeld (Schrittweite aus dem Bereich, Eingabe wird begrenzt), Schalter, Auswahllisten, Farben, Vektoren (x, y, z), Farblisten, Gruppen und Listen mit Varianten (Kräfte: hinzufügen aus den noch unbenutzten Typen, verschieben, entfernen). Jede Gruppe hat „Auf Standardwerte zurücksetzen“. Gespeichert werden nur geänderte Werte; angezeigt und ausgeführt wird mit eingesetzten Standardwerten.
+- Texte der eingebauten Effekte: Titel, Beschreibungen, Presets und Auswahlwerte stehen englisch im Schema und werden über `features/effects/labels.ts` (literale `__()`-Aufrufe, `i18n:check`) übersetzt; Texte von Add-ons erscheinen, wie geliefert.
+
+**Live-Vorschau** (`EffectPreview.vue`, `assets/gpu/preview.ts`): Auf der Bühne läuft derselbe `EffectStage` wie im Frontend. Der Vorschau-Code ist ein eigener, lazy geladener Editor-Chunk; das Effektmodul kommt zur Laufzeit von seiner (versionierten) URL. Parameter, Zufallswert und Qualität werden live angewendet (neuer Zufallswert oder neue Qualität startet neu), ein anderes Bild oder ein anderer Effekttyp erzeugt die Vorschau neu. Zeigerbewegung über der Bühne wirkt auf den Effekt. Ohne WebGL2, bei reduzierter Bewegung oder bei unbekanntem Effekt bleibt das statische Bild oder ein Platzhalter.
+
+**Server → Editor:** `AdminPage::config()` liefert `effects` (Schema, Presets, Medien-Plätze, Modul-URL) und `coreRestRoot`; `SliderController` schickt Vorschaudaten auch für Effekt-Medien. Gespeicherte Dokumente werden beim Laden nur begrenzt geprüft (ein Effekt mit veralteten Parametern blockiert das Öffnen nicht); beim Bearbeiten und Speichern gilt das Schema des Katalogs.
+
+### Nachweise (G6)
+
+- Vitest: `effect-editor.test.ts` (Store und Bedienfeld gegen das echte Schema), `effect-tools.test.ts`, `effect-preview.test.ts`, `gpu-preview.test.ts`, neue Fälle in `gpu-stage.test.ts`; WordPress-Tests für Konfiguration, Medien-Plätze und Vorschaudaten.
+- Gefundene und behobene Fehler: Eingabefelder zeigten Zahlen mit Tausendertrennzeichen und lasen sie beim Bearbeiten falsch (20,000 → 20); das Ändern einer einzelnen Vektor-/Palettenkomponente schrieb ein unvollständiges Array; ein geleertes Seed-Feld setzte den Wert auf 0.
+- `tests/e2e/gpu-editor.mjs` (echter Editor der Dev-Site, deutsch, WebGL2 per Software): siehe unten.
+
+## Effekt füllt die Ebene (Standard „Ganze Fläche“)
+
+Die Formen Scheibe, Ring, Kugel, Quader und Linie sind in Welt-Einheiten angegeben und haben keinen Bezug zur Größe der Ebene. Die Form **„Ganze Fläche“** (`spawn.shape: "view"`, jetzt Standard) verteilt die Partikel gleichmäßig über den **sichtbaren Bereich der Ebene** am Partikelniveau (Höhe aus Kameraabstand und Sichtfeld, Breite aus dem Seitenverhältnis der Ebene), `spawn.size[2]` bestimmt die Tiefe, `spawn.coverage` (0,1–2) den Anteil der Fläche.
+
+- Ohne Bild füllen deshalb `photo-grains`, `magnetic-canvas`, `ember-drift` und `vortex-ribbons` die gesamte Ebene; ohne gewähltes Medium bleiben die Bildstaub-Partikel einfach über der Fläche verteilt (sie federn zu ihrer Ausgangsposition).
+- Ändert sich das Seitenverhältnis der Ebene deutlich (mehr als 8 %, z. B. anderes Gerät oder Größe), legt die Instanz die Partikel neu aus (und baut die Bildziele neu); kleine Größenänderungen lassen sie unverändert.
+- Gewollt geformte Presets (`orbital-mist` als Kugel, `radiant-pulse`) behalten ihre Form, sind aber größer eingestellt.
+- Mit Bild bestimmt `image.fit` (Einpassen/Füllen) und `image.scale`, wie das Motiv die Fläche belegt. Bildeinstellungen wirken live (die Bildziele werden neu berechnet), auch ein erst später gewähltes oder wieder abgewähltes Bild.
+
+### E2E im echten Editor (G6)
+
+`tests/e2e/gpu-editor.mjs` (26 Prüfungen, deutsch, WebGL2 per Software): Ebene über das Menü „Effekt: Partikelfeld“, Live-Vorschau mit aria-hidden-Canvas, Preset mit Seed, Parameter live, Kraft hinzufügen, Impuls, Undo/Redo (Vorschau läuft weiter, Platzhalter ausgeblendet), Speichern und Veröffentlichen, Neuladen, Frontend (Bundle und Modul mit Plugin-Version, Effekt läuft, Pause-Schalter ohne Autoplay, Reduced Motion ohne Canvas, ohne JavaScript statisches Markup) und ein veröffentlichter Slider mit Mediathek-Bild, das aus Partikeln aufgebaut wird. Räumt seine `E2E GPU*`-Sliders, Seiten und Anhänge wieder auf.

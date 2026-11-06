@@ -34,6 +34,7 @@ uniform int uShape;
 uniform float uRadius;
 uniform vec3 uSize;
 uniform vec3 uCenter;
+uniform vec2 uView;         // visible area times the coverage (shape "view")
 uniform int uVelMode;
 uniform float uVelSpeed;
 uniform float uEmitter;
@@ -65,6 +66,7 @@ vec3 shapePosition(int shape, float u1, float u2, float u3) {
   }
   if (shape == 5) return vec3((u1 - 0.5) * uSize.x, (u2 - 0.5) * uSize.y, (u3 - 0.5) * uSize.z);
   if (shape == 6) return vec3((u1 - 0.5) * uSize.x, 0.0, 0.0);
+  if (shape == 7) return vec3((u1 - 0.5) * uView.x, (u2 - 0.5) * uView.y, (u3 - 0.5) * uSize.z);
   return vec3(0.0);
 }
 

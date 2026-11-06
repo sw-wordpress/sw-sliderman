@@ -19,20 +19,23 @@ export const particleField: EffectModule<GpuDevice> = {
   presets: descriptor.presets,
   create: async (context, rawParams) => {
     const params = rawParams as unknown as ParticleParams;
-    let image = null;
-    const url = params.image.enabled ? context.assets.url('image') : null;
-    if (url) {
-      // A missing or unreadable image rejects here; the stage then shows the static fallback image.
-      const pixels = await loadPixels(url);
-      const viewport = context.viewport ?? { width: 16, height: 9, pixelRatio: 1 };
-      image = buildTargets(pixels, {
-        count: params.count,
-        seed: context.seed,
-        image: params.image,
-        aspect: viewport.width / Math.max(viewport.height, 1),
-        viewHeight: 2 * params.camera.distance * Math.tan((params.camera.fov * Math.PI) / 360),
-      });
-    }
+    // The picture is loaded whenever a medium is set, so image settings can be switched on and off live.
+    const url = context.assets.url('image');
+    // A missing or unreadable image rejects here; the stage then shows the static fallback image.
+    const pixels = url ? await loadPixels(url) : null;
+    const targets = (aspect: number, current: ParticleParams) =>
+      pixels && current.image.enabled
+        ? buildTargets(pixels, {
+            count: current.count,
+            seed: context.seed,
+            image: current.image,
+            aspect,
+            viewHeight:
+              2 * current.camera.distance * Math.tan((current.camera.fov * Math.PI) / 360),
+          })
+        : null;
+    const viewport = context.viewport ?? { width: 16, height: 9, pixelRatio: 1 };
+    const image = targets(viewport.width / Math.max(viewport.height, 1), params);
     return new ParticleInstance({
       device: context.device,
       seed: context.seed,
@@ -41,6 +44,8 @@ export const particleField: EffectModule<GpuDevice> = {
       type: descriptor.type,
       schemaVersion: descriptor.schemaVersion,
       image,
+      viewport,
+      rebuildImage: targets,
     });
   },
 };

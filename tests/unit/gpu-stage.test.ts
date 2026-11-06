@@ -478,3 +478,53 @@ describe('EffectStage', () => {
     expect(h.devices).toHaveLength(1);
   });
 });
+
+describe('EffectStage live changes (editor preview)', () => {
+  beforeEach(() => {
+    vi.stubGlobal('ResizeObserver', FakeResizeObserver);
+    vi.stubGlobal('IntersectionObserver', FakeIntersectionObserver);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    document.body.innerHTML = '';
+    vi.restoreAllMocks();
+  });
+
+  it('hands validated parameters to the running instance and ignores stale or invalid edits', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const h = harness();
+    await h.stage.start();
+    await h.stage.reconfigure({ params: { size: 7 } });
+    expect(h.instances[0]?.setParams).toHaveBeenCalledWith({ size: 7 });
+    await h.stage.reconfigure({ params: { size: 99 } });
+    expect(h.instances[0]?.setParams).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalled();
+    await h.stage.reconfigure({});
+    expect(h.instances[0]?.setParams).toHaveBeenCalledTimes(1);
+    h.stage.dispose();
+    await h.stage.reconfigure({ params: { size: 3 } });
+    expect(h.instances[0]?.setParams).toHaveBeenCalledTimes(1);
+  });
+
+  it('restarts for a new seed or quality but not for the same values', async () => {
+    const h = harness({ quality: 'high' });
+    await h.stage.start();
+    await h.stage.reconfigure({ seed: 7, quality: 'high' });
+    expect(h.devices).toHaveLength(1);
+    await h.stage.reconfigure({ seed: 8 });
+    expect(h.devices).toHaveLength(2);
+    expect(h.createCalls.at(-1)).toMatchObject({ seed: 8 });
+    await h.stage.reconfigure({ quality: 'low' });
+    expect(h.devices).toHaveLength(3);
+    expect(h.createCalls.at(-1)).toMatchObject({ quality: 'low' });
+    expect(h.stage.state).toBe('running');
+  });
+
+  it('passes events to the running instance and ignores them otherwise', async () => {
+    const h = harness();
+    h.stage.sendEvent({ type: 'burst' });
+    await h.stage.start();
+    h.stage.sendEvent({ type: 'burst', intensity: 2 });
+    expect(h.instances[0]?.handleEvent).toHaveBeenCalledWith({ type: 'burst', intensity: 2 });
+  });
+});

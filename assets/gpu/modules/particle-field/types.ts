@@ -2,7 +2,7 @@
 export type Vec3 = readonly [number, number, number];
 
 export type SpawnShape =
-  'point' | 'disc' | 'ring' | 'sphere-surface' | 'sphere-volume' | 'box' | 'line';
+  'point' | 'disc' | 'ring' | 'sphere-surface' | 'sphere-volume' | 'box' | 'line' | 'view';
 export const SPAWN_SHAPES: readonly SpawnShape[] = [
   'point',
   'disc',
@@ -11,6 +11,7 @@ export const SPAWN_SHAPES: readonly SpawnShape[] = [
   'sphere-volume',
   'box',
   'line',
+  'view',
 ];
 
 export type VelocityMode = 'none' | 'radial' | 'tangential' | 'random';
@@ -31,6 +32,8 @@ export interface ParticleParams {
     shape: SpawnShape;
     radius: number;
     size: Vec3;
+    /** Share of the visible area the "view" shape covers. */
+    coverage: number;
     position: Vec3;
     velocity: { mode: VelocityMode; speed: number };
   };

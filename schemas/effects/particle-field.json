@@ -1,7 +1,7 @@
 {
   "type": "particle-field",
-  "label": "Partikelfeld",
-  "description": "GPU-simulierte Partikel: Formen, Strömungen, Wirbel, Zeigerkräfte.",
+  "label": "Particle field",
+  "description": "GPU-simulated particles: shapes, flows, vortices and pointer forces; can rebuild a picture.",
   "category": "particles",
   "schemaVersion": 1,
   "continuous": true,
@@ -13,7 +13,8 @@
         "type": "integer",
         "minimum": 1,
         "maximum": 200000,
-        "default": 20000
+        "default": 20000,
+        "title": "Particle count"
       },
       "spawn": {
         "type": "object",
@@ -28,15 +29,18 @@
               "sphere-surface",
               "sphere-volume",
               "box",
-              "line"
+              "line",
+              "view"
             ],
-            "default": "sphere-volume"
+            "default": "view",
+            "title": "Shape"
           },
           "radius": {
             "type": "number",
             "minimum": 0.01,
             "maximum": 50,
-            "default": 1.2
+            "default": 1.2,
+            "title": "Radius"
           },
           "size": {
             "type": "array",
@@ -51,7 +55,8 @@
               2,
               2,
               2
-            ]
+            ],
+            "title": "Size (x, y, z)"
           },
           "position": {
             "type": "array",
@@ -66,7 +71,8 @@
               0,
               0,
               0
-            ]
+            ],
+            "title": "Position (x, y, z)"
           },
           "velocity": {
             "type": "object",
@@ -80,17 +86,28 @@
                   "tangential",
                   "random"
                 ],
-                "default": "none"
+                "default": "none",
+                "title": "Direction"
               },
               "speed": {
                 "type": "number",
                 "minimum": 0,
                 "maximum": 20,
-                "default": 0
+                "default": 0,
+                "title": "Speed"
               }
-            }
+            },
+            "title": "Initial velocity"
+          },
+          "coverage": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 2,
+            "default": 1,
+            "title": "Coverage of the area"
           }
-        }
+        },
+        "title": "Spawn"
       },
       "lifecycle": {
         "type": "object",
@@ -102,21 +119,25 @@
               "persistent",
               "emitter"
             ],
-            "default": "persistent"
+            "default": "persistent",
+            "title": "Mode"
           },
           "minSeconds": {
             "type": "number",
             "minimum": 0.2,
             "maximum": 60,
-            "default": 2
+            "default": 2,
+            "title": "Shortest life (s)"
           },
           "maxSeconds": {
             "type": "number",
             "minimum": 0.2,
             "maximum": 60,
-            "default": 6
+            "default": 6,
+            "title": "Longest life (s)"
           }
-        }
+        },
+        "title": "Lifecycle"
       },
       "operators": {
         "type": "array",
@@ -136,12 +157,14 @@
                   "minimum": 0,
                   "maximum": 10,
                   "default": 0.4,
-                  "x-unit": "1/s"
+                  "x-unit": "1/s",
+                  "title": "Amount"
                 }
               },
               "required": [
                 "type"
-              ]
+              ],
+              "title": "Drag"
             },
             {
               "type": "object",
@@ -155,24 +178,28 @@
                   "type": "number",
                   "minimum": 0,
                   "maximum": 50,
-                  "default": 2
+                  "default": 2,
+                  "title": "Stiffness"
                 },
                 "damping": {
                   "type": "number",
                   "minimum": 0,
                   "maximum": 10,
-                  "default": 0.6
+                  "default": 0.6,
+                  "title": "Damping"
                 },
                 "maxForce": {
                   "type": "number",
                   "minimum": 0,
                   "maximum": 200,
-                  "default": 30
+                  "default": 30,
+                  "title": "Maximum force"
                 }
               },
               "required": [
                 "type"
-              ]
+              ],
+              "title": "Return to origin"
             },
             {
               "type": "object",
@@ -195,7 +222,8 @@
                     0,
                     1,
                     0
-                  ]
+                  ],
+                  "title": "Axis (x, y, z)"
                 },
                 "center": {
                   "type": "array",
@@ -210,24 +238,28 @@
                     0,
                     0,
                     0
-                  ]
+                  ],
+                  "title": "Centre (x, y, z)"
                 },
                 "strength": {
                   "type": "number",
                   "minimum": -20,
                   "maximum": 20,
-                  "default": 1
+                  "default": 1,
+                  "title": "Swirl"
                 },
                 "pull": {
                   "type": "number",
                   "minimum": -20,
                   "maximum": 20,
-                  "default": 0.2
+                  "default": 0.2,
+                  "title": "Pull to axis"
                 }
               },
               "required": [
                 "type"
-              ]
+              ],
+              "title": "Vortex"
             },
             {
               "type": "object",
@@ -241,24 +273,28 @@
                   "type": "number",
                   "minimum": 0.01,
                   "maximum": 10,
-                  "default": 0.8
+                  "default": 0.8,
+                  "title": "Detail"
                 },
                 "amplitude": {
                   "type": "number",
                   "minimum": 0,
                   "maximum": 20,
-                  "default": 1
+                  "default": 1,
+                  "title": "Strength"
                 },
                 "speed": {
                   "type": "number",
                   "minimum": 0,
                   "maximum": 5,
-                  "default": 0.3
+                  "default": 0.3,
+                  "title": "Change speed"
                 }
               },
               "required": [
                 "type"
-              ]
+              ],
+              "title": "Flow field"
             },
             {
               "type": "object",
@@ -287,13 +323,15 @@
                           0,
                           0,
                           0
-                        ]
+                        ],
+                        "title": "Position (x, y, z)"
                       },
                       "mass": {
                         "type": "number",
                         "minimum": -50,
                         "maximum": 50,
-                        "default": 1
+                        "default": 1,
+                        "title": "Mass (negative repels)"
                       }
                     },
                     "required": [
@@ -301,12 +339,14 @@
                       "mass"
                     ]
                   },
-                  "default": []
+                  "default": [],
+                  "title": "Wells"
                 }
               },
               "required": [
                 "type"
-              ]
+              ],
+              "title": "Gravity wells"
             },
             {
               "type": "object",
@@ -320,12 +360,14 @@
                   "type": "number",
                   "minimum": 0.05,
                   "maximum": 50,
-                  "default": 6
+                  "default": 6,
+                  "title": "Maximum speed"
                 }
               },
               "required": [
                 "type"
-              ]
+              ],
+              "title": "Speed limit"
             },
             {
               "type": "object",
@@ -343,23 +385,27 @@
                     "bounce",
                     "respawn"
                   ],
-                  "default": "wrap"
+                  "default": "wrap",
+                  "title": "When leaving"
                 },
                 "radius": {
                   "type": "number",
                   "minimum": 0.1,
                   "maximum": 100,
-                  "default": 4
+                  "default": 4,
+                  "title": "Radius"
                 }
               },
               "required": [
                 "type"
-              ]
+              ],
+              "title": "Boundary"
             }
           ],
           "discriminator": "type"
         },
-        "default": []
+        "default": [],
+        "title": "Forces and behaviour"
       },
       "appearance": {
         "type": "object",
@@ -372,19 +418,22 @@
               "glow",
               "pixel"
             ],
-            "default": "soft-disc"
+            "default": "soft-disc",
+            "title": "Style"
           },
           "sizeMin": {
             "type": "number",
             "minimum": 0.5,
             "maximum": 64,
-            "default": 1.5
+            "default": 1.5,
+            "title": "Smallest size (px)"
           },
           "sizeMax": {
             "type": "number",
             "minimum": 0.5,
             "maximum": 64,
-            "default": 3.5
+            "default": 3.5,
+            "title": "Largest size (px)"
           },
           "colorMode": {
             "type": "string",
@@ -396,19 +445,22 @@
               "palette",
               "image"
             ],
-            "default": "solid"
+            "default": "solid",
+            "title": "Colour from"
           },
           "color": {
             "type": "string",
             "maxLength": 7,
             "format": "color",
-            "default": "#78b9ff"
+            "default": "#78b9ff",
+            "title": "Colour"
           },
           "color2": {
             "type": "string",
             "maxLength": 7,
             "format": "color",
-            "default": "#ffffff"
+            "default": "#ffffff",
+            "title": "Second colour"
           },
           "palette": {
             "type": "array",
@@ -422,7 +474,8 @@
             "default": [
               "#78b9ff",
               "#ffffff"
-            ]
+            ],
+            "title": "Palette"
           },
           "blend": {
             "type": "string",
@@ -431,21 +484,25 @@
               "additive",
               "normal"
             ],
-            "default": "additive"
+            "default": "additive",
+            "title": "Blending"
           },
           "opacity": {
             "type": "number",
             "minimum": 0.01,
             "maximum": 1,
-            "default": 0.8
+            "default": 0.8,
+            "title": "Opacity"
           },
           "depthFade": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
-            "default": 0.3
+            "default": 0.3,
+            "title": "Depth fade"
           }
-        }
+        },
+        "title": "Appearance"
       },
       "camera": {
         "type": "object",
@@ -457,33 +514,39 @@
               "perspective",
               "orthographic"
             ],
-            "default": "perspective"
+            "default": "perspective",
+            "title": "Projection"
           },
           "distance": {
             "type": "number",
             "minimum": 1,
             "maximum": 100,
-            "default": 5.5
+            "default": 5.5,
+            "title": "Distance"
           },
           "fov": {
             "type": "number",
             "minimum": 10,
             "maximum": 120,
-            "default": 50
+            "default": 50,
+            "title": "Field of view (°)"
           },
           "orbitSpeed": {
             "type": "number",
             "minimum": -2,
             "maximum": 2,
-            "default": 0
+            "default": 0,
+            "title": "Orbit speed (rad/s)"
           },
           "tilt": {
             "type": "number",
             "minimum": -1.5,
             "maximum": 1.5,
-            "default": 0
+            "default": 0,
+            "title": "Tilt (rad)"
           }
-        }
+        },
+        "title": "Camera"
       },
       "interaction": {
         "type": "object",
@@ -498,40 +561,47 @@
               "swirl",
               "magnet"
             ],
-            "default": "none"
+            "default": "none",
+            "title": "Pointer effect"
           },
           "radius": {
             "type": "number",
             "minimum": 0.05,
             "maximum": 10,
-            "default": 0.8
+            "default": 0.8,
+            "title": "Radius"
           },
           "strength": {
             "type": "number",
             "minimum": 0,
             "maximum": 200,
-            "default": 4
+            "default": 4,
+            "title": "Strength"
           },
           "polarity": {
             "type": "number",
             "minimum": -1,
             "maximum": 1,
-            "default": 1
+            "default": 1,
+            "title": "Polarity"
           },
           "speedBoost": {
             "type": "number",
             "minimum": 0,
             "maximum": 10,
-            "default": 2
+            "default": 2,
+            "title": "Movement boost"
           }
-        }
+        },
+        "title": "Pointer"
       },
       "image": {
         "type": "object",
         "properties": {
           "enabled": {
             "type": "boolean",
-            "default": false
+            "default": false,
+            "title": "Rebuild the image from particles"
           },
           "fit": {
             "type": "string",
@@ -540,13 +610,15 @@
               "contain",
               "cover"
             ],
-            "default": "contain"
+            "default": "contain",
+            "title": "Fit"
           },
           "scale": {
             "type": "number",
             "minimum": 0.1,
             "maximum": 2,
-            "default": 0.9
+            "default": 0.9,
+            "title": "Scale"
           },
           "sampling": {
             "type": "string",
@@ -556,13 +628,15 @@
               "luminance",
               "inverse-luminance"
             ],
-            "default": "uniform"
+            "default": "uniform",
+            "title": "Distribution"
           },
           "depth": {
             "type": "number",
             "minimum": 0,
             "maximum": 3,
-            "default": 0
+            "default": 0,
+            "title": "Relief depth"
           },
           "assemble": {
             "type": "string",
@@ -571,15 +645,18 @@
               "rest",
               "scatter"
             ],
-            "default": "rest"
+            "default": "rest",
+            "title": "Start"
           },
           "colorBoost": {
             "type": "number",
             "minimum": 0,
             "maximum": 3,
-            "default": 1
+            "default": 1,
+            "title": "Colour boost"
           }
-        }
+        },
+        "title": "Image"
       }
     },
     "required": [
@@ -589,14 +666,14 @@
   "presets": [
     {
       "id": "orbital-mist",
-      "name": "Orbitnebel",
-      "description": "Weicher, rotierender Partikelschwarm mit kugelförmiger Silhouette.",
+      "name": "Orbital mist",
+      "description": "Soft, rotating particle swarm with a spherical silhouette.",
       "seed": 7319,
       "params": {
         "count": 20000,
         "spawn": {
           "shape": "sphere-volume",
-          "radius": 1.3
+          "radius": 2.0
         },
         "operators": [
           {
@@ -641,14 +718,13 @@
     },
     {
       "id": "vortex-ribbons",
-      "name": "Wirbelbänder",
-      "description": "Spiralförmige Strömungen um eine zentrale Achse.",
+      "name": "Vortex ribbons",
+      "description": "Spiral flows around a central axis.",
       "seed": 4242,
       "params": {
         "count": 24000,
         "spawn": {
-          "shape": "disc",
-          "radius": 2.2,
+          "shape": "view",
           "velocity": {
             "mode": "tangential",
             "speed": 0.8
@@ -691,23 +767,22 @@
     },
     {
       "id": "ember-drift",
-      "name": "Glutfunken",
-      "description": "Warme Partikel steigen mit Turbulenz auf und verlöschen.",
+      "name": "Embers",
+      "description": "Warm particles rise with turbulence and fade out.",
       "seed": 913,
       "params": {
         "count": 9000,
         "spawn": {
-          "shape": "disc",
-          "radius": 1.4,
-          "position": [
-            0,
-            -1.8,
-            0
-          ],
+          "shape": "view",
           "velocity": {
             "mode": "random",
             "speed": 0.4
-          }
+          },
+          "size": [
+            2,
+            2,
+            3
+          ]
         },
         "lifecycle": {
           "mode": "emitter",
@@ -753,14 +828,14 @@
     },
     {
       "id": "radiant-pulse",
-      "name": "Strahlenimpuls",
-      "description": "Radialer Ausstoß (Impuls auslösen), danach Abbremsen und Sammeln.",
+      "name": "Radiant pulse",
+      "description": "Radial burst (trigger the impulse), then slowing down and gathering.",
       "seed": 2718,
       "params": {
         "count": 16000,
         "spawn": {
           "shape": "sphere-surface",
-          "radius": 0.6
+          "radius": 1.6
         },
         "operators": [
           {
@@ -794,14 +869,13 @@
     },
     {
       "id": "photo-grains",
-      "name": "Bildstaub",
-      "description": "Das Bild entsteht aus Tausenden farbigen Punkten; der Zeiger wirbelt sie auf, sie setzen sich wieder zusammen. Bild unter „Medien“ wählen.",
+      "name": "Photo grains",
+      "description": "The picture builds from thousands of coloured points; the pointer whirls them up and they settle again. Choose a picture under \"Media\".",
       "seed": 8128,
       "params": {
         "count": 70000,
         "spawn": {
-          "shape": "sphere-volume",
-          "radius": 2.5
+          "shape": "view"
         },
         "image": {
           "enabled": true,
@@ -846,8 +920,8 @@
     },
     {
       "id": "magnetic-canvas",
-      "name": "Magnetfläche",
-      "description": "Der Zeiger zieht Bildpunkte in bogenartigen Feldlinien aus dem Motiv; sie kehren zurück. Bild unter „Medien“ wählen.",
+      "name": "Magnetic canvas",
+      "description": "The pointer pulls picture points out along curved field lines; they return. Choose a picture under \"Media\".",
       "seed": 3141,
       "params": {
         "count": 60000,
@@ -891,8 +965,17 @@
           "strength": 6,
           "polarity": 1,
           "speedBoost": 3
+        },
+        "spawn": {
+          "shape": "view"
         }
       }
+    }
+  ],
+  "assets": [
+    {
+      "key": "image",
+      "label": "Image to rebuild"
     }
   ]
 }

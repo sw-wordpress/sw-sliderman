@@ -36,7 +36,16 @@ export function initialState(count: number, config: ReferenceConfig): ReferenceS
     home: new Float32Array(count * 3),
   };
   for (let i = 0; i < count; i++) {
-    const p = spawnPosition(config.shape, seed, i, 0, spawn.radius, spawn.size, spawn.center);
+    const p = spawnPosition(
+      config.shape,
+      seed,
+      i,
+      0,
+      spawn.radius,
+      spawn.size,
+      spawn.center,
+      spawn.view,
+    );
     const rel: Vec3 = [p[0] - spawn.center[0], p[1] - spawn.center[1], p[2] - spawn.center[2]];
     const v = spawnVelocity(config.velocityMode, spawn.velocitySpeed, rel, seed, i, 0);
     state.pos.set(p, i * 3);
@@ -171,6 +180,7 @@ export function step(
         spawn.radius,
         spawn.size,
         spawn.center,
+        spawn.view,
       );
       const rel: Vec3 = [p[0] - spawn.center[0], p[1] - spawn.center[1], p[2] - spawn.center[2]];
       const v = spawnVelocity(config.velocityMode, spawn.velocitySpeed, rel, seed, i, stepIndex);

@@ -47,12 +47,12 @@ interface Derived {
   readonly paletteSize: number;
 }
 
-function derive(params: ParticleParams): Derived {
+function derive(params: ParticleParams, aspect: number): Derived {
   const palette = new Float32Array(12);
   params.appearance.palette.slice(0, 4).forEach((hex, i) => palette.set(hexToRgb(hex), i * 3));
   return {
     operators: operatorUniforms(params.operators),
-    spawn: spawnUniforms(params),
+    spawn: spawnUniforms(params, aspect),
     color: Float32Array.from(hexToRgb(params.appearance.color)),
     color2: Float32Array.from(hexToRgb(params.appearance.color2)),
     palette,
@@ -89,7 +89,17 @@ export interface InstanceOptions {
   readonly schemaVersion: number;
   /** Optional image reconstruction target (G5). */
   readonly image?: ImageTarget | null;
+  /** Size of the effect area at creation: the "whole area" shape and images are fitted to its aspect. */
+  readonly viewport?: Viewport;
+  /**
+   * Builds the image targets again (new aspect ratio or changed image settings); null: no image.
+   * Without it the targets given in `image` stay as they are.
+   */
+  readonly rebuildImage?: (aspect: number, params: ParticleParams) => ImageTarget | null;
 }
+
+const aspectOf = (viewport: Viewport | undefined): number =>
+  viewport && viewport.height > 0 ? viewport.width / viewport.height : 16 / 9;
 
 const merge = (base: unknown, patch: unknown): unknown => {
   if (
@@ -143,12 +153,18 @@ export class ParticleInstance implements EffectInstance<Params> {
   private pointerBoost = 1;
   private uniformLocations = new Map<string, WebGLUniformLocation | null>();
   private image: ImageTarget | null;
+  /** Aspect ratio the particles were laid out for; a clearly different one rebuilds them. */
+  private aspect: number;
+  /** Parameters the current particles were built from (structural changes are detected against them). */
+  private built: Params;
 
   constructor(private readonly options: InstanceOptions) {
     this.gl = options.device.gl;
     this.scope = options.device.scope();
     this.params = options.params;
-    this.derived = derive(options.params);
+    this.aspect = aspectOf(options.viewport);
+    this.derived = derive(options.params, this.aspect);
+    this.built = options.params;
     this.seed = options.seed >>> 0;
     this.tier = options.quality;
     this.image = options.image ?? null;
@@ -261,6 +277,7 @@ export class ParticleInstance implements EffectInstance<Params> {
         spawn.radius,
         spawn.size,
         spawn.position,
+        this.derived.spawn.view,
       );
       const rel: Vec3 = [
         p[0] - spawn.position[0],
@@ -298,6 +315,13 @@ export class ParticleInstance implements EffectInstance<Params> {
 
   resize(viewport: Viewport): void {
     this.viewport = viewport;
+    const aspect = aspectOf(viewport);
+    if (Math.abs(aspect - this.aspect) / this.aspect <= 0.08) return;
+    // The area changed clearly (e.g. another device size): lay the particles out for it again.
+    this.aspect = aspect;
+    this.derived = derive(this.params, aspect);
+    if (this.options.rebuildImage) this.image = this.options.rebuildImage(aspect, this.params);
+    this.reinitialise();
   }
 
   setQuality(tier: QualityTier): void {
@@ -485,6 +509,7 @@ export class ParticleInstance implements EffectInstance<Params> {
     gl.uniform1f(u('uRadius'), spawn.radius);
     gl.uniform3fv(u('uSize'), spawn.size);
     gl.uniform3fv(u('uCenter'), spawn.center);
+    gl.uniform2fv(u('uView'), spawn.view);
     gl.uniform1i(u('uVelMode'), spawn.velocityMode);
     gl.uniform1f(u('uVelSpeed'), spawn.velocitySpeed);
     gl.uniform1f(u('uEmitter'), spawn.emitter);
@@ -543,21 +568,33 @@ export class ParticleInstance implements EffectInstance<Params> {
     if (!transition) return;
     transition.elapsed += deltaSeconds;
     const t = Math.min(transition.elapsed / transition.duration, 1);
-    this.applyParams(blend(transition.from, transition.to, ease(transition.easing, t)) as Params);
+    this.applyParams(
+      blend(transition.from, transition.to, ease(transition.easing, t)) as Params,
+      t >= 1,
+    );
     if (t >= 1) this.transition = null;
   }
 
-  /** Structural changes (count, spawn, lifecycle mode) rebuild the particles; everything else is uniforms. */
-  private applyParams(next: Params): void {
-    const before = this.params;
+  /**
+   * Structural changes (count, spawn, lifecycle mode, image settings) rebuild the particles;
+   * everything else only changes uniforms. While a transition runs only the uniforms follow; the
+   * rebuild happens once at its end.
+   */
+  private applyParams(next: Params, final = true): void {
     this.params = next;
-    this.derived = derive(next);
+    this.derived = derive(next, this.aspect);
+    const before = this.built;
+    const imageChanged = JSON.stringify(before.image) !== JSON.stringify(next.image);
     const structural =
       before.count !== next.count ||
       JSON.stringify(before.spawn) !== JSON.stringify(next.spawn) ||
-      before.lifecycle.mode !== next.lifecycle.mode;
-    if (structural) this.reinitialise();
-    else this.activeCount = this.countFor(this.tier);
+      before.lifecycle.mode !== next.lifecycle.mode ||
+      imageChanged;
+    if (structural && final) {
+      if (imageChanged && this.options.rebuildImage)
+        this.image = this.options.rebuildImage(this.aspect, next);
+      this.reinitialise();
+    } else this.activeCount = this.countFor(this.tier);
   }
 
   private reinitialise(): void {
@@ -565,6 +602,7 @@ export class ParticleInstance implements EffectInstance<Params> {
     this.uniformLocations.clear();
     this.scope = this.options.device.scope();
     this.res = this.build();
+    this.built = this.params;
   }
 }
 

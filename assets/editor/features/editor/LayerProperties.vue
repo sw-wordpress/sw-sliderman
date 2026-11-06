@@ -28,6 +28,7 @@ import PercentSlider from '@editor/components/fields/PercentSlider.vue';
 import OverrideState from '@editor/components/fields/OverrideState.vue';
 import FocalPointField from '@editor/components/fields/FocalPointField.vue';
 import AccordionSection from '@editor/components/AccordionSection.vue';
+import EffectProperties from '@editor/features/effects/EffectProperties.vue';
 
 const props = defineProps<{ layer: Layer }>();
 const editor = useEditorStore();
@@ -379,7 +380,8 @@ const animationSummary = computed(() => {
     </header>
 
     <!-- content -->
-    <AccordionSection id="layer.content" :title="__('Content')" default-open>
+    <EffectProperties v-if="layer.type === 'effect'" :layer="layer" />
+    <AccordionSection v-else id="layer.content" :title="__('Content')" default-open>
       <template #summary>{{ contentSummary }}</template>
       <template v-if="layer.type === 'text'">
         <RichTextEditor

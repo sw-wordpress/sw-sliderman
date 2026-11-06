@@ -11,6 +11,7 @@ namespace SW\Slider\Admin;
 
 use SW\Slider\Fonts\FontRepository;
 use SW\Slider\Infrastructure\Capabilities;
+use SW\Slider\Infrastructure\EffectRegistry;
 use SW\Slider\Infrastructure\UploadPaths;
 use SW\Slider\Rendering\Assets;
 use SW\Slider\Rest\SliderController;
@@ -34,7 +35,8 @@ final class AdminPage {
 		private readonly string $plugin_url,
 		private readonly string $plugin_dir,
 		private readonly string $version,
-		private readonly bool $fonts_offline
+		private readonly bool $fonts_offline,
+		private readonly ?EffectRegistry $effects = null
 	) {
 	}
 
@@ -99,6 +101,7 @@ final class AdminPage {
 	public function config(): array {
 		return array(
 			'restRoot'     => esc_url_raw( rest_url( SliderController::NAMESPACE . '/' ) ),
+			'coreRestRoot' => esc_url_raw( rest_url( 'wp/v2/' ) ),
 			'nonce'        => wp_create_nonce( 'wp_rest' ),
 			'locale'       => determine_locale(),
 			'userId'       => get_current_user_id(),
@@ -107,7 +110,34 @@ final class AdminPage {
 			'adminUrl'     => esc_url_raw( admin_url( 'admin.php?page=' . self::SLUG ) ),
 			'capabilities' => Capabilities::current_user_caps(),
 			'fontsOffline' => $this->fonts_offline,
+			'effects'      => $this->effects_for_editor(),
 		);
+	}
+
+	/**
+	 * Registered GPU effect types for the editor: schema, presets, media slots and the module URL
+	 * (schema and preset parameters are objects, so empty objects stay `{}` in JSON).
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private function effects_for_editor(): array {
+		$list = array();
+		foreach ( null === $this->effects ? array() : $this->effects->all() as $effect ) {
+			$list[] = array(
+				'type'          => $effect['type'],
+				'label'         => $effect['label'],
+				'description'   => $effect['description'],
+				'category'      => $effect['category'],
+				'continuous'    => $effect['continuous'],
+				'schemaVersion' => $effect['schema_version'],
+				'schema'        => $effect['schema'],
+				'presets'       => $effect['presets'],
+				'assets'        => $effect['assets'],
+				'module'        => $effect['module_url'],
+				'builtin'       => $effect['builtin'],
+			);
+		}
+		return $list;
 	}
 
 	public function module_tag( string $tag, string $handle ): string {

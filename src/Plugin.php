@@ -110,7 +110,7 @@ final class Plugin {
 		$jobs->register();
 		( new FontManagementController( $catalog, $installer, $jobs, $current_offline ) )->register();
 		if ( is_admin() ) {
-			( new AdminPage( $font_repo, SWS_URL, SWS_DIR, SWS_VERSION, $offline ) )->register();
+			( new AdminPage( $font_repo, SWS_URL, SWS_DIR, SWS_VERSION, $offline, $effects ) )->register();
 		}
 	}
 }

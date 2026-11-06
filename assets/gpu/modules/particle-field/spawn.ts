@@ -28,6 +28,7 @@ export const SPAWN_SHAPE_ID: Readonly<Record<SpawnShape, number>> = {
   'sphere-volume': 4,
   box: 5,
   line: 6,
+  view: 7,
 };
 export const VELOCITY_MODE_ID: Readonly<Record<VelocityMode, number>> = {
   none: 0,
@@ -43,6 +44,9 @@ export function unit(seed: number, index: number, stream: number, step: number):
   return toUnit(hashAt((seed + Math.imul(step, 0x9e3779b1)) >>> 0, index, stream));
 }
 
+/** Visible extent at the particle plane in world units, already multiplied by the coverage. */
+export type ViewExtent = readonly [number, number];
+
 /** Position on the spawn shape relative to its centre, from three uniform numbers. */
 export function shapePosition(
   shape: SpawnShape,
@@ -51,6 +55,7 @@ export function shapePosition(
   u3: number,
   radius: number,
   size: Vec3,
+  view: ViewExtent = [size[0], size[1]],
 ): Vec3 {
   switch (shape) {
     case 'disc': {
@@ -74,6 +79,9 @@ export function shapePosition(
       return [(u1 - 0.5) * size[0], (u2 - 0.5) * size[1], (u3 - 0.5) * size[2]];
     case 'line':
       return [(u1 - 0.5) * size[0], 0, 0];
+    case 'view':
+      // The whole visible rectangle of the layer, `size[2]` deep.
+      return [(u1 - 0.5) * view[0], (u2 - 0.5) * view[1], (u3 - 0.5) * size[2]];
     default:
       return [0, 0, 0];
   }
@@ -88,6 +96,7 @@ export function spawnPosition(
   radius: number,
   size: Vec3,
   center: Vec3,
+  view?: ViewExtent,
 ): Vec3 {
   const p = shapePosition(
     shape,
@@ -96,6 +105,7 @@ export function spawnPosition(
     unit(seed, index, STREAM.u3, step),
     radius,
     size,
+    view,
   );
   return [p[0] + center[0], p[1] + center[1], p[2] + center[2]];
 }

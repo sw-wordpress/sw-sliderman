@@ -77,18 +77,28 @@ export interface SpawnUniforms {
   center: Vec3;
   velocityMode: number;
   velocitySpeed: number;
+  /** Visible area (world units) times the coverage, for the "view" shape. */
+  view: [number, number];
   emitter: number;
   lifeMin: number;
   lifeMax: number;
 }
 
-export function spawnUniforms(params: ParticleParams): SpawnUniforms {
+/** Visible size at the particle plane (z = 0) for a camera and the aspect ratio of the layer. */
+export function viewExtent(camera: ParticleParams['camera'], aspect: number): [number, number] {
+  const height = 2 * camera.distance * Math.tan((camera.fov * Math.PI) / 360);
+  return [height * aspect, height];
+}
+
+export function spawnUniforms(params: ParticleParams, aspect = 16 / 9): SpawnUniforms {
+  const [viewWidth, viewHeight] = viewExtent(params.camera, aspect);
   const { spawn, lifecycle } = params;
   return {
     shape: SPAWN_SHAPE_ID[spawn.shape],
     radius: spawn.radius,
     size: spawn.size,
     center: spawn.position,
+    view: [viewWidth * spawn.coverage, viewHeight * spawn.coverage],
     velocityMode: VELOCITY_MODE_ID[spawn.velocity.mode],
     velocitySpeed: spawn.velocity.speed,
     emitter: lifecycle.mode === 'emitter' ? 1 : 0,

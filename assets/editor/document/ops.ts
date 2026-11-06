@@ -9,6 +9,7 @@ import {
   type OverridableStyleKey,
   type Slide,
   type SliderDocument,
+  type EffectContent,
 } from '@shared/types';
 import { newId } from '@editor/utils/ids';
 
@@ -82,6 +83,7 @@ export function createLayer(
   stageWidth: number,
   stageHeight: number,
   name: string,
+  effect?: EffectContent,
 ): Layer {
   // An effect layer fills the whole stage by default (it can be resized like any layer).
   const size =
@@ -128,7 +130,7 @@ export function createLayer(
       return {
         ...common,
         type,
-        content: {
+        content: effect ?? {
           effect: 'particle-field',
           schemaVersion: 1,
           seed: 1,
@@ -136,6 +138,7 @@ export function createLayer(
           params: {},
           fallbackImageId: null,
           alt: '',
+          assets: {},
         },
       };
     default: {

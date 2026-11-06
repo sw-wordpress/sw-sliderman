@@ -454,4 +454,48 @@ final class EffectLayerTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'preset "too-big" rejected', $problems );
 		$this->assertStringContainsString( 'preset "Bad Id" rejected', $problems );
 	}
+
+	public function test_the_editor_config_lists_effects_with_schema_presets_and_media_slots(): void {
+		$registry = $this->add_ons( array( $this->glow() ) );
+		$page     = new \SW\Slider\Admin\AdminPage( new \SW\Slider\Fonts\WpFontRepository(), SWS_URL, SWS_DIR, SWS_VERSION, false, $registry );
+		$config   = $page->config();
+		$this->assertSame( rest_url( 'wp/v2/' ), $config['coreRestRoot'] );
+		$types = array_column( $config['effects'], 'type' );
+		$this->assertSame( array( 'particle-field', 'acme/glow' ), $types );
+		$particles = $config['effects'][0];
+		$this->assertTrue( $particles['builtin'] );
+		$this->assertSame( array( array( 'key' => 'image', 'label' => 'Image to rebuild' ) ), $particles['assets'] );
+		$this->assertSame( 6, count( $particles['presets'] ) );
+		$this->assertSame( array(), $config['effects'][1]['assets'] );
+		$json = (string) wp_json_encode( $config['effects'] );
+		$this->assertStringContainsString( '"properties":{', $json, 'schemas stay JSON objects' );
+		$this->assertStringNotContainsString( '"properties":[', $json );
+		$this->assertSame( array(), ( new \SW\Slider\Admin\AdminPage( new \SW\Slider\Fonts\WpFontRepository(), SWS_URL, SWS_DIR, SWS_VERSION, false ) )->config()['effects'], 'no registry, no effects' );
+	}
+
+	public function test_invalid_media_slots_are_dropped(): void {
+		$registry = $this->add_ons( array( $this->glow( array( 'assets' => array( array( 'key' => 'image', 'label' => 'Picture' ), array( 'key' => '-bad' ), array( 'key' => 'two' ), 'x', array( 'key' => 'a' ), array( 'key' => 'b' ), array( 'key' => 'c' ) ) ) ) ) );
+		$slots    = $registry->descriptor( 'acme/glow' )['assets'];
+		$this->assertSame( array( 'image', 'two' ), array_column( $slots, 'key' ), 'only the first four entries are read; invalid keys are dropped' );
+		$this->assertSame( array( 'Picture', 'two' ), array_column( $slots, 'label' ) );
+	}
+
+	public function test_the_editor_receives_previews_for_effect_media(): void {
+		do_action( 'rest_api_init' );
+		$attachment = self::factory()->attachment->create_upload_object( dirname( __DIR__ ) . '/vendor/wp-phpunit/wp-phpunit/data/images/canola.jpg' );
+		$other      = self::factory()->attachment->create_upload_object( dirname( __DIR__ ) . '/vendor/wp-phpunit/wp-phpunit/data/images/33772.jpg' );
+		$registry   = $this->add_ons( array( $this->glow() ) );
+		$service    = $this->service( $registry );
+		$id         = $service->create_slider( 'Media' );
+		$content    = array(
+			'fallbackImageId' => $attachment,
+			'assets'          => array( 'image' => $other ),
+		);
+		$service->save_draft( $id, 'Media', $this->document_with_effect( $service, $id, $content ), 1 );
+		$request  = new WP_REST_Request( 'GET', '/sw-sliderman/v1/sliders/' . $id );
+		$response = rest_get_server()->dispatch( $request );
+		$media    = $response->get_data()['media'];
+		$this->assertEqualsCanonicalizing( array( $attachment, $other ), array_keys( (array) $media ) );
+		$this->assertMatchesRegularExpression( '#^https?://.+\.jpg$#', ( (array) $media )[ $other ]['url'] );
+	}
 }

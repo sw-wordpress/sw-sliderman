@@ -2,7 +2,7 @@
 /**
  * Local end-to-end helper (development site only, never shipped).
  *
- * Usage: php tests/e2e/wp-helper.php auth|activate|page <slider-id>|slider <title>|bulk <prefix> <count>|age <id>|cleanup <title-prefix>
+ * Usage: php tests/e2e/wp-helper.php auth|activate|page <slider-id>|slider <title>|gpu-slider <title> [preset]|bulk <prefix> <count>|age <id>|cleanup <title-prefix>
  * Prints JSON. `auth` returns admin cookies for Playwright; `page` creates/updates a test page
  * that embeds the slider twice.
  *
@@ -54,6 +54,71 @@ if ( 'slider' === $sws_command ) {
 	echo wp_json_encode( array( 'id' => $sws_created['id'], 'published' => 200 === $sws_status ) ), "\n";
 	exit;
 }
+if ( 'gpu-slider' === $sws_command ) {
+	// Published slider with one full-stage particle-field layer and a picture (the WordPress logo).
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+	require_once ABSPATH . 'wp-admin/includes/media.php';
+	$sws_admins = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
+	wp_set_current_user( (int) ( $sws_admins[0] ?? 0 ) );
+	do_action( 'rest_api_init' );
+	$sws_title  = $argv[2] ?? 'E2E GPU';
+	$sws_preset = $argv[3] ?? 'magnetic-canvas';
+	$sws_upload = wp_upload_bits( 'e2e-gpu-logo-' . wp_generate_password( 6, false ) . '.png', null, (string) file_get_contents( ABSPATH . 'wp-includes/images/w-logo-blue.png' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+	$sws_media  = wp_insert_attachment(
+		array(
+			'post_title'     => $sws_title . ' image',
+			'post_mime_type' => 'image/png',
+			'post_status'    => 'inherit',
+		),
+		$sws_upload['file']
+	);
+	wp_update_attachment_metadata( $sws_media, wp_generate_attachment_metadata( $sws_media, $sws_upload['file'] ) );
+	$sws_registry = new \SW\Slider\Infrastructure\EffectRegistry( SWS_DIR, SWS_URL, SWS_VERSION );
+	$sws_effect   = $sws_registry->descriptor( 'particle-field' );
+	$sws_params   = new stdClass();
+	$sws_seed     = 1;
+	foreach ( $sws_effect['presets'] as $sws_candidate ) {
+		if ( $sws_preset === $sws_candidate['id'] ) {
+			$sws_params = $sws_candidate['params'];
+			$sws_seed   = $sws_candidate['seed'];
+		}
+	}
+	$sws_call = static function ( string $method, string $route, array $body ): array {
+		$request = new WP_REST_Request( $method, '/sw-sliderman/v1' . $route );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( (string) wp_json_encode( $body ) );
+		$response = rest_get_server()->dispatch( $request );
+		return array( $response->get_status(), $response->get_data() );
+	};
+	list( , $sws_created ) = $sws_call( 'POST', '/sliders', array( 'title' => $sws_title ) );
+	$sws_document          = json_decode( (string) wp_json_encode( $sws_created['document'] ), true );
+	$sws_document['slides'][0]['layers'][] = array(
+		'id'        => 'gpu-fx',
+		'type'      => 'effect',
+		'name'      => 'Effekt',
+		'locked'    => false,
+		'content'   => array(
+			'effect'          => 'particle-field',
+			'schemaVersion'   => 1,
+			'seed'            => $sws_seed,
+			'quality'         => 'auto',
+			'params'          => $sws_params,
+			'preset'          => $sws_preset,
+			'alt'             => 'WordPress logo',
+			'fallbackImageId' => $sws_media,
+			'assets'          => array( 'image' => $sws_media ),
+		),
+		'layout'    => array( 'x' => 0, 'y' => 0, 'width' => 1440, 'height' => 600, 'anchorX' => 'left', 'anchorY' => 'top', 'rotation' => 0, 'visible' => true ),
+		'style'     => array( 'fontRef' => null, 'fontSize' => 20, 'lineHeight' => 1.2, 'letterSpacing' => 0, 'color' => '#ffffff', 'textAlign' => 'center', 'backgroundColor' => '#0b1220', 'borderRadius' => 0, 'paddingX' => 0, 'paddingY' => 0, 'opacity' => 1 ),
+		'overrides' => new stdClass(),
+		'animation' => array( 'enter' => array( 'preset' => 'none', 'startMs' => 0, 'durationMs' => 0, 'easing' => 'ease', 'distance' => 0 ), 'exit' => array( 'mode' => 'slide-end' ) ),
+	);
+	list( $sws_saved, $sws_body ) = $sws_call( 'PUT', '/sliders/' . $sws_created['id'], array( 'title' => $sws_title, 'expectedVersion' => $sws_created['version'], 'document' => $sws_document ) );
+	list( $sws_status )           = $sws_call( 'POST', '/sliders/' . $sws_created['id'] . '/publish', array( 'version' => $sws_body['version'] ?? 0 ) );
+	echo wp_json_encode( array( 'id' => $sws_created['id'], 'media' => $sws_media, 'saved' => $sws_saved, 'published' => 200 === $sws_status ) ), "\n";
+	exit;
+}
 if ( 'bulk' === $sws_command ) {
 	// Many unpublished sliders, to exercise paginated lists.
 	$sws_admins = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
@@ -88,6 +153,11 @@ if ( 'cleanup' === $sws_command ) {
 	foreach ( get_posts( array( 'post_type' => 'sw_slider', 'posts_per_page' => -1, 'post_status' => 'any' ) ) as $sws_post ) {
 		if ( str_starts_with( $sws_post->post_title, (string) ( $argv[2] ?? 'E2E' ) ) ) {
 			wp_delete_post( $sws_post->ID, true );
+		}
+	}
+	foreach ( get_posts( array( 'post_type' => 'attachment', 'posts_per_page' => -1, 'post_status' => 'any', 's' => (string) ( $argv[2] ?? 'E2E' ) ) ) as $sws_attachment ) {
+		if ( str_starts_with( $sws_attachment->post_title, (string) ( $argv[2] ?? 'E2E' ) ) ) {
+			wp_delete_attachment( $sws_attachment->ID, true );
 		}
 	}
 	echo "{}\n";

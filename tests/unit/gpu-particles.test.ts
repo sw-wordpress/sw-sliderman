@@ -27,7 +27,12 @@ import {
   spawnVelocity,
   unit,
 } from '@gpu/modules/particle-field/spawn';
-import { hexToRgb, operatorUniforms, spawnUniforms } from '@gpu/modules/particle-field/uniforms';
+import {
+  hexToRgb,
+  operatorUniforms,
+  spawnUniforms,
+  viewExtent,
+} from '@gpu/modules/particle-field/uniforms';
 
 const defaults = (patch: Record<string, unknown> = {}): ParticleParams =>
   withDefaults(descriptor.schema, { count: 100, ...patch }) as ParticleParams;
@@ -49,7 +54,8 @@ describe('particle-field descriptor', () => {
   it('defaults make a complete, valid parameter set from just a count', () => {
     const params = defaults();
     expect(validateParams(descriptor.schema, params)).toEqual([]);
-    expect(params.spawn.shape).toBe('sphere-volume');
+    expect(params.spawn.shape).toBe('view');
+    expect(params.spawn.coverage).toBe(1);
     expect(params.camera.projection).toBe('perspective');
     expect(params.operators).toEqual([]);
   });
@@ -642,5 +648,146 @@ describe('image targets and the magnetic pointer in the instance', () => {
     particles.update(frame(1 / 60, { pointer: at(300) }), 1);
     const strengths = named(calls, 'uPointerParams').map((a) => a[2]);
     expect(strengths).toEqual([10, 10]);
+  });
+});
+
+describe('whole-area spawn (the effect fills the layer)', () => {
+  const camera = {
+    projection: 'perspective',
+    distance: 5.5,
+    fov: 50,
+    orbitSpeed: 0,
+    tilt: 0,
+  } as const;
+
+  it('knows the visible area at the particle plane, scaled by the aspect ratio', () => {
+    const [w, h] = viewExtent(camera, 2);
+    expect(h).toBeCloseTo(2 * 5.5 * Math.tan((25 * Math.PI) / 180), 9);
+    expect(w).toBeCloseTo(2 * h, 9);
+    expect(spawnUniforms(defaults({ spawn: { coverage: 0.5 } }), 2).view[1]).toBeCloseTo(
+      h * 0.5,
+      9,
+    );
+  });
+
+  it('spreads particles evenly over the whole visible rectangle and `size[2]` deep', () => {
+    const view: [number, number] = [12, 5];
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    let maxZ = 0;
+    let quarter = 0;
+    const n = 4000;
+    for (let i = 0; i < n; i++) {
+      const [x, y, z] = spawnPosition('view', 3, i, 0, 1, [1, 1, 2], [0, 0, 0], view);
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+      maxZ = Math.max(maxZ, Math.abs(z));
+      if (x > 0 && y > 0) quarter++;
+    }
+    expect(minX).toBeLessThan(-5.9);
+    expect(maxX).toBeGreaterThan(5.9);
+    expect(minY).toBeLessThan(-2.4);
+    expect(maxY).toBeGreaterThan(2.4);
+    expect(maxX).toBeLessThanOrEqual(6);
+    expect(maxZ).toBeLessThanOrEqual(1);
+    expect(quarter / n).toBeCloseTo(0.25, 1);
+  });
+
+  it('falls back to the size when no view extent is given', () => {
+    const p = shapePosition('view', 1, 1, 1, 1, [4, 2, 6]);
+    expect(p).toEqual([2, 1, 3]);
+  });
+
+  it('is the default shape and every preset fills the area unless it is deliberately shaped', () => {
+    const shaped = new Set(['orbital-mist', 'radiant-pulse']);
+    for (const preset of descriptor.presets) {
+      const shape = (withDefaults(descriptor.schema, preset.params) as ParticleParams).spawn.shape;
+      if (!shaped.has(preset.id)) expect(shape, preset.id).toBe('view');
+    }
+  });
+
+  it('lays particles out again when the area gets a clearly different aspect ratio, but not for small changes', () => {
+    const { particles, device } = instance({ count: 50, spawn: { shape: 'view' } }, 'high', null);
+    const before = device.resourceCount;
+    particles.resize({ width: 400, height: 300, pixelRatio: 1 });
+    particles.resize({ width: 410, height: 300, pixelRatio: 1 });
+    expect(device.resourceCount).toBe(before);
+    particles.resize({ width: 900, height: 300, pixelRatio: 1 });
+    expect(device.resourceCount).toBe(before);
+  });
+});
+
+describe('image targets follow settings and area', () => {
+  function withRebuild() {
+    const { gl, calls } = glDouble();
+    const canvas = document.createElement('canvas');
+    canvas.getContext = (() => gl) as never;
+    const device = GpuDevice.create(canvas);
+    if (!device) throw new Error('device');
+    const params = defaults({ count: 20, image: { enabled: true, fit: 'contain' } });
+    const rebuild = vi.fn((_aspect: number, _p: ParticleParams) => ({
+      home: new Float32Array(80),
+      color: new Float32Array(80).fill(1),
+    }));
+    const particles = new ParticleInstance({
+      device,
+      seed: 1,
+      params,
+      quality: 'high',
+      type: 'particle-field',
+      schemaVersion: 1,
+      viewport: { width: 400, height: 200, pixelRatio: 1 },
+      image: rebuild(2, params),
+      rebuildImage: rebuild,
+    });
+    rebuild.mockClear();
+    particles.resize({ width: 400, height: 200, pixelRatio: 1 });
+    return { particles, rebuild, calls, device };
+  }
+
+  it('keeps the particles when the area stays about the same', () => {
+    const { particles, rebuild } = withRebuild();
+    particles.resize({ width: 420, height: 200, pixelRatio: 1 });
+    expect(rebuild).not.toHaveBeenCalled();
+  });
+
+  it('builds the image targets again for a clearly different aspect ratio', () => {
+    const { particles, rebuild, device } = withRebuild();
+    const before = device.resourceCount;
+    particles.resize({ width: 200, height: 400, pixelRatio: 1 });
+    expect(rebuild).toHaveBeenCalledTimes(1);
+    expect(rebuild.mock.calls[0]?.[0]).toBeCloseTo(0.5, 6);
+    expect(device.resourceCount).toBe(before);
+  });
+
+  it('applies changed image settings live (fit, scale, switching the picture off) but not unrelated edits', () => {
+    const { particles, rebuild } = withRebuild();
+    particles.setParams({ appearance: { opacity: 0.2 } } as never);
+    expect(rebuild).not.toHaveBeenCalled();
+    particles.setParams({ image: { fit: 'cover' } } as never);
+    expect(rebuild).toHaveBeenCalledTimes(1);
+    expect(rebuild.mock.calls[0]?.[1].image.fit).toBe('cover');
+    particles.setParams({ image: { enabled: false } } as never);
+    expect(rebuild).toHaveBeenCalledTimes(2);
+    expect(rebuild.mock.calls[1]?.[1].image.enabled).toBe(false);
+  });
+
+  it('rebuilds only once at the end of a transition that changes the image', () => {
+    const { particles, rebuild } = withRebuild();
+    const state = particles.captureState();
+    const target = {
+      ...state,
+      params: { ...state.params, image: { ...(state.params.image as object), scale: 0.3 } },
+    };
+    particles.transitionTo(target, { durationSeconds: 1, easing: 'linear' });
+    for (let i = 0; i < 4; i++) particles.update(frame(i / 4, { deltaSeconds: 0.2 }), 0);
+    expect(rebuild).not.toHaveBeenCalled();
+    particles.update(frame(1, { deltaSeconds: 0.5 }), 0);
+    expect(rebuild).toHaveBeenCalledTimes(1);
+    expect(rebuild.mock.calls[0]?.[1].image.scale).toBe(0.3);
   });
 });

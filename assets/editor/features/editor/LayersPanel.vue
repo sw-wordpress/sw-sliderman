@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { Layer, LayerType } from '@shared/types';
+import { LIMITS } from '@shared/limits';
+import { effectInfos } from '@editor/effects/catalog';
+import { effectText } from '@editor/features/effects/labels';
 import { resolveLayerLayout } from '@shared/layout';
 import { useEditorStore } from '@editor/stores/editor';
 import { __, sprintf } from '@editor/i18n';
@@ -10,6 +13,12 @@ const editor = useEditorStore();
 
 /** Top-most layer first (the document stores bottom-to-top render order). */
 const layers = computed<Layer[]>(() => [...(editor.slide?.layers ?? [])].reverse());
+const effects = effectInfos();
+const effectLimitReached = computed(
+  () =>
+    (editor.slide?.layers.filter((l) => l.type === 'effect').length ?? 0) >=
+    LIMITS.effectLayersPerSlide,
+);
 const icons: Record<LayerType, string> = {
   text: 'r_title',
   image: 'r_image',
@@ -53,6 +62,19 @@ function select(event: MouseEvent, layer: Layer): void {
             <q-item clickable @click="editor.addLayer('shape')">
               <q-item-section avatar><q-icon name="r_category" /></q-item-section>
               <q-item-section>{{ __('Shape') }}</q-item-section>
+            </q-item>
+            <q-separator v-if="effects.length > 0" />
+            <q-item
+              v-for="effect in effects"
+              :key="effect.type"
+              clickable
+              :disable="effectLimitReached"
+              @click="editor.addLayer('effect', effect.type)"
+            >
+              <q-item-section avatar><q-icon name="r_auto_awesome" /></q-item-section>
+              <q-item-section>{{
+                sprintf(__('Effect: %s'), effectText(effect.label))
+              }}</q-item-section>
             </q-item>
           </q-list>
         </q-menu>

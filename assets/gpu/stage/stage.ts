@@ -1,7 +1,13 @@
 import { AdaptiveQuality, QUALITY_PROFILES, resolveTier } from '../core/quality';
 import { FixedStepper } from '../core/timestep';
 import type { EffectRegistry } from '../core/registry';
-import type { EffectConfig, EffectInstance, PointerSample, QualityTier } from '../core/index';
+import type {
+  EffectConfig,
+  EffectEvent,
+  EffectInstance,
+  PointerSample,
+  QualityTier,
+} from '../core/index';
 import type { GpuDevice } from '../device/webgl2';
 import type { Scheduler } from './scheduler';
 
@@ -56,7 +62,11 @@ export class EffectStage {
   private restoreAttempts = 0;
   private generation = 0;
 
+  /** Current configuration; `reconfigure` replaces parts of it. */
+  private config: EffectConfig;
+
   constructor(private readonly options: StageOptions) {
+    this.config = options.config;
     this.tier = resolveTier(options.config.quality ?? 'auto', 'high');
   }
 
@@ -96,6 +106,46 @@ export class EffectStage {
     if (on) this.reasons.add(reason);
     else this.reasons.delete(reason);
     this.updateRunning();
+  }
+
+  /**
+   * Applies edited settings while running (editor preview). Parameters are validated again and handed
+   * to the instance; a new seed or quality restarts the effect.
+   */
+  async reconfigure(patch: {
+    params?: Record<string, unknown>;
+    seed?: number;
+    quality?: EffectConfig['quality'];
+  }): Promise<void> {
+    if (this.stateValue === 'disposed') return;
+    const restart =
+      (patch.seed !== undefined && patch.seed !== this.config.seed) ||
+      (patch.quality !== undefined && patch.quality !== this.config.quality);
+    this.config = {
+      ...this.config,
+      ...(patch.params === undefined ? {} : { params: patch.params }),
+      ...(patch.seed === undefined ? {} : { seed: patch.seed }),
+      ...(patch.quality === undefined ? {} : { quality: patch.quality }),
+    };
+    if (patch.quality !== undefined) this.tier = resolveTier(patch.quality, this.tier);
+    if (restart) {
+      this.release();
+      return this.start();
+    }
+    if (patch.params === undefined || !this.instance) return;
+    const generation = this.generation;
+    try {
+      const resolved = await this.options.registry.resolveParams(this.config);
+      if (generation === this.generation && this.instance) this.instance.setParams(resolved.params);
+    } catch (error) {
+      // An invalid intermediate edit keeps the last valid look; the editor shows the validation issue.
+      console.warn('sw-sliderman: effect parameters rejected', error);
+    }
+  }
+
+  /** Sends an event (impulse, reset) to the running effect. */
+  sendEvent(event: EffectEvent): void {
+    this.instance?.handleEvent(event);
   }
 
   /** Latest pointer position in client (viewport) coordinates, or null when it left. */
@@ -151,7 +201,8 @@ export class EffectStage {
   }
 
   private async createInstance(generation: number): Promise<boolean> {
-    const { config, registry, assets } = this.options;
+    const { registry, assets } = this.options;
+    const config = this.config;
     const device = this.device;
     if (!device) return false;
     try {
@@ -241,8 +292,7 @@ export class EffectStage {
     const deltaSeconds = last === null ? 0 : Math.max(0, (nowMs - last) / 1000);
     if (last !== null) {
       const next = this.adaptive.sample(deltaSeconds * 1000);
-      if (next !== null && (this.options.config.quality ?? 'auto') === 'auto')
-        this.changeTier(next);
+      if (next !== null && (this.config.quality ?? 'auto') === 'auto') this.changeTier(next);
     }
     const profile = QUALITY_PROFILES[this.tier];
     this.time += Math.min(deltaSeconds, 0.25);

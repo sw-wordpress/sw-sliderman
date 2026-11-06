@@ -171,9 +171,32 @@ final class EffectRegistry implements EffectCatalog {
 			'schema_version' => $schema_version,
 			'schema'         => $schema,
 			'presets'        => $presets,
+			'assets'         => $this->asset_slots( $data['assets'] ?? array() ),
 			'module_url'     => $module_url,
 			'builtin'        => $builtin,
 		);
+	}
+
+	/**
+	 * Media slots the effect reads (`image` for a picture to rebuild): at most four `{key, label}`.
+	 *
+	 * @param mixed $raw Raw slot list.
+	 *
+	 * @return list<array{key: string, label: string}>
+	 */
+	private function asset_slots( mixed $raw ): array {
+		$slots = array();
+		foreach ( is_array( $raw ) ? array_slice( $raw, 0, 4 ) : array() as $slot ) {
+			$key = is_array( $slot ) && is_string( $slot['key'] ?? null ) ? $slot['key'] : '';
+			if ( 1 === preg_match( '/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/D', $key ) ) {
+				$label   = is_string( $slot['label'] ?? null ) && '' !== $slot['label'] ? mb_substr( $slot['label'], 0, 80, 'UTF-8' ) : $key;
+				$slots[] = array(
+					'key'   => $key,
+					'label' => $label,
+				);
+			}
+		}
+		return $slots;
 	}
 
 	/**
