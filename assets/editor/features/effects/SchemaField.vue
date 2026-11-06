@@ -325,7 +325,7 @@ const addLabel = computed(() =>
         />
         <template v-for="[key, child] in propertyEntries(schemaOf(item))" v-else :key="key">
           <SchemaField
-            v-if="key !== discriminator"
+            v-if="variants.length === 0 || key !== discriminator"
             :schema="child"
             :path="[...path, index, key]"
             :name="key"

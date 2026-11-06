@@ -62,6 +62,27 @@ describe('SchemaField lists of plain values', () => {
   });
 });
 
+describe('SchemaField object lists with an ordinary type property', () => {
+  it('keeps the type field editable when the items are not discriminated variants', () => {
+    const { wrapper } = mountField(
+      {
+        type: 'array',
+        maxItems: 3,
+        title: 'Marks',
+        items: {
+          type: 'object',
+          properties: {
+            type: { type: 'string', enum: ['circle', 'square'], default: 'circle', title: 'Shape' },
+          },
+        },
+      },
+      [{ type: 'square' }],
+    );
+    expect(wrapper.text()).toContain('Shape');
+    wrapper.unmount();
+  });
+});
+
 describe('SchemaField minItems', () => {
   const numbers = { type: 'number', minimum: 0, maximum: 10, default: 1 };
   const removeButtons = (wrapper: ReturnType<typeof mountField>['wrapper']) =>
