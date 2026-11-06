@@ -231,6 +231,24 @@ describe('EffectPreview', () => {
     fake.instances[0]?.onState?.('running');
   });
 
+  it('restarts the preview when the reduced-motion setting changes while the editor is open', async () => {
+    let change: (() => void) | undefined;
+    const remove = vi.fn();
+    window.matchMedia = vi.fn().mockReturnValue({
+      matches: false,
+      addEventListener: (_: string, listener: () => void) => (change = listener),
+      removeEventListener: remove,
+    });
+    const { wrapper } = await setup();
+    expect(fake.instances).toHaveLength(1);
+    change?.();
+    await flushPromises();
+    expect(fake.instances[0]?.dispose).toHaveBeenCalledTimes(1);
+    expect(fake.instances).toHaveLength(2);
+    wrapper.unmount();
+    expect(remove).toHaveBeenCalledWith('change', change);
+  });
+
   it('does not start for an unknown effect type and cleans up on unmount', async () => {
     const { editor, layer, wrapper } = await setup();
     editor.updateLayer(layer().id, (l) => {

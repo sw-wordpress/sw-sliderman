@@ -101,7 +101,15 @@ const onPointer = (event: PointerEvent): void =>
   preview?.setPointer({ x: event.clientX, y: event.clientY, down: event.buttons > 0 });
 const onLeave = (): void => preview?.setPointer(null);
 
+// Switching the system setting while the editor is open stops or restarts the effect.
+const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+const onMotionChange = (): void => {
+  stop();
+  void start();
+};
+
 onMounted(() => {
+  motionQuery.addEventListener('change', onMotionChange);
   void start();
   window.addEventListener('pointermove', onPointer, { passive: true });
   document.addEventListener('pointerleave', onLeave);
@@ -109,6 +117,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   disposed = true;
   offEvent();
+  motionQuery.removeEventListener('change', onMotionChange);
   window.removeEventListener('pointermove', onPointer);
   document.removeEventListener('pointerleave', onLeave);
   stop();

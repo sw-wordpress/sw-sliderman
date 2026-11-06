@@ -188,11 +188,11 @@ export class ParticleInstance implements EffectInstance<Params> {
     const dynamic = gl.DYNAMIC_COPY;
     const bufferP: Pair<WebGLBuffer> = [
       scope.buffer(position, dynamic),
-      scope.buffer(position.byteLength, dynamic),
+      scope.buffer(position, dynamic), // both sides start initialised so a raised quality tier finds valid particles
     ];
     const bufferV: Pair<WebGLBuffer> = [
       scope.buffer(velocity, dynamic),
-      scope.buffer(velocity.byteLength, dynamic),
+      scope.buffer(velocity, dynamic),
     ];
     const bufferH = scope.buffer(home, gl.STATIC_DRAW);
     const bufferC = scope.buffer(color, gl.STATIC_DRAW);

@@ -458,6 +458,16 @@ describe('ParticleInstance', () => {
     expect(particles.activeParticleCount).toBe(4000);
   });
 
+  it('initialises both ping-pong sides so a raised quality tier finds valid particles', () => {
+    const { calls } = instance({ count: 8000 }, 'low');
+    const dynamic = calls
+      .filter(([n, a]) => n === 'bufferData' && (a as unknown[])[1] instanceof Float32Array)
+      .map(([, a]) => (a as unknown[])[1] as Float32Array)
+      .filter((data) => data.length === 8000 * 4);
+    // position and velocity on two sides, home and colour once each
+    expect(dynamic.length).toBeGreaterThanOrEqual(6);
+  });
+
   it('applies parameter patches: appearance stays cheap, structure rebuilds without leaking', () => {
     const { particles, device } = instance();
     const before = device.resourceCount;
@@ -588,7 +598,8 @@ describe('image targets and the magnetic pointer in the instance', () => {
       'high',
       image,
     );
-    const [position, velocity, home, color] = uploaded(calls);
+    const [position, otherPosition, velocity, , home, color] = uploaded(calls);
+    expect(otherPosition).toEqual(position);
     expect(Array.from(position?.slice(0, 3) ?? [])).toEqual([10, 20, 30]);
     expect(Array.from(home?.slice(0, 3) ?? [])).toEqual([10, 20, 30]);
     expect(Array.from(color?.slice(0, 4) ?? [])).toEqual([0.5, 0.5, 0.5, 0.5]);
@@ -606,7 +617,7 @@ describe('image targets and the magnetic pointer in the instance', () => {
       'high',
       image,
     );
-    const [position, , home] = uploaded(calls);
+    const [position, , , , home] = uploaded(calls);
     expect(Array.from(home?.slice(0, 3) ?? [])).toEqual([10, 20, 30]);
     expect(
       Math.hypot(position?.[0] ?? 99, position?.[1] ?? 99, position?.[2] ?? 99),
