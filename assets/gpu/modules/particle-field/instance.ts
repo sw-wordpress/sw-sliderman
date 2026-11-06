@@ -228,7 +228,7 @@ export class ParticleInstance implements EffectInstance<Params> {
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     this.current = 0;
     this.stepIndex = 0;
-    this.activeCount = this.countFor(this.tier);
+    this.activeCount = this.countFor(this.tier, this.params.count);
     return {
       updateProgram,
       renderProgram,
@@ -250,8 +250,12 @@ export class ParticleInstance implements EffectInstance<Params> {
     gl.vertexAttribDivisor(location, divisor);
   }
 
-  private countFor(tier: QualityTier): number {
-    return Math.max(1, Math.floor(this.params.count * QUALITY_PROFILES[tier].countScale));
+  /** Never more than the buffers hold: during a transition `params.count` may exceed `built.count`. */
+  private countFor(
+    tier: QualityTier,
+    base = Math.min(this.params.count, this.built.count),
+  ): number {
+    return Math.max(1, Math.floor(base * QUALITY_PROFILES[tier].countScale));
   }
 
   /** Initial state from the CPU spawn functions (the same hash as the shader, step 0). */

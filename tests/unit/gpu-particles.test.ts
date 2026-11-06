@@ -794,6 +794,23 @@ describe('image targets follow settings and area', () => {
     expect(rebuild.mock.calls[0]?.[1].count).toBe(40);
   });
 
+  it('keeps the drawn particles within the allocated buffers while a transition raises the count', () => {
+    const { particles, rebuild } = withRebuild();
+    const state = particles.captureState();
+    particles.transitionTo(
+      { ...state, params: { ...state.params, count: 40 } },
+      {
+        durationSeconds: 1,
+        easing: 'linear',
+      },
+    );
+    particles.update(frame(0.5, { deltaSeconds: 0.5 }), 0);
+    expect(particles.activeParticleCount).toBeLessThanOrEqual(20);
+    particles.update(frame(1, { deltaSeconds: 0.5 }), 0);
+    expect(rebuild).toHaveBeenCalled();
+    expect(particles.activeParticleCount).toBe(40);
+  });
+
   it('rebuilds only once at the end of a transition that changes the image', () => {
     const { particles, rebuild } = withRebuild();
     const state = particles.captureState();
