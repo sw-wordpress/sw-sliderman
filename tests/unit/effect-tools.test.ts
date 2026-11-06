@@ -76,6 +76,8 @@ describe('schema tools', () => {
     expect(fieldKind(prop('appearance', 'opacity'))).toBe('number');
     expect(fieldKind(prop('image', 'enabled'))).toBe('boolean');
     expect(fieldKind(prop('spawn', 'shape'))).toBe('enum');
+    expect(fieldKind({ type: 'integer', minimum: 1, maximum: 4, enum: [1, 2, 4] })).toBe('enum');
+    expect(fieldKind({ type: 'number', minimum: 1, maximum: 4 })).toBe('number');
     expect(fieldKind(prop('appearance', 'color'))).toBe('color');
     expect(fieldKind(prop('spawn', 'position'))).toBe('vector');
     expect(fieldKind(prop('appearance', 'palette'))).toBe('colors');

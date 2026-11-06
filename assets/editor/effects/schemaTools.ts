@@ -56,6 +56,9 @@ export type FieldKind =
 /** Which control renders a schema node. */
 export function fieldKind(schema: Json): FieldKind {
   if (Array.isArray(schema.oneOf)) return 'unknown'; // only reachable as a list item
+  // An enum restricts the value whatever its scalar type (numbers keep their type in the options).
+  if (Array.isArray(schema.enum) && schema.type !== 'object' && schema.type !== 'array')
+    return 'enum';
   switch (schema.type) {
     case 'integer':
       return 'integer';
@@ -64,7 +67,6 @@ export function fieldKind(schema: Json): FieldKind {
     case 'boolean':
       return 'boolean';
     case 'string':
-      if (Array.isArray(schema.enum)) return 'enum';
       return schema.format === 'color' ? 'color' : 'text';
     case 'object':
       return 'object';

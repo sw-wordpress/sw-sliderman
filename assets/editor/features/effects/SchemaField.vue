@@ -65,7 +65,7 @@ function commitNumber(raw: number | string | null): void {
 // ---- enums / colours / vectors ----
 const options = computed(() =>
   (Array.isArray(props.schema.enum) ? props.schema.enum : []).map((v) => ({
-    value: String(v),
+    value: v as string | number | boolean,
     label: enumLabel(String(v)),
   })),
 );
@@ -185,14 +185,14 @@ const addLabel = computed(() =>
 
     <q-select
       v-else-if="kind === 'enum'"
-      :model-value="String(value ?? '')"
+      :model-value="value ?? ''"
       :options="options"
       emit-value
       map-options
       dense
       outlined
       :label="title"
-      @update:model-value="(v: string) => form.set(path, v)"
+      @update:model-value="(v: unknown) => form.set(path, v)"
     />
 
     <label v-else-if="kind === 'color'" class="sws-fx-field__color">

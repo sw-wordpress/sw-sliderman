@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h, provide, ref } from 'vue';
 import { mount } from '@vue/test-utils';
-import { Quasar } from 'quasar';
+import { Quasar, QSelect } from 'quasar';
 
 vi.mock('@editor/config', () => ({
   getConfig: () => ({ siteId: 1, userId: 1, locale: 'en_US', capabilities: [], effects: [] }),
@@ -79,6 +79,34 @@ describe('SchemaField object lists with an ordinary type property', () => {
       [{ type: 'square' }],
     );
     expect(wrapper.text()).toContain('Shape');
+    wrapper.unmount();
+  });
+});
+
+describe('SchemaField numeric enums', () => {
+  it('renders a select that keeps the numeric option values', () => {
+    const values = ref<Record<string, unknown>>({ parts: 2 });
+    const set = vi.fn();
+    const Host = defineComponent({
+      setup() {
+        provide(EFFECT_FORM, { values, set, reset: vi.fn(), begin: vi.fn(), end: vi.fn() });
+        return () =>
+          h(SchemaField, {
+            schema: { type: 'integer', minimum: 1, maximum: 4, enum: [1, 2, 4], default: 1 },
+            path: ['parts'],
+            name: 'parts',
+          });
+      },
+    });
+    const wrapper = mount(Host, { global: { plugins: [Quasar] }, attachTo: document.body });
+    const select = wrapper.findComponent(QSelect);
+    expect(select.exists()).toBe(true);
+    expect(select.props('modelValue')).toBe(2);
+    expect((select.props('options') as Array<{ value: unknown }>).map((o) => o.value)).toEqual([
+      1, 2, 4,
+    ]);
+    select.vm.$emit('update:model-value', 4);
+    expect(set).toHaveBeenCalledWith(['parts'], 4);
     wrapper.unmount();
   });
 });
