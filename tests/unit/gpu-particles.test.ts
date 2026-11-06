@@ -449,6 +449,24 @@ describe('ParticleInstance', () => {
     expect(count(calls, 'drawArraysInstanced')).toBe(1);
   });
 
+  it('projects a still redraw with the new aspect ratio after a resize', () => {
+    const { particles, calls } = instance();
+    particles.update(frame(0), 1);
+    const draw = (width: number) => {
+      calls.length = 0;
+      particles.render({
+        target: null,
+        input: frame(0, { viewport: { width, height: 300, pixelRatio: 1 } }),
+        alpha: 0,
+      });
+      const matrix = calls.find(([n]) => n === 'uniformMatrix4fv')?.[1] as unknown[];
+      return Array.from(matrix[2] as Float32Array);
+    };
+    const wide = draw(400);
+    particles.resize({ width: 300, height: 300, pixelRatio: 1 });
+    expect(draw(300)).not.toEqual(wide);
+  });
+
   it('scales the active particles with the quality tier', () => {
     const { particles } = instance({ count: 8000 });
     expect(particles.activeParticleCount).toBe(8000);

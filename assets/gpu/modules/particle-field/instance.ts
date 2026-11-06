@@ -319,6 +319,7 @@ export class ParticleInstance implements EffectInstance<Params> {
 
   resize(viewport: Viewport): void {
     this.viewport = viewport;
+    this.camera = null; // the next draw projects with the new aspect ratio, even without an update()
     const aspect = aspectOf(viewport);
     if (Math.abs(aspect - this.aspect) / this.aspect <= 0.08) return;
     // The area changed clearly (e.g. another device size): lay the particles out for it again.
