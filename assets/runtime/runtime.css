@@ -280,7 +280,8 @@
   height: 100%;
   pointer-events: none;
 }
-/* The live canvas replaces the fallback image; on pause the last frame stays, on loss/error the image returns. */
+/* The live canvas replaces the fallback image visually; on pause the last frame stays, on loss/error the
+   image returns. Opacity (not visibility) keeps its alternative text for assistive technology. */
 .sws-slider .sws-fx.sws-fx--live .sws-fx__fallback {
-  visibility: hidden;
+  opacity: 0;
 }

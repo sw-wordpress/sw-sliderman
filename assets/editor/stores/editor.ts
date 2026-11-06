@@ -401,6 +401,12 @@ export const useEditorStore = defineStore('editor', () => {
   }
 
   // ---------- layer actions ----------
+  /** True when adding `extra` copies would exceed the effect layers allowed per slide. */
+  const exceedsEffectLimit = (existing: readonly Layer[], extra: readonly Layer[]): boolean =>
+    existing.filter((l) => l.type === 'effect').length +
+      extra.filter((l) => l.type === 'effect').length >
+    LIMITS.effectLayersPerSlide;
+
   function addLayer(type: LayerType, effectType?: string): void {
     const current = slide.value;
     const doc = document.value;
@@ -435,6 +441,7 @@ export const useEditorStore = defineStore('editor', () => {
     );
     if (copies.length === 0 || current.layers.length + copies.length > LIMITS.layersPerSlide)
       return;
+    if (exceedsEffectLimit(current.layers, copies)) return;
     edit((draft) => {
       const target = findSlide(draft, current.id);
       copies.forEach((copy) => {
@@ -494,6 +501,7 @@ export const useEditorStore = defineStore('editor', () => {
     const current = slide.value;
     if (!current || clipboard.value.length === 0) return;
     if (current.layers.length + clipboard.value.length > LIMITS.layersPerSlide) return;
+    if (exceedsEffectLimit(current.layers, clipboard.value)) return;
     const copies = clipboard.value.map((layer) => {
       const copy = cloneLayer(layer, layer.name);
       return { ...copy, layout: { ...copy.layout, x: copy.layout.x + 20, y: copy.layout.y + 20 } };

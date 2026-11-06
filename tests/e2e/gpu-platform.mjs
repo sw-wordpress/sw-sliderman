@@ -192,10 +192,10 @@ try {
       await tab.evaluate(
         () =>
           getComputedStyle(document.querySelector('[data-sws-layer="fx0"] .sws-fx__fallback'))
-            .visibility,
+            .opacity,
       ),
-      'hidden',
-      'the live canvas replaces the fallback image',
+      '0',
+      'the live canvas replaces the fallback image visually (alt text stays available)',
     );
     assert.equal(
       await tab.locator('[data-sws-layer="fx1"] canvas').count(),
@@ -277,9 +277,9 @@ try {
     assert.equal(await state(tab, 0), 'fallback');
     assert.equal(
       await tab.evaluate(
-        () => getComputedStyle(document.querySelector('.sws-fx__fallback')).visibility,
+        () => getComputedStyle(document.querySelector('.sws-fx__fallback')).opacity,
       ),
-      'visible',
+      '1',
     );
     assert.deepEqual(problems, []);
     await ctx.close();
@@ -299,9 +299,9 @@ try {
     );
     assert.equal(
       await tab.evaluate(
-        () => getComputedStyle(document.querySelector('.sws-fx__fallback')).visibility,
+        () => getComputedStyle(document.querySelector('.sws-fx__fallback')).opacity,
       ),
-      'visible',
+      '1',
       'fallback while the context is lost',
     );
     await tab.evaluate(() => window.__lose.restoreContext());
@@ -395,9 +395,9 @@ try {
     assert.equal(await noGl.tab.locator('canvas').count(), 0);
     assert.equal(
       await noGl.tab.evaluate(
-        () => getComputedStyle(document.querySelector('.sws-fx__fallback')).visibility,
+        () => getComputedStyle(document.querySelector('.sws-fx__fallback')).opacity,
       ),
-      'visible',
+      '1',
     );
     assert.deepEqual(noGl.problems, []);
     await noGl.ctx.close();

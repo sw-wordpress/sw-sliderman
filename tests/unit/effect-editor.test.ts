@@ -130,6 +130,19 @@ describe('effect layer in the editor store', () => {
     expect(count()).toBe(3);
   });
 
+  it('keeps duplicating and pasting within the effect layer limit', async () => {
+    const { editor } = await setup();
+    editor.addLayer('effect', 'particle-field');
+    editor.addLayer('effect', 'particle-field');
+    const count = () => editor.slide?.layers.filter((l) => l.type === 'effect').length;
+    expect(count()).toBe(3);
+    editor.duplicateLayers();
+    expect(count()).toBe(3);
+    editor.copyLayers();
+    editor.pasteLayers();
+    expect(count()).toBe(3);
+  });
+
   it('reports invalid parameters through the registered schema', async () => {
     const { editor, layer } = await setup();
     editor.updateLayer(layer().id, (l) => {
