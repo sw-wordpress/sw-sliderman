@@ -873,7 +873,7 @@
       "description": "The picture builds from thousands of coloured points; the pointer whirls them up and they settle again. Choose a picture under \"Media\".",
       "seed": 8128,
       "params": {
-        "count": 70000,
+        "count": 50000,
         "spawn": {
           "shape": "view"
         },
@@ -888,22 +888,28 @@
         "operators": [
           {
             "type": "spring-home",
-            "stiffness": 6,
-            "damping": 2.4,
-            "maxForce": 60
+            "stiffness": 2.5,
+            "damping": 1.1,
+            "maxForce": 40
+          },
+          {
+            "type": "flow-field",
+            "frequency": 1.4,
+            "amplitude": 0.7,
+            "speed": 0.3
           },
           {
             "type": "drag",
-            "amount": 0.9
+            "amount": 0.6
           }
         ],
         "appearance": {
           "style": "soft-disc",
-          "sizeMin": 1.1,
-          "sizeMax": 2.1,
+          "sizeMin": 0.9,
+          "sizeMax": 1.7,
           "colorMode": "image",
           "blend": "normal",
-          "opacity": 1,
+          "opacity": 0.8,
           "depthFade": 0
         },
         "camera": {

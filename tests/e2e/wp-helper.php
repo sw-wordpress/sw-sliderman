@@ -2,7 +2,7 @@
 /**
  * Local end-to-end helper (development site only, never shipped).
  *
- * Usage: php tests/e2e/wp-helper.php auth|activate|page <slider-id>|slider <title>|gpu-slider <title> [preset]|bulk <prefix> <count>|age <id>|cleanup <title-prefix>
+ * Usage: php tests/e2e/wp-helper.php auth|activate|page <slider-id>|slider <title>|gpu-slider <title> [preset] [image-file]|bulk <prefix> <count>|age <id>|cleanup <title-prefix>
  * Prints JSON. `auth` returns admin cookies for Playwright; `page` creates/updates a test page
  * that embeds the slider twice.
  *
@@ -64,7 +64,7 @@ if ( 'gpu-slider' === $sws_command ) {
 	do_action( 'rest_api_init' );
 	$sws_title  = $argv[2] ?? 'E2E GPU';
 	$sws_preset = $argv[3] ?? 'magnetic-canvas';
-	$sws_upload = wp_upload_bits( 'e2e-gpu-logo-' . wp_generate_password( 6, false ) . '.png', null, (string) file_get_contents( ABSPATH . 'wp-includes/images/w-logo-blue.png' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+	$sws_upload = wp_upload_bits( 'e2e-gpu-logo-' . wp_generate_password( 6, false ) . '.png', null, (string) file_get_contents( $argv[4] ?? ABSPATH . 'wp-includes/images/w-logo-blue.png' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 	$sws_media  = wp_insert_attachment(
 		array(
 			'post_title'     => $sws_title . ' image',

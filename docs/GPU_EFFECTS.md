@@ -148,7 +148,7 @@ Presets: Orbitnebel, Wirbelbänder, Glutfunken, Strahlenimpuls (weitere folgen m
 
 **Magnet (`interaction.mode: magnet`):** Der Zeiger ist ein weich begrenzter Dipol, `B = (3(m·r̂)r̂ − m)/r³`. Die Achse `m` folgt der Zeigerbewegung (ruhender Zeiger behält die letzte Achse), schnelle Bewegung zieht stärker (`speedBoost`), `polarity` kehrt die Richtung um. Teilchen werden entlang gekrümmter Feldlinien aus dem Motiv gezogen und kehren per Feder zurück; die Wirkung bleibt innerhalb des Radius.
 
-Presets `photo-grains` („Bildstaub“, scatter + Wirbel) und `magnetic-canvas` („Magnetfläche“, rest + Magnet).
+Presets `photo-grains` („Bildstaub“: 50 000 kleine, leicht transparente Körner, weiche Feder + leichtes Flow-Field, daher bleibt der Staub sichtbar in Bewegung; scatter + Wirbel) und `magnetic-canvas` („Magnetfläche“, rest + Magnet).
 
 ### Nachweise (G5)
 

@@ -670,8 +670,8 @@ try {
     assert.equal(r.error, undefined, r.error);
     assert.ok(r.spread0 > 1.5, `particles start scattered (${r.spread0})`);
     assert.ok(
-      r.speedLate < r.speedEarly * 0.05 + 0.01,
-      `they settle (${r.speedEarly} -> ${r.speedLate})`,
+      r.speedLate > 0.01 && r.speedLate < 1,
+      `the dust keeps drifting gently instead of freezing (${r.speedEarly} -> ${r.speedLate})`,
     );
     assert.ok(
       r.left.r > 120 && r.left.r > r.left.b * 2,
