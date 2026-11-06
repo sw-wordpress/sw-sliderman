@@ -120,6 +120,37 @@ describe('AdaptiveQuality', () => {
     expect(feed(up, 8, 2000).filter(Boolean)).toEqual([]);
   });
 
+  it('recovers on a 60 Hz display where frame times stay at the refresh interval', () => {
+    const quality = new AdaptiveQuality({ start: 'high' });
+    feed(quality, 30, 120);
+    expect(quality.tier).not.toBe('high');
+    const changes = feed(quality, 1000 / 60, 3000).filter(Boolean);
+    expect(changes).toContain('high');
+  });
+
+  it('does not recover while frames are still dropped (below the refresh rate)', () => {
+    const quality = new AdaptiveQuality({ start: 'high' });
+    feed(quality, 30, 120);
+    const tier = quality.tier;
+    expect(feed(quality, 25, 3000).filter(Boolean)).toEqual([]);
+    expect(quality.tier).toBe(tier);
+  });
+
+  it('waits longer after an upgrade that had to be taken back', () => {
+    const quality = new AdaptiveQuality({ start: 'high' });
+    feed(quality, 30, 120); // down
+    const framesUntilUpgrade = (): number => {
+      for (let frames = 1; frames <= 20000; frames++)
+        if (quality.sample(1000 / 60) !== null) return frames;
+      return Number.POSITIVE_INFINITY;
+    };
+    const first = framesUntilUpgrade();
+    feed(quality, 30, 120); // the upgrade did not hold: down again
+    const second = framesUntilUpgrade();
+    expect(first).toBeLessThan(20000);
+    expect(second).toBeGreaterThan(first);
+  });
+
   it('ignores hidden-tab and invalid frame times', () => {
     const quality = new AdaptiveQuality({ start: 'high' });
     expect(feed(quality, 5000, 100).filter(Boolean)).toEqual([]);

@@ -33,6 +33,11 @@ export interface AdaptiveOptions {
   readonly max?: QualityTier;
 }
 
+const RECOVER_FRAMES = 300;
+const MAX_RECOVER_FRAMES = 9600;
+/** A step down within this many frames of a step up counts as a failed upgrade. */
+const FAILED_UPGRADE_FRAMES = 1800;
+
 const index = (tier: QualityTier): number => QUALITY_TIERS.indexOf(tier);
 
 export class AdaptiveQuality {
@@ -44,6 +49,9 @@ export class AdaptiveQuality {
   private over = 0;
   private under = 0;
   private cooldown = 0;
+  /** Calm frames needed before a step up; doubles when an upgrade is taken back right away. */
+  private recoverFrames = RECOVER_FRAMES;
+  private sinceUpgrade = Number.POSITIVE_INFINITY;
 
   constructor(options: AdaptiveOptions = {}) {
     this.budgetMs = options.budgetMs ?? 1000 / 58;
@@ -67,15 +75,23 @@ export class AdaptiveQuality {
     if (!Number.isFinite(frameMs) || frameMs <= 0 || frameMs > 250) return null;
     this.smoothed = this.smoothed === 0 ? frameMs : this.smoothed * 0.9 + frameMs * 0.1;
     if (this.cooldown > 0) this.cooldown--;
+    this.sinceUpgrade++;
+    // Frame times are quantised to the display refresh (about 16.7 ms at 60 Hz even when rendering is
+    // cheap), so "calm" means: the budget is met without dropped frames, not "far below the budget".
     this.over = this.smoothed > this.budgetMs * 1.2 ? this.over + 1 : 0;
-    this.under = this.smoothed < this.budgetMs * 0.75 ? this.under + 1 : 0;
+    this.under = this.smoothed <= this.budgetMs * 1.05 ? this.under + 1 : 0;
     if (this.over >= 45 && this.tierIndex > this.minIndex) {
       this.tierIndex--;
+      // The higher tier did not hold: wait longer before trying it again.
+      if (this.sinceUpgrade < FAILED_UPGRADE_FRAMES)
+        this.recoverFrames = Math.min(this.recoverFrames * 2, MAX_RECOVER_FRAMES);
+      this.sinceUpgrade = Number.POSITIVE_INFINITY;
       this.reset(600);
       return this.tier;
     }
-    if (this.under >= 300 && this.cooldown === 0 && this.tierIndex < this.maxIndex) {
+    if (this.under >= this.recoverFrames && this.cooldown === 0 && this.tierIndex < this.maxIndex) {
       this.tierIndex++;
+      this.sinceUpgrade = 0;
       this.reset(300);
       return this.tier;
     }
