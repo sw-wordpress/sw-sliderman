@@ -97,8 +97,13 @@ const items = computed(() => (isJson(props.schema.items) ? props.schema.items : 
 const variants = computed(() => branches(items.value));
 const list = computed(() => (Array.isArray(value.value) ? (value.value as unknown[]) : []));
 const maxItems = computed(() => Number(props.schema.maxItems ?? 0));
-const tagOf = (item: unknown): string =>
-  isJson(item) && typeof item.type === 'string' ? item.type : '';
+const discriminator = computed(() =>
+  typeof items.value.discriminator === 'string' ? items.value.discriminator : 'type',
+);
+const tagOf = (item: unknown): string => {
+  const tag = isJson(item) ? item[discriminator.value] : undefined;
+  return typeof tag === 'string' ? tag : '';
+};
 const usedTags = computed(() => new Set(list.value.map(tagOf)));
 const addable = computed(() => variants.value.filter((v) => !usedTags.value.has(v.tag)));
 const canAdd = computed(
@@ -306,7 +311,7 @@ const addLabel = computed(() =>
         </div>
         <template v-for="[key, child] in propertyEntries(schemaOf(item))" :key="key">
           <SchemaField
-            v-if="key !== 'type'"
+            v-if="key !== discriminator"
             :schema="child"
             :path="[...path, index, key]"
             :name="key"

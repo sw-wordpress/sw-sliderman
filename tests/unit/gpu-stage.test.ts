@@ -361,6 +361,37 @@ describe('EffectStage', () => {
     expect(h.devices[0]?.resize).toHaveBeenCalledTimes(2);
   });
 
+  it('maps the pointer through a rotated or scaled layer into its own pixels', async () => {
+    const h = harness();
+    await h.stage.start();
+    // Layer 400x200 rotated by 90 degrees: its bounding box is 200x400 around the same centre.
+    h.host.style.transform = 'matrix(0, 1, -1, 0, 0, 0)';
+    h.host.getBoundingClientRect = () =>
+      ({ left: 110, top: -80, right: 310, bottom: 320, width: 200, height: 400 }) as DOMRect;
+    h.stage.setPointer({ x: 210, y: 120, down: false });
+    h.clock.frame(100);
+    h.stage.setPointer({ x: 210, y: 220, down: false });
+    h.clock.frame(116);
+    const centre = h.instances[0]?.update.mock.calls[0]?.[0] as { pointer: Record<string, number> };
+    expect(centre.pointer).toMatchObject({ x: 200, y: 100, inside: true });
+    const moved = h.instances[0]?.update.mock.calls[1]?.[0] as { pointer: Record<string, number> };
+    expect(moved.pointer).toMatchObject({ x: 300, y: 100, inside: true, dx: 100, dy: 0 });
+    // A zoomed editor stage (scale 0.5) maps back to the layer's pixels.
+    h.host.style.transform = 'matrix(0.5, 0, 0, 0.5, 0, 0)';
+    h.host.getBoundingClientRect = () =>
+      ({ left: 110, top: 70, right: 310, bottom: 170, width: 200, height: 100 }) as DOMRect;
+    h.stage.setPointer({ x: 160, y: 120, down: false });
+    h.clock.frame(148);
+    const zoomed = h.instances[0]?.update.mock.calls[2]?.[0] as { pointer: Record<string, number> };
+    expect(zoomed.pointer).toMatchObject({ x: 100, y: 100, inside: true });
+    // A degenerate transform falls back to the plain offset.
+    h.host.style.transform = 'matrix(0, 0, 0, 0, 0, 0)';
+    h.stage.setPointer({ x: 160, y: 120, down: false });
+    h.clock.frame(164);
+    const flat = h.instances[0]?.update.mock.calls[3]?.[0] as { pointer: Record<string, number> };
+    expect(flat.pointer).toMatchObject({ x: 150, y: 100 });
+  });
+
   it('maps the pointer into the effect area and reports movement', async () => {
     const h = harness();
     await h.stage.start();

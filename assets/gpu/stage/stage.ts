@@ -329,18 +329,25 @@ export class EffectStage {
   private pointerSample(): PointerSample | null {
     const pointer = this.pointer;
     if (!pointer) return null;
-    const rect = this.options.host.getBoundingClientRect();
+    const host = this.options.host;
+    const rect = host.getBoundingClientRect();
+    // The layer may be rotated or scaled (layer rotation, editor zoom): map the offset from its centre
+    // back through the inverse of the accumulated transform into the layer's own pixels.
+    const m = linearTransform(host);
+    const det = m.a * m.d - m.b * m.c;
+    const ox = pointer.x - (rect.left + rect.right) / 2;
+    const oy = pointer.y - (rect.top + rect.bottom) / 2;
+    const lx = Math.abs(det) < 1e-9 ? ox : (m.d * ox - m.c * oy) / det;
+    const ly = Math.abs(det) < 1e-9 ? oy : (-m.b * ox + m.a * oy) / det;
+    const dxl = pointer.x - pointer.px;
+    const dyl = pointer.y - pointer.py;
     const sample: PointerSample = {
-      x: pointer.x - rect.left,
-      y: pointer.y - rect.top,
-      inside:
-        pointer.x >= rect.left &&
-        pointer.x <= rect.right &&
-        pointer.y >= rect.top &&
-        pointer.y <= rect.bottom,
+      x: this.cssWidth / 2 + lx,
+      y: this.cssHeight / 2 + ly,
+      inside: Math.abs(lx) <= this.cssWidth / 2 && Math.abs(ly) <= this.cssHeight / 2,
       down: pointer.down,
-      dx: pointer.x - pointer.px,
-      dy: pointer.y - pointer.py,
+      dx: Math.abs(det) < 1e-9 ? dxl : (m.d * dxl - m.c * dyl) / det,
+      dy: Math.abs(det) < 1e-9 ? dyl : (-m.b * dxl + m.a * dyl) / det,
     };
     this.pointer = { ...pointer, px: pointer.x, py: pointer.y };
     return sample;
@@ -396,4 +403,34 @@ export class EffectStage {
     this.lastTime = null;
     this.reasons.delete('offscreen');
   }
+}
+
+interface Linear {
+  a: number;
+  b: number;
+  c: number;
+  d: number;
+}
+
+/** Linear part (rotation, scale, skew) of the CSS transforms of an element and all its ancestors. */
+function linearTransform(element: Element): Linear {
+  let total: Linear = { a: 1, b: 0, c: 0, d: 1 };
+  for (let el: Element | null = element; el; el = el.parentElement) {
+    const css = getComputedStyle(el).transform;
+    if (!css || css === 'none') continue;
+    const values = /^matrix(3d)?\((.+)\)$/.exec(css);
+    const parts = values?.[2]?.split(',').map(Number);
+    if (!parts || parts.some((n) => !Number.isFinite(n))) continue;
+    const t: Linear =
+      values?.[1] === undefined
+        ? { a: parts[0] ?? 1, b: parts[1] ?? 0, c: parts[2] ?? 0, d: parts[3] ?? 1 }
+        : { a: parts[0] ?? 1, b: parts[1] ?? 0, c: parts[4] ?? 0, d: parts[5] ?? 1 };
+    total = {
+      a: t.a * total.a + t.c * total.b,
+      b: t.b * total.a + t.d * total.b,
+      c: t.a * total.c + t.c * total.d,
+      d: t.b * total.c + t.d * total.d,
+    };
+  }
+  return total;
 }
