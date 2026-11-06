@@ -517,6 +517,15 @@ describe('EffectStage live changes (editor preview)', () => {
     expect(h.instances[0]?.setParams).toHaveBeenCalledTimes(1);
   });
 
+  it('applies parameters edited while the instance is still loading', async () => {
+    const h = harness();
+    const starting = h.stage.start();
+    void h.stage.reconfigure({ params: { size: 9 } });
+    await starting;
+    expect(h.createCalls[0]?.size).toBe(2);
+    expect(h.instances[0]?.setParams).toHaveBeenCalledWith({ size: 9 });
+  });
+
   it('restarts for a new seed or quality but not for the same values', async () => {
     const h = harness({ quality: 'high' });
     await h.stage.start();

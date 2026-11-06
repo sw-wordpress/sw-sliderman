@@ -74,7 +74,7 @@ const doc = (): SliderDocument => {
   return result.document;
 };
 
-async function setup() {
+async function setup(settle = true) {
   setActivePinia(createPinia());
   window.localStorage.clear();
   fake.instances.length = 0;
@@ -103,7 +103,7 @@ async function setup() {
     global: { plugins: [Quasar, getActivePinia() as never] },
     attachTo: document.body,
   });
-  await flushPromises();
+  if (settle) await flushPromises();
   return { editor, layer, wrapper };
 }
 
@@ -181,6 +181,19 @@ describe('EffectPreview', () => {
     });
     await flushPromises();
     expect((fake.instances[2]?.entry as { assets: unknown }).assets).toEqual({});
+  });
+
+  it('creates a single preview when the picture changes while the preview chunk is still loading', async () => {
+    const { editor, layer } = await setup(false);
+    editor.rememberMedia(55, { url: '/u/55.jpg', width: 40, height: 30 });
+    editor.updateLayer(layer().id, (l) => {
+      if (l.type === 'effect') l.content.assets = { image: 55 };
+    });
+    await flushPromises();
+    expect(fake.instances).toHaveLength(1);
+    expect((fake.instances[0]?.entry as { assets: unknown }).assets).toEqual({
+      image: { url: '/u/55.jpg', width: 40, height: 30 },
+    });
   });
 
   it('forwards impulses for its own layer only, and the pointer', async () => {

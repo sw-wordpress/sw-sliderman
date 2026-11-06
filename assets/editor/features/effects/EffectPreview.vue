@@ -21,6 +21,7 @@ const host = ref<HTMLElement | null>(null);
 const state = ref('idle');
 let preview: Preview | null = null;
 let disposed = false;
+let startToken = 0;
 let moduleLoaded: typeof PreviewModule | null = null;
 
 const info = computed(() => effectInfo(props.layer.content.effect));
@@ -52,8 +53,9 @@ async function start(): Promise<void> {
   const element = host.value;
   const effect = info.value;
   if (!element || !effect) return;
+  const token = ++startToken;
   moduleLoaded ??= await import('@gpu/preview');
-  if (disposed || !host.value) return;
+  if (disposed || !host.value || token !== startToken) return;
   const content = props.layer.content;
   preview = moduleLoaded.createPreview(
     element,
@@ -72,6 +74,7 @@ async function start(): Promise<void> {
 }
 
 function stop(): void {
+  startToken++; // invalidates starts still waiting for the chunk
   preview?.dispose();
   preview = null;
   state.value = 'idle';

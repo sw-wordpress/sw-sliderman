@@ -233,6 +233,12 @@ export class EffectStage {
         height: this.cssHeight,
         pixelRatio: this.pixelRatio,
       });
+      // Parameters edited while the instance was loading are applied now.
+      if (this.config.params !== config.params) {
+        const latest = await registry.resolveParams(this.config);
+        if (generation === this.generation && this.instance === instance)
+          instance.setParams(latest.params);
+      }
       return true;
     } catch (error) {
       console.warn('sw-sliderman: effect unavailable, showing the static fallback', error);
