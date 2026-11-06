@@ -319,6 +319,29 @@ describe('EffectStage', () => {
     expect(h.host.classList.contains('sws-fx--live')).toBe(true);
   });
 
+  it('draws the still image again when a paused effect is resized', async () => {
+    const h = harness();
+    await h.stage.start();
+    h.clock.frame(0);
+    h.clock.frame(16);
+    h.stage.setPaused('user', true);
+    const instance = h.instances[0];
+    instance?.render.mockClear();
+    resizeCallback?.([{ contentRect: { width: 500, height: 250 } }]);
+    expect(instance?.render).toHaveBeenCalledTimes(1);
+    const call = instance?.render.mock.calls[0]?.[0] as {
+      input: { viewport: { width: number; height: number } };
+      alpha: number;
+    };
+    expect(call.input.viewport).toMatchObject({ width: 500, height: 250 });
+    expect(call.alpha).toBe(0);
+    // A running effect draws in its frame loop, not on resize.
+    h.stage.setPaused('user', false);
+    instance?.render.mockClear();
+    resizeCallback?.([{ contentRect: { width: 520, height: 250 } }]);
+    expect(instance?.render).not.toHaveBeenCalled();
+  });
+
   it('pauses for each reason and resumes only when all are cleared', async () => {
     const h = harness();
     await h.stage.start();

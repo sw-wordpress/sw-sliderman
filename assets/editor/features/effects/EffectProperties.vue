@@ -13,6 +13,7 @@ import {
   newEffectContent,
   presetChanges,
   randomSeed,
+  materializeList,
   resolvedParams,
   setAt,
 } from '@editor/effects/ops';
@@ -63,7 +64,8 @@ function update(change: (c: DeepMutable<EffectContent>) => void): void {
 // ---- parameters (schema form) ----
 function setParam(path: Path, value: unknown): void {
   update((c) => {
-    c.params = setAt(c.params, path, value) as Record<string, unknown>;
+    const base = materializeList(c.params, values.value, path);
+    c.params = setAt(base, path, value) as Record<string, unknown>;
     delete c.preset;
   });
 }

@@ -5,6 +5,7 @@ import type {
   EffectConfig,
   EffectEvent,
   EffectInstance,
+  FrameInput,
   PointerSample,
   QualityTier,
 } from '../core/index';
@@ -55,6 +56,7 @@ export class EffectStage {
   private readonly adaptive = new AdaptiveQuality({ start: 'high' });
   private tier: QualityTier;
   private lastTime: number | null = null;
+  private lastInput: FrameInput | null = null;
   private time = 0;
   private cssWidth = 0;
   private cssHeight = 0;
@@ -272,6 +274,15 @@ export class EffectStage {
     this.pixelRatio = Math.min(window.devicePixelRatio || 1, QUALITY_PROFILES[this.tier].dprCap);
     this.device.resize(width, height, this.pixelRatio);
     this.instance?.resize({ width, height, pixelRatio: this.pixelRatio });
+    // Resizing clears the canvas; a paused effect has no frame loop, so draw its still image again.
+    if (this.stateValue === 'paused' && this.instance && this.lastInput) {
+      const viewport = { width, height, pixelRatio: this.pixelRatio };
+      this.instance.render({
+        target: this.device,
+        input: { ...this.lastInput, viewport },
+        alpha: 0,
+      });
+    }
   }
 
   private updateRunning(): void {
@@ -321,6 +332,7 @@ export class EffectStage {
       simSteps = Math.floor(this.pendingSteps / 2);
       this.pendingSteps -= simSteps * 2;
     } else this.pendingSteps = 0;
+    this.lastInput = input;
     instance.update(input, simSteps);
     instance.render({ target: device, input, alpha });
     if (this.stateValue === 'running') this.options.host.classList.add('sws-fx--live');

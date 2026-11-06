@@ -7,6 +7,7 @@ import {
   presetChanges,
   randomSeed,
   resolvedParams,
+  materializeList,
   setAt,
 } from '@editor/effects/ops';
 import {
@@ -123,6 +124,24 @@ describe('schema tools', () => {
 });
 
 describe('effect parameter operations', () => {
+  it('copies a list that only exists as a schema default before an item is edited', () => {
+    const resolved = { forces: [{ type: 'drag', amount: 1 }], size: 2 };
+    expect(materializeList({}, resolved, ['forces', 0, 'amount'])).toEqual({
+      forces: [{ type: 'drag', amount: 1 }],
+    });
+    const edited = setAt(
+      materializeList({}, resolved, ['forces', 0, 'amount']),
+      ['forces', 0, 'amount'],
+      2,
+    );
+    expect(edited).toEqual({ forces: [{ type: 'drag', amount: 2 }] });
+    // Stored lists, plain paths and unknown lists stay untouched.
+    const stored = { forces: [{ type: 'drag', amount: 5 }] };
+    expect(materializeList(stored, resolved, ['forces', 0, 'amount'])).toBe(stored);
+    expect(materializeList({}, resolved, ['size'])).toEqual({});
+    expect(materializeList({}, resolved, ['other', 0])).toEqual({});
+  });
+
   it('sets and clears values along a path without touching the input', () => {
     const tree = { spawn: { shape: 'ring' }, list: [1, 2, 3] };
     const frozen = JSON.stringify(tree);

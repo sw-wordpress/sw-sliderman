@@ -1,6 +1,7 @@
 import { withDefaults } from '@gpu/core/schema';
 import type { EffectContent } from '@shared/types';
 import type { EffectInfo } from '@editor/types/config';
+import { getAt } from './schemaTools';
 
 /** Random seed for a new effect (1 … 2³¹−1); the editor offers "new random seed" as an action. */
 export function randomSeed(): number {
@@ -68,6 +69,23 @@ export function setAt(
       : {};
   object[head] = setAt(object[head], rest, value);
   return object;
+}
+
+/**
+ * Editing inside a list that only exists as a schema default would store a lone, incomplete item. This
+ * copies the resolved list into the parameters first so the edit builds on complete items.
+ */
+export function materializeList(
+  params: Record<string, unknown>,
+  resolved: Record<string, unknown>,
+  path: ReadonlyArray<string | number>,
+): Record<string, unknown> {
+  const at = path.findIndex((part) => typeof part === 'number');
+  if (at < 0) return params;
+  const listPath = path.slice(0, at);
+  if (getAt(params, listPath) !== undefined) return params;
+  const list = getAt(resolved, listPath);
+  return list === undefined ? params : (setAt(params, listPath, list) as Record<string, unknown>);
 }
 
 /** Removes the value at `path` (back to the default); empty parent objects disappear too. */
