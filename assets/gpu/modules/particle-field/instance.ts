@@ -588,7 +588,11 @@ export class ParticleInstance implements EffectInstance<Params> {
     this.params = next;
     this.derived = derive(next, this.aspect);
     const before = this.built;
-    const imageChanged = JSON.stringify(before.image) !== JSON.stringify(next.image);
+    // The image targets depend on the image settings and on the visible area (camera distance and fov).
+    const imageChanged =
+      JSON.stringify(before.image) !== JSON.stringify(next.image) ||
+      before.camera.distance !== next.camera.distance ||
+      before.camera.fov !== next.camera.fov;
     const structural =
       before.count !== next.count ||
       JSON.stringify(before.spawn) !== JSON.stringify(next.spawn) ||

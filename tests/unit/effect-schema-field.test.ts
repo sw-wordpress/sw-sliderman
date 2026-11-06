@@ -33,6 +33,35 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
+function mountField(fieldSchema: Record<string, unknown>, initial: unknown) {
+  const values = ref<Record<string, unknown>>({ parts: initial });
+  const set = vi.fn();
+  const Host = defineComponent({
+    setup() {
+      provide(EFFECT_FORM, { values, set, reset: vi.fn(), begin: vi.fn(), end: vi.fn() });
+      return () => h(SchemaField, { schema: fieldSchema, path: ['parts'], name: 'parts' });
+    },
+  });
+  const wrapper = mount(Host, { global: { plugins: [Quasar] }, attachTo: document.body });
+  return { wrapper, set };
+}
+
+describe('SchemaField lists of plain values', () => {
+  it('renders an editable control for every scalar entry', () => {
+    const { wrapper } = mountField(
+      {
+        type: 'array',
+        maxItems: 4,
+        title: 'Weights',
+        items: { type: 'number', minimum: 0, maximum: 10, default: 1 },
+      },
+      [2, 5],
+    );
+    expect(wrapper.findAll('input').length).toBeGreaterThanOrEqual(2);
+    wrapper.unmount();
+  });
+});
+
 describe('SchemaField with a custom discriminator', () => {
   it('shows the fields of an item and tracks used variants by the declared discriminator', () => {
     const values = ref<Record<string, unknown>>({ parts: [{ kind: 'glow', power: 3 }] });

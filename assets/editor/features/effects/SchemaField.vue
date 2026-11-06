@@ -104,6 +104,10 @@ const tagOf = (item: unknown): string => {
   const tag = isJson(item) ? item[discriminator.value] : undefined;
   return typeof tag === 'string' ? tag : '';
 };
+// Lists of plain values (numbers, texts, ...) edit each entry itself instead of object properties.
+const scalarItems = computed(
+  () => variants.value.length === 0 && fieldKind(items.value) !== 'object',
+);
 const usedTags = computed(() => new Set(list.value.map(tagOf)));
 const addable = computed(() => variants.value.filter((v) => !usedTags.value.has(v.tag)));
 const canAdd = computed(
@@ -309,7 +313,13 @@ const addLabel = computed(() =>
             />
           </span>
         </div>
-        <template v-for="[key, child] in propertyEntries(schemaOf(item))" :key="key">
+        <SchemaField
+          v-if="scalarItems"
+          :schema="items"
+          :path="[...path, index]"
+          :name="String(index + 1)"
+        />
+        <template v-for="[key, child] in propertyEntries(schemaOf(item))" v-else :key="key">
           <SchemaField
             v-if="key !== discriminator"
             :schema="child"
