@@ -1,10 +1,12 @@
 import { canonicalBytes } from './canonical';
+import { validateParams } from '@gpu/core';
 import { LIMITS } from './limits';
 import {
   ANIMATION_PRESETS,
   EASINGS,
   OVERRIDABLE_STYLE_KEYS,
   SCHEMA_VERSION,
+  EFFECT_QUALITIES,
   LAYER_TYPES,
   SHAPE_KINDS,
   TEXT_TAGS,
@@ -59,9 +61,22 @@ export const LINK_PATTERN =
 
 type Json = Record<string, unknown>;
 
+/**
+ * Registered effect types. Without a catalog effect parameters are only bounded, not checked against
+ * a schema (the editor passes the catalog from the server; unknown types stay valid).
+ */
+export interface EffectCatalog {
+  find(type: string): { readonly schemaVersion: number; readonly schema: unknown } | null;
+}
+
+export const EFFECT_TYPE_PATTERN =
+  /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*(?:\/[a-z][a-z0-9]*(?:-[a-z0-9]+)*)?$/;
+
 class Context {
   readonly issues: ValidationIssue[] = [];
   readonly ids = new Set<string>();
+
+  constructor(readonly effects: EffectCatalog | null = null) {}
 
   add(path: string, code: IssueCode): void {
     this.issues.push({ path, code });
@@ -510,9 +525,87 @@ function validateContent(ctx: Context, type: unknown, value: unknown, path: stri
       enumeration(ctx, content, 'kind', path, SHAPE_KINDS);
       return;
     }
+    case 'effect': {
+      const content = object(
+        ctx,
+        value,
+        path,
+        ['effect', 'schemaVersion', 'seed', 'quality', 'params'],
+        ['preset', 'alt', 'fallbackImageId', 'assets'],
+      );
+      if (content) validateEffect(ctx, content, path);
+      return;
+    }
     default:
       // The layer type itself is reported by validateLayer; content cannot be checked.
       return;
+  }
+}
+
+/** Nesting depth of a JSON value (a scalar is 0, an empty container 1). */
+function depth(value: unknown): number {
+  if (typeof value !== 'object' || value === null) return 0;
+  let deepest = 0;
+  for (const child of Object.values(value)) deepest = Math.max(deepest, depth(child));
+  return 1 + deepest;
+}
+
+/**
+ * Effect layer content (mirrors DocumentValidator::validate_effect): bounded envelope, then the
+ * parameters against the type's schema. Unknown types stay valid; parameters of another
+ * `schemaVersion` than the installed module's are only bounded (older: the module upgrades them at
+ * runtime; newer: static fallback).
+ */
+function validateEffect(ctx: Context, content: Json, path: string): void {
+  const type = content.effect;
+  if (present(content, 'effect')) {
+    if (typeof type !== 'string') ctx.add(`${path}/effect`, 'type');
+    else if (type.length > 64 || !EFFECT_TYPE_PATTERN.test(type))
+      ctx.add(`${path}/effect`, 'pattern');
+  }
+  num(ctx, content, 'schemaVersion', path, 1, 1000, true);
+  num(ctx, content, 'seed', path, 0, 2147483647, true);
+  enumeration(ctx, content, 'quality', path, EFFECT_QUALITIES);
+  str(ctx, content, 'preset', path, 0, LIMITS.idLength);
+  str(ctx, content, 'alt', path, 0, LIMITS.altLength);
+  attachment(ctx, content, 'fallbackImageId', path);
+  if (present(content, 'assets')) validateEffectAssets(ctx, content.assets, `${path}/assets`);
+  if (!present(content, 'params')) return;
+  const at = `${path}/params`;
+  const params = content.params;
+  if (!isObject(params)) {
+    ctx.add(at, 'type');
+    return;
+  }
+  if (
+    canonicalBytes(params) > LIMITS.effectParamsBytes ||
+    depth(params) > LIMITS.effectParamsDepth
+  ) {
+    ctx.add(at, 'length');
+    return;
+  }
+  const descriptor = typeof type === 'string' ? ctx.effects?.find(type) : null;
+  const version = content.schemaVersion;
+  if (!descriptor || typeof version !== 'number' || !Number.isInteger(version)) return;
+  // Only parameters of exactly the installed schema version are checked (see DocumentValidator).
+  if (version === descriptor.schemaVersion) {
+    for (const issue of validateParams(descriptor.schema, params))
+      ctx.add(`${at}${issue.path}`, issue.code);
+  }
+}
+
+function validateEffectAssets(ctx: Context, value: unknown, path: string): void {
+  if (!isObject(value)) {
+    ctx.add(path, 'type');
+    return;
+  }
+  const entries = Object.entries(value);
+  if (entries.length > LIMITS.effectAssets) ctx.add(path, 'count');
+  for (const [key, attachment] of entries) {
+    const at = `${path}/${key.replace(/~/g, '~0').replace(/\//g, '~1')}`;
+    if (!ID_PATTERN.test(key)) ctx.add(at, 'pattern');
+    else if (typeof attachment !== 'number' || !Number.isInteger(attachment)) ctx.add(at, 'type');
+    else if (attachment < 1 || attachment > Number.MAX_SAFE_INTEGER) ctx.add(at, 'range');
   }
 }
 
@@ -610,7 +703,15 @@ function validateSlide(ctx: Context, value: unknown, path: string, fontRefs: Set
       num(ctx, transition, 'durationMs', at, 0, LIMITS.transitionMaxMs, true);
     }
   }
+  let effectLayers = 0;
   list(ctx, slide, 'layers', path, 0, LIMITS.layersPerSlide).forEach((layer, index) => {
+    if (
+      isObject(layer) &&
+      layer.type === 'effect' &&
+      ++effectLayers === LIMITS.effectLayersPerSlide + 1
+    ) {
+      ctx.add(`${path}/layers`, 'count');
+    }
     validateLayer(ctx, layer, `${path}/layers/${index}`, fontRefs);
   });
 }
@@ -620,14 +721,20 @@ function conforms(_raw: unknown, issues: readonly ValidationIssue[]): _raw is Sl
   return issues.length === 0;
 }
 
-export function validateDocument(raw: unknown): ValidationResult {
-  const issues = collectIssues(raw);
+export function validateDocument(
+  raw: unknown,
+  effects: EffectCatalog | null = null,
+): ValidationResult {
+  const issues = collectIssues(raw, effects);
   if (conforms(raw, issues)) return { ok: true, document: raw };
   return { ok: false, issues };
 }
 
-export function collectIssues(raw: unknown): ValidationIssue[] {
-  const ctx = new Context();
+export function collectIssues(
+  raw: unknown,
+  effects: EffectCatalog | null = null,
+): ValidationIssue[] {
+  const ctx = new Context(effects);
   if (isObject(raw) && present(raw, 'schemaVersion') && raw.schemaVersion !== SCHEMA_VERSION) {
     // Unknown (newer or older) versions are never inspected or silently converted.
     return [{ path: '/schemaVersion', code: 'schema_version' }];

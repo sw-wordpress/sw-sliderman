@@ -5,11 +5,14 @@ import type {
   Layer,
   LayerLayout,
   LayerStyle,
+  EffectContent,
   LayerType,
   Slide,
   SliderDocument,
 } from '@shared/types';
 import { collectIssues, type ValidationIssue } from '@shared/validate';
+import { effectCatalog, effectInfo, effectInfos } from '@editor/effects/catalog';
+import { newEffectContent } from '@editor/effects/ops';
 import { LIMITS } from '@shared/limits';
 import { diagnose, type Diagnostic } from '@shared/diagnostics';
 import { resolveStage } from '@shared/layout';
@@ -121,7 +124,7 @@ export const useEditorStore = defineStore('editor', () => {
     revision += 1;
     historyTick.value += 1;
     if (saveState.value !== 'conflict') saveState.value = 'dirty';
-    issues.value = collectIssues(next);
+    issues.value = collectIssues(next, effectCatalog);
     recovery?.write(title.value, next, serverVersion.value);
     scheduleAutosave();
   }
@@ -215,7 +218,7 @@ export const useEditorStore = defineStore('editor', () => {
     }
     const doc = document.value;
     if (!doc || saveState.value === 'conflict' || revision === savedRevision) return;
-    const localIssues = collectIssues(doc);
+    const localIssues = collectIssues(doc, effectCatalog);
     if (localIssues.length > 0) {
       issues.value = localIssues;
       saveState.value = 'invalid';
@@ -398,18 +401,33 @@ export const useEditorStore = defineStore('editor', () => {
   }
 
   // ---------- layer actions ----------
-  function addLayer(type: LayerType): void {
+  /** True when adding `extra` copies would exceed the effect layers allowed per slide. */
+  const exceedsEffectLimit = (existing: readonly Layer[], extra: readonly Layer[]): boolean =>
+    existing.filter((l) => l.type === 'effect').length +
+      extra.filter((l) => l.type === 'effect').length >
+    LIMITS.effectLayersPerSlide;
+
+  function addLayer(type: LayerType, effectType?: string): void {
     const current = slide.value;
     const doc = document.value;
     if (!current || !doc || current.layers.length >= LIMITS.layersPerSlide) return;
+    let effect: EffectContent | undefined;
+    if (type === 'effect') {
+      if (current.layers.filter((l) => l.type === 'effect').length >= LIMITS.effectLayersPerSlide)
+        return;
+      const info = effectType ? effectInfo(effectType) : effectInfos()[0];
+      if (!info) return;
+      effect = newEffectContent(info);
+    }
     const names: Record<LayerType, string> = {
       text: __('Text'),
       image: __('Image'),
       button: __('Button'),
       shape: __('Shape'),
+      effect: __('Effect'),
     };
     const desktop = doc.breakpoints.desktop;
-    const layer = createLayer(type, desktop.stageWidth, desktop.stageHeight, names[type]);
+    const layer = createLayer(type, desktop.stageWidth, desktop.stageHeight, names[type], effect);
     edit((draft) => {
       findSlide(draft, current.id)?.layers.push(mutable(layer));
     });
@@ -423,6 +441,7 @@ export const useEditorStore = defineStore('editor', () => {
     );
     if (copies.length === 0 || current.layers.length + copies.length > LIMITS.layersPerSlide)
       return;
+    if (exceedsEffectLimit(current.layers, copies)) return;
     edit((draft) => {
       const target = findSlide(draft, current.id);
       copies.forEach((copy) => {
@@ -482,6 +501,7 @@ export const useEditorStore = defineStore('editor', () => {
     const current = slide.value;
     if (!current || clipboard.value.length === 0) return;
     if (current.layers.length + clipboard.value.length > LIMITS.layersPerSlide) return;
+    if (exceedsEffectLimit(current.layers, clipboard.value)) return;
     const copies = clipboard.value.map((layer) => {
       const copy = cloneLayer(layer, layer.name);
       return { ...copy, layout: { ...copy.layout, x: copy.layout.x + 20, y: copy.layout.y + 20 } };

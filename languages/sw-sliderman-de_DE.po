@@ -13,7 +13,7 @@ msgstr ""
 #. Plugin Name of the plugin
 #: sw-sliderman.php
 #: src/Admin/AdminPage.php:49
-#: src/Rendering/SliderRenderer.php:109
+#: src/Rendering/SliderRenderer.php:123
 msgid "SW Sliderman"
 msgstr "SW Sliderman"
 
@@ -53,7 +53,7 @@ msgid "Sliders"
 msgstr "Slider"
 
 #: src/Infrastructure/PostTypes.php:34
-#: src/Rendering/Block.php:52
+#: src/Rendering/Block.php:69
 msgid "Slider"
 msgstr "Slider"
 
@@ -83,98 +83,98 @@ msgstr "– Slider auswählen –"
 msgid "%s (not published)"
 msgstr "%s (nicht veröffentlicht)"
 
-#: src/Rendering/Block.php:50
+#: src/Rendering/Block.php:67
 msgid "SW SliderMan"
 msgstr "SW SliderMan"
 
-#: src/Rendering/Block.php:51
+#: src/Rendering/Block.php:68
 msgid "Displays a published SW SliderMan slider."
 msgstr "Zeigt einen veröffentlichten SW-SliderMan-Slider an."
 
-#: src/Rendering/Block.php:53
+#: src/Rendering/Block.php:70
 msgid "Select a slider."
 msgstr "Slider auswählen."
 
-#: src/Rendering/Block.php:54
+#: src/Rendering/Block.php:71
 msgid "— Select a slider —"
 msgstr "— Slider auswählen —"
 
-#: src/Rendering/Block.php:55
+#: src/Rendering/Block.php:72
 msgid "not published"
 msgstr "nicht veröffentlicht"
 
 #. translators: %s: slider title.
-#: src/Rendering/Block.php:57
+#: src/Rendering/Block.php:74
 #, php-format
 msgid "Published slider: %s"
 msgstr "Veröffentlichter Slider: %s"
 
-#: src/Rendering/Block.php:58
+#: src/Rendering/Block.php:75
 msgid "This slider is not published yet; visitors see nothing."
 msgstr "Dieser Slider ist noch nicht veröffentlicht; Besucher sehen nichts."
 
-#: src/Rendering/Block.php:59
+#: src/Rendering/Block.php:76
 msgid "The selected slider was not found."
 msgstr "Der gewählte Slider wurde nicht gefunden."
 
-#: src/Rendering/Block.php:60
+#: src/Rendering/Block.php:77
 msgid "The slider list could not be loaded. The saved slider ID stays unchanged."
 msgstr "Die Sliderliste konnte nicht geladen werden. Die gespeicherte Slider-ID bleibt unverändert."
 
-#: src/Rendering/SliderRenderer.php:54
+#: src/Rendering/SliderRenderer.php:65
 msgid "Slider not found."
 msgstr "Slider nicht gefunden."
 
-#: src/Rendering/SliderRenderer.php:54
+#: src/Rendering/SliderRenderer.php:65
 msgid "This slider has not been published yet."
 msgstr "Dieser Slider wurde noch nicht veröffentlicht."
 
-#: src/Rendering/SliderRenderer.php:62
+#: src/Rendering/SliderRenderer.php:73
 msgid "The draft contains invalid data."
 msgstr "Der Entwurf enthält ungültige Daten."
 
-#: src/Rendering/SliderRenderer.php:72
-#: src/Rendering/SliderRenderer.php:77
+#: src/Rendering/SliderRenderer.php:83
+#: src/Rendering/SliderRenderer.php:88
 msgid "The published slider data is damaged."
 msgstr "Die veröffentlichten Sliderdaten sind beschädigt."
 
-#: src/Rendering/SliderRenderer.php:81
+#: src/Rendering/SliderRenderer.php:92
 msgid "This slider has no enabled slides."
 msgstr "Dieser Slider hat keine aktivierten Slides."
 
-#: src/Rendering/SliderRenderer.php:91
+#: src/Rendering/SliderRenderer.php:102
 msgid "carousel"
 msgstr "Karussell"
 
 #. translators: 1: slide position, 2: number of slides
-#: src/Rendering/SliderRenderer.php:119
+#: src/Rendering/SliderRenderer.php:133
 #, php-format
 msgid "%1$d of %2$d"
 msgstr "%1$d von %2$d"
 
-#: src/Rendering/SliderRenderer.php:124
+#: src/Rendering/SliderRenderer.php:138
 msgid "slide"
 msgstr "Slide"
 
-#: src/Rendering/SliderRenderer.php:230
+#: src/Rendering/SliderRenderer.php:252
 msgid "Pause slider"
 msgstr "Slider anhalten"
 
-#: src/Rendering/SliderRenderer.php:230
+#: src/Rendering/SliderRenderer.php:252
 msgid "Play slider"
 msgstr "Slider abspielen"
 
-#: src/Rendering/SliderRenderer.php:233
+#: src/Rendering/SliderRenderer.php:255
 msgid "Previous slide"
 msgstr "Vorheriger Slide"
 
 #. translators: %d: slide position
-#: src/Rendering/SliderRenderer.php:240
+#: src/Rendering/SliderRenderer.php:262
 #, php-format
 msgid "Show slide %d"
 msgstr "Slide %d anzeigen"
 
-#: src/Rendering/SliderRenderer.php:248
+#: src/Rendering/SliderRenderer.php:270
 msgid "Next slide"
 msgstr "Nächster Slide"
 

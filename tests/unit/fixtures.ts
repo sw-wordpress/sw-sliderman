@@ -57,3 +57,17 @@ export function patch(document: unknown, ops: readonly PatchOp[]): unknown {
   }
   return root;
 }
+
+/** Effect types known to the validators in the contract tests (tests/fixtures/documents/effect-catalog.json). */
+export function effectCatalog(): {
+  find(type: string): { schemaVersion: number; schema: unknown } | null;
+} {
+  const raw = fixture('documents/effect-catalog.json') as Record<
+    string,
+    { schemaVersion: number; schema: unknown }
+  >;
+  return {
+    find: (type) =>
+      type !== 'description' && Object.hasOwn(raw, type) ? (raw[type] ?? null) : null,
+  };
+}

@@ -26,6 +26,7 @@ Stand: 30.10.2026 · Konzeptversion: 1.0 · Referenz: [PLAN.md](PLAN.md)
 | M7 | Erweiterte Zeitleiste, Gruppen und Aktionen | M6 | Eigene Ausbaufreigabe |
 | M8 | Dynamische Inhalte, Video, variable Fonts | M6; M7 soweit benötigt | Eigene Ausbaufreigabe |
 | M9 | Effekte und Erweiterungssystem | M6–M8 je Funktion | Eigene Ausbaufreigabe |
+| M10 | GPU-Effektplattform (Ebenentyp `effect`, Partikel, Erweiterung durch Plugins) | M4 | Demo durch Stefan |
 
 ## M0 – Machbarkeitsprototyp und praktische Entscheidung
 
@@ -424,3 +425,19 @@ Nächste notwendige Änderung:
 - Bildanpassung auf volle Bühnenbreite/-höhe mit Seitenverhältnis, Zentrierung, responsive Überschreibungen und Undo ergänzt.
 - Nachweise: Vitest-Lifecycle-/Store-Tests, nativer Chromium-Ressourcen-/Animationscheck, PHP-Prüfungen und 12 WordPress-Integrationstests auf einer separaten Testdatenbank. Details und Grenzen in `PROBLEMS.md` und `docs/runtime-readiness.md`.
 - Stefans praktische M0-Abnahme ist inzwischen bestätigt (siehe Abnahmeprotokoll oben); die spätere grafische Timeline bleibt offen.
+
+## M10 – GPU-Effektplattform
+
+**Ziel:** GPU-gerenderte Effekt-Ebenen mit erweiterbarer Registry; Dokumentation in [docs/GPU_EFFECTS.md](docs/GPU_EFFECTS.md), Entscheidungen in [ADR 0005](docs/adr/0005-gpu-effects.md).
+
+- [x] G0 ADR 0005, `docs/GPU_EFFECTS.md`, TODO-Abschnitt.
+- [x] G1 `assets/gpu/core`: Typen, Registry, Schema-Dialekt (TS + PHP + Fixtures), RNG, Zeitschritt, Qualität, Transition. Nachweis: `gpu-core.test.ts`, `gpu-schema.test.ts`, `EffectSchemaTest.php`, `tests/fixtures/effects/schema.json`; Kern-Coverage 97,7 %.
+- [x] G2 Dokument/PHP: Ebenentyp `effect`, Validierung, Limits, statischer Fallback, PHP-Registry für Add-on-Plugins, Asset-Einbindung. Nachweis: gemeinsame Fixtures (`valid/effect.json`, `effect-catalog.json`, 27 Fälle in `invalid.json`), `EffectLayerTest.php` (25 Tests), `DocumentValidatorTest`/`contract.test.ts`; PHP-Coverage 88,0 %. Bundle-Budget für `gpu.js` folgt mit dem Bundle in G3.
+- [x] G3 `device`/`stage`: Capability-Prüfung, WebGL2, Scheduler, Observer, Kontextverlust, Slide-Lebenszyklus, Pause-Schalter. Nachweis: Unit-Tests (Gerät, Stage, Controller, Entry, Runtime-Anbindung), `tests/e2e/gpu-platform.mjs` mit echtem WebGL2; `gpu.js` 8,4 KiB gzip (Budget 30).
+- [x] G4 `particle-field`: Spawnformen, Integrator, Operatoren, Stile, Kamera, vier Presets. Nachweis: `gpu-particles.test.ts` (31), `tests/e2e/gpu-particles.mjs` mit echtem WebGL2 (GPU = CPU-Referenz, GLSL-Spawn = TS, Determinismus, Stabilität); Modul 11 KiB gzip. Durchsatz auf echter GPU offen (G7).
+- [x] G5 Bildrekonstruktion und Magnet-Dipol (`photo-grains`, `magnetic-canvas`). Nachweis: `gpu-image.test.ts`, `tests/e2e/gpu-particles.mjs` (Bild erkennbar, Zusammensetzen, lokaler Magnet mit vollständiger Rückkehr, Fehlerfälle). Optik und Gefühl auf echter Hardware prüft Stefan in G9.
+- [x] G6 Editor: Ebene, Schema-Panel, Preset-Galerie, Live-Vorschau, Impuls-Knopf, Medienauswahl. Standard „Ganze Fläche“: der Effekt füllt die Ebene (Stefans Anforderung). Nachweis: `effect-editor/-tools/-preview.test.ts`, `gpu-preview.test.ts`, `tests/e2e/gpu-editor.mjs` (echter Editor der Dev-Site: Ebene anlegen, Preset, Parameter, Kraft, Impuls, Undo/Redo, Speichern, Veröffentlichen, Frontend, Pause-Schalter, Reduced Motion, Mediathek-Bild), Flächenabdeckung in `gpu-particles.mjs`.
+- [ ] G7 Stabilisierung: adaptive Qualität, Benchmark-Protokoll, Visual Regression, Zugänglichkeit.
+- [ ] G8 Erweiterung: `gradient-warp`, WebGPU-Backend, Resonanz, Bindungen, weitere Presets.
+- [ ] G9 Stefan prüft die Demo (Bildeffekt, Maus, Pause, Reduced Motion).
+

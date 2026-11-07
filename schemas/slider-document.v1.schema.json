@@ -2675,6 +2675,616 @@
                       }
                     }
                   }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "name",
+                    "locked",
+                    "layout",
+                    "style",
+                    "overrides",
+                    "animation",
+                    "type",
+                    "content"
+                  ],
+                  "properties": {
+                    "id": {
+                      "$ref": "#/$defs/id"
+                    },
+                    "name": {
+                      "type": "string",
+                      "maxLength": 80
+                    },
+                    "locked": {
+                      "type": "boolean"
+                    },
+                    "layout": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "x",
+                        "y",
+                        "width",
+                        "height",
+                        "anchorX",
+                        "anchorY",
+                        "rotation",
+                        "visible"
+                      ],
+                      "properties": {
+                        "x": {
+                          "type": "number",
+                          "minimum": -20000,
+                          "maximum": 20000
+                        },
+                        "y": {
+                          "type": "number",
+                          "minimum": -20000,
+                          "maximum": 20000
+                        },
+                        "width": {
+                          "type": "number",
+                          "minimum": 1,
+                          "maximum": 20000
+                        },
+                        "height": {
+                          "type": "number",
+                          "minimum": 1,
+                          "maximum": 20000
+                        },
+                        "anchorX": {
+                          "enum": [
+                            "left",
+                            "center",
+                            "right"
+                          ]
+                        },
+                        "anchorY": {
+                          "enum": [
+                            "top",
+                            "center",
+                            "bottom"
+                          ]
+                        },
+                        "rotation": {
+                          "type": "number",
+                          "minimum": -360,
+                          "maximum": 360
+                        },
+                        "visible": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "style": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "fontRef",
+                        "fontSize",
+                        "lineHeight",
+                        "letterSpacing",
+                        "color",
+                        "textAlign",
+                        "backgroundColor",
+                        "borderRadius",
+                        "paddingX",
+                        "paddingY",
+                        "opacity"
+                      ],
+                      "properties": {
+                        "fontRef": {
+                          "oneOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "$ref": "#/$defs/id"
+                            }
+                          ],
+                          "description": "ID of an entry in fontRefs"
+                        },
+                        "fontSize": {
+                          "type": "number",
+                          "minimum": 4,
+                          "maximum": 400
+                        },
+                        "lineHeight": {
+                          "type": "number",
+                          "minimum": 0.5,
+                          "maximum": 4
+                        },
+                        "letterSpacing": {
+                          "type": "number",
+                          "minimum": -20,
+                          "maximum": 100
+                        },
+                        "color": {
+                          "$ref": "#/$defs/color"
+                        },
+                        "textAlign": {
+                          "enum": [
+                            "left",
+                            "center",
+                            "right"
+                          ]
+                        },
+                        "backgroundColor": {
+                          "oneOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "$ref": "#/$defs/color"
+                            }
+                          ]
+                        },
+                        "borderRadius": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 2000
+                        },
+                        "paddingX": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 400
+                        },
+                        "paddingY": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 400
+                        },
+                        "opacity": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        },
+                        "borderWidth": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 20
+                        },
+                        "borderColor": {
+                          "$ref": "#/$defs/color"
+                        },
+                        "shadowX": {
+                          "type": "number",
+                          "minimum": -200,
+                          "maximum": 200
+                        },
+                        "shadowY": {
+                          "type": "number",
+                          "minimum": -200,
+                          "maximum": 200
+                        },
+                        "shadowBlur": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "shadowColor": {
+                          "oneOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "$ref": "#/$defs/color"
+                            }
+                          ]
+                        },
+                        "shadowOpacity": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        }
+                      }
+                    },
+                    "overrides": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [],
+                      "properties": {
+                        "tablet": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [],
+                          "properties": {
+                            "layout": {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": [],
+                              "properties": {
+                                "x": {
+                                  "type": "number",
+                                  "minimum": -20000,
+                                  "maximum": 20000
+                                },
+                                "y": {
+                                  "type": "number",
+                                  "minimum": -20000,
+                                  "maximum": 20000
+                                },
+                                "width": {
+                                  "type": "number",
+                                  "minimum": 1,
+                                  "maximum": 20000
+                                },
+                                "height": {
+                                  "type": "number",
+                                  "minimum": 1,
+                                  "maximum": 20000
+                                },
+                                "anchorX": {
+                                  "enum": [
+                                    "left",
+                                    "center",
+                                    "right"
+                                  ]
+                                },
+                                "anchorY": {
+                                  "enum": [
+                                    "top",
+                                    "center",
+                                    "bottom"
+                                  ]
+                                },
+                                "rotation": {
+                                  "type": "number",
+                                  "minimum": -360,
+                                  "maximum": 360
+                                },
+                                "visible": {
+                                  "type": "boolean"
+                                }
+                              }
+                            },
+                            "style": {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": [],
+                              "properties": {
+                                "fontSize": {
+                                  "type": "number",
+                                  "minimum": 4,
+                                  "maximum": 400
+                                },
+                                "lineHeight": {
+                                  "type": "number",
+                                  "minimum": 0.5,
+                                  "maximum": 4
+                                },
+                                "letterSpacing": {
+                                  "type": "number",
+                                  "minimum": -20,
+                                  "maximum": 100
+                                },
+                                "textAlign": {
+                                  "enum": [
+                                    "left",
+                                    "center",
+                                    "right"
+                                  ]
+                                },
+                                "paddingX": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 400
+                                },
+                                "paddingY": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 400
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "mobile": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [],
+                          "properties": {
+                            "layout": {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": [],
+                              "properties": {
+                                "x": {
+                                  "type": "number",
+                                  "minimum": -20000,
+                                  "maximum": 20000
+                                },
+                                "y": {
+                                  "type": "number",
+                                  "minimum": -20000,
+                                  "maximum": 20000
+                                },
+                                "width": {
+                                  "type": "number",
+                                  "minimum": 1,
+                                  "maximum": 20000
+                                },
+                                "height": {
+                                  "type": "number",
+                                  "minimum": 1,
+                                  "maximum": 20000
+                                },
+                                "anchorX": {
+                                  "enum": [
+                                    "left",
+                                    "center",
+                                    "right"
+                                  ]
+                                },
+                                "anchorY": {
+                                  "enum": [
+                                    "top",
+                                    "center",
+                                    "bottom"
+                                  ]
+                                },
+                                "rotation": {
+                                  "type": "number",
+                                  "minimum": -360,
+                                  "maximum": 360
+                                },
+                                "visible": {
+                                  "type": "boolean"
+                                }
+                              }
+                            },
+                            "style": {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": [],
+                              "properties": {
+                                "fontSize": {
+                                  "type": "number",
+                                  "minimum": 4,
+                                  "maximum": 400
+                                },
+                                "lineHeight": {
+                                  "type": "number",
+                                  "minimum": 0.5,
+                                  "maximum": 4
+                                },
+                                "letterSpacing": {
+                                  "type": "number",
+                                  "minimum": -20,
+                                  "maximum": 100
+                                },
+                                "textAlign": {
+                                  "enum": [
+                                    "left",
+                                    "center",
+                                    "right"
+                                  ]
+                                },
+                                "paddingX": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 400
+                                },
+                                "paddingY": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 400
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "animation": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "enter",
+                        "exit"
+                      ],
+                      "properties": {
+                        "enter": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "preset",
+                            "startMs",
+                            "durationMs",
+                            "easing",
+                            "distance"
+                          ],
+                          "properties": {
+                            "preset": {
+                              "enum": [
+                                "none",
+                                "fade",
+                                "slide-up",
+                                "slide-down",
+                                "slide-left",
+                                "slide-right",
+                                "zoom-in",
+                                "zoom-out",
+                                "rotate",
+                                "reveal-left",
+                                "reveal-circle"
+                              ]
+                            },
+                            "startMs": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 60000
+                            },
+                            "durationMs": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 10000
+                            },
+                            "easing": {
+                              "enum": [
+                                "linear",
+                                "ease",
+                                "ease-in",
+                                "ease-out",
+                                "ease-in-out"
+                              ]
+                            },
+                            "distance": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 4000
+                            }
+                          }
+                        },
+                        "exit": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": [
+                                "mode"
+                              ],
+                              "properties": {
+                                "mode": {
+                                  "const": "slide-end"
+                                }
+                              }
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": [
+                                "mode",
+                                "preset",
+                                "startMs",
+                                "durationMs",
+                                "easing",
+                                "distance"
+                              ],
+                              "properties": {
+                                "mode": {
+                                  "const": "timed"
+                                },
+                                "preset": {
+                                  "enum": [
+                                    "none",
+                                    "fade",
+                                    "slide-up",
+                                    "slide-down",
+                                    "slide-left",
+                                    "slide-right",
+                                    "zoom-in",
+                                    "zoom-out",
+                                    "rotate",
+                                    "reveal-left",
+                                    "reveal-circle"
+                                  ]
+                                },
+                                "startMs": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 60000
+                                },
+                                "durationMs": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 10000
+                                },
+                                "easing": {
+                                  "enum": [
+                                    "linear",
+                                    "ease",
+                                    "ease-in",
+                                    "ease-out",
+                                    "ease-in-out"
+                                  ]
+                                },
+                                "distance": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 4000
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "type": {
+                      "const": "effect"
+                    },
+                    "content": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "effect",
+                        "schemaVersion",
+                        "seed",
+                        "quality",
+                        "params"
+                      ],
+                      "properties": {
+                        "effect": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*(?:/[a-z][a-z0-9]*(?:-[a-z0-9]+)*)?$",
+                          "description": "Type id: name for built-in modules, vendor/name for add-ons."
+                        },
+                        "schemaVersion": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 1000
+                        },
+                        "seed": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        },
+                        "quality": {
+                          "enum": [
+                            "auto",
+                            "low",
+                            "medium",
+                            "high",
+                            "ultra"
+                          ]
+                        },
+                        "params": {
+                          "type": "object",
+                          "description": "Validated against the parameter schema of the registered effect type (schemas/effects, sws_register_effects); at most 16 KiB and nesting depth 8."
+                        },
+                        "preset": {
+                          "type": "string",
+                          "maxLength": 64
+                        },
+                        "alt": {
+                          "type": "string",
+                          "maxLength": 300
+                        },
+                        "fallbackImageId": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1
+                        },
+                        "assets": {
+                          "type": "object",
+                          "maxProperties": 4,
+                          "propertyNames": {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+                          },
+                          "additionalProperties": {
+                            "type": "integer",
+                            "minimum": 1
+                          }
+                        }
+                      }
+                    }
+                  }
                 }
               ]
             }

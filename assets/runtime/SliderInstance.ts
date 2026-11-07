@@ -1,3 +1,4 @@
+import type { GpuMount } from '../browser/gpuHost';
 import type { HeroPlayback } from '../browser/heroEffects';
 import { prepareImages } from '../browser/images';
 import { enterKeyframes, exitKeyframes, phaseTiming } from '@shared/animation';
@@ -37,6 +38,8 @@ export class SliderInstance {
   private resources = new AbortController();
   private readonly prepared: Animation[] = [];
   private hero: HeroPlayback | null = null;
+  /** GPU effect layers (optional bundle); effects follow slide visibility and the pause switch. */
+  private gpu: GpuMount | null = null;
   private timer: number | null = null;
   private userPaused = false;
   private hovered = false;
@@ -65,6 +68,8 @@ export class SliderInstance {
     this.listen(motion, 'change', () => {
       this.reducedMotion = motion.matches;
       if (this.reducedMotion) this.settleCurrent();
+      if (this.gpu) this.gpu.setReducedMotion(this.reducedMotion);
+      else this.mountGpu();
       this.updateToggle();
       this.schedule();
     });
@@ -112,7 +117,17 @@ export class SliderInstance {
     this.resourceError = imagesOk === false;
     this.setPhase('ready');
     this.playLayers(0);
+    this.mountGpu();
     this.schedule();
+  }
+
+  /** Starts the GPU effect layers when the optional bundle is present; otherwise the static fallback stays. */
+  private mountGpu(): void {
+    if (this.destroyed || this.gpu || this.config.effects.length === 0 || !window.swsGpu) return;
+    this.gpu = window.swsGpu.mount(this.root, this.config.effects, this.reducedMotion);
+    if (this.userPaused) this.gpu.setUserPaused(true);
+    const current = this.slides[this.index];
+    if (current && !current.hidden) this.gpu.activate(current);
   }
 
   private get count(): number {
@@ -132,6 +147,7 @@ export class SliderInstance {
     if (this.toggle) {
       this.listen(this.toggle, 'click', () => {
         this.userPaused = !this.userPaused;
+        this.gpu?.setUserPaused(this.userPaused);
         this.updateToggle();
         this.schedule();
       });
@@ -324,6 +340,7 @@ export class SliderInstance {
     // only after the slide transition, so delayed entrances cannot flash their static content.
     this.playLayers(this.index, true);
     incoming.hidden = false;
+    this.gpu?.activate(incoming);
     // Focus inside the leaving slide would be dropped to <body> by `inert`; the incoming slide is
     // still inert until the transition ends, so `finish()` hands the focus over.
     this.rescueFocus = outgoing.contains(document.activeElement);
@@ -403,6 +420,7 @@ export class SliderInstance {
   }
 
   private hide(slide: HTMLElement): void {
+    this.gpu?.deactivate(slide);
     slide.classList.remove('sws-is-leaving', 'sws-is-active');
     slide.hidden = true;
     // `hidden` alone is undone during transitions; `inert` keeps links out of focus order and AT.
@@ -506,6 +524,8 @@ export class SliderInstance {
     this.destroyed = true;
     this.generation++;
     this.cancelAll();
+    this.gpu?.destroy();
+    this.gpu = null;
     this.cleanups.splice(0).forEach((cleanup) => cleanup());
     this.root.classList.remove('sws-js');
     delete this.root.dataset.swsState;

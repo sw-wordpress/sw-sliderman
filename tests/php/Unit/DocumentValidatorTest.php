@@ -15,6 +15,7 @@ use stdClass;
 use SW\Slider\Domain\DocumentValidator;
 use SW\Slider\Domain\Limits;
 use SW\Slider\Domain\ValidationIssue;
+use SW\Slider\Tests\Support\FixtureCatalog;
 use SW\Slider\Tests\Support\Fixtures;
 
 final class DocumentValidatorTest extends TestCase {
@@ -30,7 +31,7 @@ final class DocumentValidatorTest extends TestCase {
 
 	#[DataProvider( 'valid_documents' )]
 	public function test_valid_fixture_has_no_issues( string $fixture ): void {
-		$issues = ( new DocumentValidator() )->validate( Fixtures::object( $fixture ) );
+		$issues = ( new DocumentValidator( new FixtureCatalog() ) )->validate( Fixtures::object( $fixture ) );
 		self::assertSame( array(), array_map( static fn ( ValidationIssue $issue ): array => $issue->to_array(), $issues ) );
 	}
 
@@ -55,7 +56,7 @@ final class DocumentValidatorTest extends TestCase {
 		$document = Fixtures::patch( Fixtures::object( 'documents/valid/' . $fixture->base . '.json' ), $fixture->ops );
 		$actual   = array_map(
 			static fn ( ValidationIssue $issue ): string => $issue->path . ' ' . $issue->code,
-			( new DocumentValidator() )->validate( $document )
+			( new DocumentValidator( new FixtureCatalog() ) )->validate( $document )
 		);
 		$expected = array_map( static fn ( stdClass $issue ): string => $issue->path . ' ' . $issue->code, $fixture->issues );
 		sort( $actual );

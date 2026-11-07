@@ -22,7 +22,8 @@
     "baseUrl": ".",
     "paths": {
       "@shared/*": ["assets/shared/*"],
-      "@editor/*": ["assets/editor/*"]
+      "@editor/*": ["assets/editor/*"],
+      "@gpu/*": ["assets/gpu/*"]
     }
   },
   "include": [

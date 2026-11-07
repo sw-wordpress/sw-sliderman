@@ -259,3 +259,29 @@
   height: 100%;
   border-radius: inherit;
 }
+
+/* GPU effect layer: static fallback image; the runtime adds an aria-hidden canvas on top. */
+.sws-slider .sws-fx {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.sws-slider .sws-fx__fallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sws-slider .sws-fx canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+/* The live canvas replaces the fallback image visually; on pause the last frame stays, on loss/error the
+   image returns. Opacity (not visibility) keeps its alternative text for assistive technology. */
+.sws-slider .sws-fx.sws-fx--live .sws-fx__fallback {
+  opacity: 0;
+}
