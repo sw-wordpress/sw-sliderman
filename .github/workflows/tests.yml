@@ -16,7 +16,7 @@ jobs:
       SWS_TEST_DB_USER: root
       SWS_TEST_DB_PASSWORD: wordpress-test
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: shivammathur/setup-php@v2
       with:
         php-version: '8.2'
@@ -49,7 +49,7 @@ jobs:
     - name: Merge and normalize Clover paths
       run: php tests/coverage/merge.php coverage/unit.xml coverage/wordpress.xml
     - name: Upload Clover coverage
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: php-coverage
         path: coverage/clover.xml
@@ -83,7 +83,7 @@ jobs:
       SWS_TEST_DB_USER: root
       SWS_TEST_DB_PASSWORD: wordpress-test
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: shivammathur/setup-php@v2
       with:
         php-version: ${{ matrix.php }}
@@ -116,8 +116,8 @@ jobs:
   frontend:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
       with:
         node-version: '22'
         cache: npm
@@ -125,7 +125,7 @@ jobs:
     - run: npm ci
     - run: npm audit --omit=dev --audit-level=high
     - run: npm run lint && npm run typecheck && npm run coverage && npm run build:only && npm run i18n:check
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: js-coverage
         path: coverage/js/lcov.info
@@ -143,14 +143,14 @@ jobs:
        github.ref_name == github.event.repository.default_branch)
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with:
         name: php-coverage
         path: coverage
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with:
         name: js-coverage
         path: coverage/js
@@ -169,7 +169,7 @@ jobs:
         fi
         test -s coverage/clover.xml
     - name: Analyze code and import coverage
-      uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9
+      uses: SonarSource/sonarqube-scan-action@e805d875275f728fac1885b413934be6d7c63f65
       with:
         args: -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
       env:
