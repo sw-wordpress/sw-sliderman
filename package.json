@@ -33,7 +33,7 @@
     "@tiptap/extensions": "3.33.0",
     "@tiptap/pm": "3.33.0",
     "@tiptap/vue-3": "3.33.0",
-    "pinia": "^3.0.0",
+    "pinia": "^4.1.0",
     "quasar": "^2.18.0",
     "vue": "^3.5.45",
     "vue-router": "^4.5.0"
