@@ -57,6 +57,8 @@ final class Plugin {
 	public function boot(): void {
 		global $wpdb;
 
+		\SW\Slider\Infrastructure\Updates\UpdateProvider::init();
+
 		$offline         = (bool) get_option( self::OFFLINE_OPTION, false );
 		$template        = (string) file_get_contents( SWS_DIR . 'schemas/defaults/new-slider.json' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- bundled local file.
 		$system          = new WpSystemPorts();

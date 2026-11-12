@@ -441,3 +441,11 @@ Nächste notwendige Änderung:
 - [ ] G8 Erweiterung: `gradient-warp`, WebGPU-Backend, Resonanz, Bindungen, weitere Presets.
 - [ ] G9 Stefan prüft die Demo (Bildeffekt, Maus, Pause, Reduced Motion).
 
+
+## Verifizierte manuelle GitHub-Updates – 12.11.2026
+
+- [x] Eigene Quelle `sw-wordpress/sw-sliderman`/`1438174384`, isolierte Schlüssel-/Speicher-/Hooknamen, signierte Metadaten und ZIP-Prüfung vor nativer Core-Installation.
+- [x] Prüfschaltfläche und lokaler Status direkt in der WordPress-Pluginzeile (auch Netzwerk); keine Updatebedienung im Slider-Editor, keine automatische Installation.
+- [x] Private WordPress-/Multisite- und Browserprüfungen, Coverage >80 % für PHP und TS/JS, echtes ZIP mit Wegwerfschlüssel verifiziert; PR-Tests und geschützter Draft-/Signierworkflow. Details/Grenzen: [Prüfprotokoll](docs/GITHUB-UPDATES-TESTS.md).
+- [ ] Betreiber richtet eigene Produktionsschlüssel, geschütztes `plugin-releases`, Vertrauensverteilung und ersten signierten Release ein; bis dahin gesperrt. [Betrieb und kopierbare Befehle](docs/GITHUB-UPDATES-BETRIEB.md).
+- [ ] Stefan nimmt die Bedienung in der Pluginübersicht praktisch ab (Prüfschritte im Prüfprotokoll). Bestehende M0-/Release-Abnahmepunkte bleiben davon unberührt.

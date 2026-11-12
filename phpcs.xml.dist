@@ -7,6 +7,7 @@
     <arg name="cache" value=".phpcs.cache"/>
 
     <file>src</file>
+    <file>includes</file>
     <file>tests/php</file>
     <file>tests/coverage</file>
     <file>tests/package-smoke.php</file>

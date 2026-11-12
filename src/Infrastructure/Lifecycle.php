@@ -29,6 +29,7 @@ final class Lifecycle {
 
 	public static function deactivate(): void {
 		// Sliders, fonts and revisions are intentionally kept; only the cleanup task is removed.
+		\SW\Slider\Infrastructure\Updates\UpdateProvider::deactivate();
 		ArtifactCleanup::unschedule();
 	}
 

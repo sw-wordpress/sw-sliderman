@@ -4,6 +4,7 @@
  * Description:       Responsive layer slider with a visual editor, container-based mobile layouts and locally hosted Google Fonts.
  * Version:           0.1.0
  * Requires at least: 6.6
+ * Update URI:        https://github.com/sw-wordpress/sw-sliderman
  * Requires PHP:      8.2
  * Author:            sw-wordpress
  * License:           GPL-2.0-or-later
@@ -13,6 +14,8 @@
  *
  * @package sw-sliderman
  */
+
+declare(strict_types=1);
 
 defined( 'ABSPATH' ) || exit;
 

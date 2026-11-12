@@ -28,6 +28,10 @@ foreach ( $sws_iterator as $sws_file ) {
 }
 $sws_required = array(
 	'sw-sliderman.php',
+	'build/admin/updates.js',
+	'includes/update/source.php',
+	'includes/update/descriptors.php',
+	'includes/update/trusted-keys.php',
 	'uninstall.php',
 	'build/editor/editor.js',
 	'build/editor/editor.css',

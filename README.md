@@ -48,6 +48,10 @@ and `sws_manage_fonts`, granted to administrators on activation.
 
 The plugin has no `wp-config.php` constants of its own.
 
+### Plugin updates
+
+GitHub update checks and their local status appear in the SW Sliderman row under **Plugins → Installed Plugins**, including network administration. Installation uses WordPress' native manual update actions; automatic installation is blocked. The public trust keyring is initially empty. Operators must configure and distribute their own key before updates can work: [setup, copyable commands and release operation](docs/GITHUB-UPDATES-BETRIEB.md).
+
 ### Background tasks
 
 Font installations and catalog updates run via WP-Cron. While **Sliderman → Fonts** is open, the page processes
