@@ -145,7 +145,7 @@ export class GpuDevice {
 
   /** Creates the device for `canvas`, or null when WebGL2 is not available. */
   static create(canvas: HTMLCanvasElement): GpuDevice | null {
-    let gl: WebGL2RenderingContext | null = null;
+    let gl: WebGL2RenderingContext | null;
     try {
       gl = canvas.getContext('webgl2', {
         alpha: true,
