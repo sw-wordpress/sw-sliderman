@@ -6,7 +6,8 @@
  * Requires at least: 6.6
  * Update URI:        https://github.com/sw-wordpress/sw-sliderman
  * Requires PHP:      8.2
- * Author:            sw-wordpress
+ * Author:            Stefan Warnat
+ * Author URI:        https://stefanwarnat.de
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       sw-sliderman

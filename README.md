@@ -50,7 +50,17 @@ The plugin has no `wp-config.php` constants of its own.
 
 ### Plugin updates
 
-GitHub update checks and their local status appear in the SW Sliderman row under **Plugins → Installed Plugins**, including network administration. Installation uses WordPress' native manual update actions; automatic installation is blocked. The public trust keyring is initially empty. Operators must configure and distribute their own key before updates can work: [setup, copyable commands and release operation](docs/GITHUB-UPDATES-BETRIEB.md).
+GitHub update checks and their local status appear in the SW Sliderman row under **Plugins → Installed Plugins**, including network administration. Installation uses WordPress' native manual update actions; automatic installation is blocked. The public trust keyring contains `sw-sliderman-2026-11`. Existing installations still need this key through a trusted distribution path; release signing and protected GitHub configuration are required: [setup, copyable commands and release operation](docs/GITHUB-UPDATES-BETRIEB.md).
+
+### Release command
+
+After review, on a clean checkout of the approved branch:
+
+```bash
+make release VERSION=0.1.1
+```
+
+This synchronizes the plugin header and `SWS_VERSION`, commits a version change, creates an annotated tag and atomically pushes branch and tag to `origin`. The existing signed release workflow then builds and publishes the release through `plugin-releases`. An unchanged current version may be tagged without an empty commit. Dirty worktrees, downgrades, inconsistent versions and existing tags abort. Versions may use `X.Y.Z` or `X.Y.Z.W`. A rejected atomic push leaves the local release commit/tag for inspection and publishes neither remote ref. See [release prerequisites](docs/GITHUB-UPDATES-BETRIEB.md#release-und-vertrauensstart).
 
 ### Background tasks
 

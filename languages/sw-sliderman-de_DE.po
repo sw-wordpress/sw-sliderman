@@ -24,8 +24,13 @@ msgstr "Responsiver Layer-Slider mit visuellem Editor, containerbasierten Mobil-
 
 #. Author of the plugin
 #: sw-sliderman.php
-msgid "sw-wordpress"
-msgstr "sw-wordpress"
+msgid "Stefan Warnat"
+msgstr "Stefan Warnat"
+
+#. Author URI of the plugin
+#: sw-sliderman.php
+msgid "https://stefanwarnat.de"
+msgstr "https://stefanwarnat.de"
 
 #: src/Admin/AdminPage.php:52
 msgid "Sliderman"

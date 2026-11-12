@@ -3,7 +3,7 @@
 NPM ?= npm
 DEPS_STAMP := node_modules/.make-install
 
-.PHONY: build check zip
+.PHONY: build check zip release
 build: $(DEPS_STAMP)
 	$(NPM) run build
 
@@ -20,3 +20,8 @@ check: $(DEPS_STAMP)
 
 zip:
 	bash bin/build-zip.sh
+
+# The version travels through the environment, never interpolated into shell code.
+release: export SWS_RELEASE_VERSION = $(VERSION)
+release:
+	bash bin/release.sh

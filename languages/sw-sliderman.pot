@@ -1,4 +1,4 @@
-# Copyright (C) 2026 sw-wordpress
+# Copyright (C) 2026 Stefan Warnat
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
@@ -28,7 +28,12 @@ msgstr ""
 
 #. Author of the plugin
 #: sw-sliderman.php
-msgid "sw-wordpress"
+msgid "Stefan Warnat"
+msgstr ""
+
+#. Author URI of the plugin
+#: sw-sliderman.php
+msgid "https://stefanwarnat.de"
 msgstr ""
 
 #: src/Admin/AdminPage.php:52
