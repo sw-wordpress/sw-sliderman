@@ -18,6 +18,7 @@ use SW\Slider\Domain\DocumentValidator;
 use SW\Slider\Domain\RichText;
 use SW\Slider\Domain\Schedule;
 use SW\Slider\Infrastructure\Capabilities;
+use SW\Slider\Infrastructure\EffectRegistry;
 
 /**
  * Renders the published snapshot of a slider (PLAN.md 11).
@@ -38,10 +39,20 @@ final class SliderRenderer {
 	 */
 	private int $instances = 0;
 
+	/**
+	 * @param EffectRegistry|null    $effects   Registered GPU effect types; without it effect layers render only their static fallback.
+	 * @param DocumentValidator|null $validator Validator with the effect catalog (default: without schemas).
+	 */
 	public function __construct(
 		private readonly SliderRepository $repository,
-		private readonly Assets $assets
+		private readonly Assets $assets,
+		private readonly ?EffectRegistry $effects = null,
+		private readonly ?DocumentValidator $validator = null
 	) {
+	}
+
+	private function validator(): DocumentValidator {
+		return $this->validator ?? new DocumentValidator( $this->effects );
 	}
 
 	/**
@@ -58,7 +69,7 @@ final class SliderRenderer {
 
 	/** A private request may render a validated draft, without writing a public CSS artifact. */
 	public function render_preview( StoredSlider $slider ): string {
-		if ( array() !== ( new DocumentValidator() )->validate_json( $slider->document_json ) ) {
+		if ( array() !== $this->validator()->validate_json( $slider->document_json ) ) {
 			return $this->diagnostic( __( 'The draft contains invalid data.', 'sw-sliderman' ) );
 		}
 		$document = CanonicalJson::decode_assoc( $slider->document_json );
@@ -68,7 +79,7 @@ final class SliderRenderer {
 	}
 
 	private function render_snapshot( StoredSlider $slider, PublishedSnapshot $published ): string {
-		if ( array() !== ( new DocumentValidator() )->validate_json( $published->document_json ) ) {
+		if ( array() !== $this->validator()->validate_json( $published->document_json ) ) {
 			return $this->diagnostic( __( 'The published slider data is damaged.', 'sw-sliderman' ) );
 		}
 		try {
@@ -94,10 +105,13 @@ final class SliderRenderer {
 			$html .= $this->slide( $slide, $index, $count, $instance );
 		}
 		$html .= '</div>';
-		if ( $count > 1 ) {
-			$html .= $this->controls( $document['settings'], $slides, $instance );
+		$effects    = $this->effect_entries( $slides, $published->document_json );
+		$continuous = array() !== array_filter( $effects, static fn ( array $entry ): bool => true === $entry['continuous'] );
+		// Continuous GPU motion always gets the pause switch (WCAG 2.2.2), also without autoplay or with one slide.
+		if ( $count > 1 || $continuous ) {
+			$html .= $this->controls( $document['settings'], $slides, $instance, $count > 1, true === $document['settings']['autoplay'] || $continuous );
 		}
-		$html .= '<script type="application/json" class="sws-config">' . $this->config_json( $document, $slides ) . '</script>';
+		$html .= '<script type="application/json" class="sws-config">' . $this->config_json( $document, $slides, $effects ) . '</script>';
 		$html .= '</section>';
 		return $html;
 	}
@@ -161,6 +175,7 @@ final class SliderRenderer {
 		$body = match ( $layer['type'] ) {
 			'text'   => $this->text( $layer['content'] ),
 			'image'  => $this->image( $layer['content'], $layer['layout'], $eager, $priority ),
+			'effect' => $this->effect( $layer['content'], $layer['layout'], $eager ),
 			'button' => $this->button( $layer['content'] ),
 			'shape'  => '<span class="sws-shape sws-shape--' . ( 'circle' === ( $layer['content']['kind'] ?? '' ) ? 'circle' : 'rectangle' ) . '" aria-hidden="true"></span>',
 			default  => '',
@@ -226,17 +241,20 @@ final class SliderRenderer {
 	/**
 	 * @param array<string, mixed>       $settings Slider settings.
 	 * @param list<array<string, mixed>> $slides   Enabled slides.
+	 * @param string                     $instance Instance ID.
+	 * @param bool                       $multiple Whether arrows and dots are needed (more than one slide).
+	 * @param bool                       $toggle   Whether the pause/play switch is shown.
 	 */
-	private function controls( array $settings, array $slides, string $instance ): string {
+	private function controls( array $settings, array $slides, string $instance, bool $multiple, bool $toggle ): string {
 		$viewport = esc_attr( $instance . '-viewport' );
 		$html     = '<div class="sws-controls">';
-		if ( true === $settings['autoplay'] ) {
+		if ( $toggle ) {
 			$html .= '<button type="button" class="sws-toggle" aria-controls="' . $viewport . '" data-label-pause="' . esc_attr__( 'Pause slider', 'sw-sliderman' ) . '" data-label-play="' . esc_attr__( 'Play slider', 'sw-sliderman' ) . '" aria-label="' . esc_attr__( 'Pause slider', 'sw-sliderman' ) . '"><span class="sws-icon sws-icon--pause" aria-hidden="true"></span></button>';
 		}
-		if ( true === $settings['showArrows'] ) {
+		if ( $multiple && true === $settings['showArrows'] ) {
 			$html .= '<button type="button" class="sws-prev" aria-controls="' . $viewport . '" aria-label="' . esc_attr__( 'Previous slide', 'sw-sliderman' ) . '"><span class="sws-icon sws-icon--prev" aria-hidden="true"></span></button>';
 		}
-		if ( true === $settings['showDots'] ) {
+		if ( $multiple && true === $settings['showDots'] ) {
 			$html .= '<div class="sws-dots">';
 			foreach ( $slides as $index => $slide ) {
 				$label = sprintf(
@@ -248,11 +266,110 @@ final class SliderRenderer {
 			}
 			$html .= '</div>';
 		}
-		if ( true === $settings['showArrows'] ) {
+		if ( $multiple && true === $settings['showArrows'] ) {
 			$html .= '<button type="button" class="sws-next" aria-controls="' . $viewport . '" aria-label="' . esc_attr__( 'Next slide', 'sw-sliderman' ) . '"><span class="sws-icon sws-icon--next" aria-hidden="true"></span></button>';
 		}
 		$html .= '<p class="sws-live" aria-live="polite" aria-atomic="true"></p>';
 		return $html . '</div>';
+	}
+
+	/**
+	 * Static markup of a GPU effect layer: only the fallback image. The runtime adds the canvas
+	 * (`aria-hidden`, no focus, no pointer events) when GPU and motion are available.
+	 *
+	 * @param array<string, mixed> $content Effect content.
+	 * @param array<string, mixed> $layout  Base layout (for the `sizes` hint).
+	 */
+	private function effect( array $content, array $layout, bool $eager ): string {
+		$image = '';
+		if ( is_int( $content['fallbackImageId'] ?? null ) ) {
+			$image = (string) wp_get_attachment_image(
+				$content['fallbackImageId'],
+				'full',
+				false,
+				array(
+					'class'    => 'sws-fx__fallback',
+					'alt'      => (string) ( $content['alt'] ?? '' ),
+					'loading'  => $eager ? 'eager' : 'lazy',
+					'decoding' => 'async',
+					'sizes'    => '(max-width: 767px) 100vw, ' . (int) ceil( (float) $layout['width'] ) . 'px',
+				)
+			);
+		}
+		return '<div class="sws-fx" data-sws-fx="' . esc_attr( (string) $content['effect'] ) . '">' . $image . '</div>';
+	}
+
+	/**
+	 * Effect layers of the enabled slides that the runtime can start: the type is registered and its
+	 * schema version is not newer than the installed module. Everything else stays a static fallback.
+	 *
+	 * @param list<array<string, mixed>> $slides        Enabled slides.
+	 * @param string                     $document_json Validated document JSON (parameters keep `{}` and `[]` apart).
+	 *
+	 * @return list<array<string, mixed>> Runtime entries.
+	 */
+	private function effect_entries( array $slides, string $document_json ): array {
+		if ( null === $this->effects ) {
+			return array();
+		}
+		$params_of = $this->effect_params( $document_json );
+		$entries = array();
+		foreach ( $slides as $slide ) {
+			foreach ( $slide['layers'] as $layer ) {
+				if ( 'effect' !== $layer['type'] || 1 !== preg_match( DocumentValidator::ID_PATTERN, (string) $layer['id'] ) ) {
+					continue;
+				}
+				$content    = $layer['content'];
+				$descriptor = $this->effects->descriptor( (string) $content['effect'] );
+				if ( null === $descriptor || (int) $content['schemaVersion'] > (int) $descriptor['schema_version'] ) {
+					continue;
+				}
+				$assets = array();
+				foreach ( (array) ( $content['assets'] ?? array() ) as $key => $attachment ) {
+					$source = wp_get_attachment_image_src( (int) $attachment, 'large' );
+					if ( is_array( $source ) ) {
+						$assets[ (string) $key ] = array(
+							'url'    => $source[0],
+							'width'  => $source[1],
+							'height' => $source[2],
+						);
+					}
+				}
+				$entries[] = array(
+					'layerId'       => $layer['id'],
+					'type'          => $content['effect'],
+					'schemaVersion' => $content['schemaVersion'],
+					'seed'          => $content['seed'],
+					'quality'       => $content['quality'],
+					'continuous'    => true === $descriptor['continuous'],
+					'module'        => $descriptor['module_url'],
+					'params'        => $params_of[ $layer['id'] ] ?? new \stdClass(),
+					'assets'        => array() === $assets ? new \stdClass() : $assets,
+				);
+			}
+		}
+		return $entries;
+	}
+
+	/**
+	 * Effect parameters by layer id, decoded as objects so nested empty objects stay `{}`.
+	 *
+	 * @param string $document_json Validated document JSON.
+	 *
+	 * @return array<string, object> Parameter objects.
+	 */
+	private function effect_params( string $document_json ): array {
+		$document = json_decode( $document_json, false, 64 );
+		$found    = array();
+		foreach ( is_object( $document ) && is_array( $document->slides ?? null ) ? $document->slides : array() as $slide ) {
+			foreach ( is_object( $slide ) && is_array( $slide->layers ?? null ) ? $slide->layers : array() as $layer ) {
+				$content = is_object( $layer ) ? ( $layer->content ?? null ) : null;
+				if ( is_object( $layer ) && 'effect' === ( $layer->type ?? null ) && is_string( $layer->id ?? null ) && is_object( $content ) && is_object( $content->params ?? null ) ) {
+					$found[ $layer->id ] = $content->params;
+				}
+			}
+		}
+		return $found;
 	}
 
 	/**
@@ -261,12 +378,14 @@ final class SliderRenderer {
 	 *
 	 * @param array<string, mixed>       $document Published document.
 	 * @param list<array<string, mixed>> $slides   Enabled slides.
+	 * @param list<array<string, mixed>> $effects  Runtime entries of the GPU effect layers.
 	 */
-	private function config_json( array $document, array $slides ): string {
+	private function config_json( array $document, array $slides, array $effects = array() ): string {
 		$config = array(
 			'autoplay'    => true === $document['settings']['autoplay'],
 			'loop'        => true === $document['settings']['loop'],
 			'breakpoints' => $document['breakpoints'],
+			'effects'     => $effects,
 			'slides'      => array_map(
 				static fn ( array $slide ): array => array(
 					'id'         => $slide['id'],

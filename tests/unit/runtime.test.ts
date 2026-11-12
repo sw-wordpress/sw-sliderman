@@ -306,6 +306,149 @@ describe('runtime', () => {
   });
 });
 
+describe('GPU effect layers (M10)', () => {
+  const entry = {
+    layerId: 'fx',
+    type: 'particle-field',
+    schemaVersion: 1,
+    seed: 5,
+    quality: 'auto',
+    continuous: true,
+    module: '/m.js?ver=1',
+    params: { count: 10 },
+    assets: { image: { url: '/i.jpg', width: 4, height: 3 } },
+  };
+  const withEffects = (effects: unknown) => {
+    const base = config(true);
+    const parsed = parseConfig(JSON.stringify({ ...base, effects }));
+    if (!parsed) throw new Error('config');
+    return parsed;
+  };
+  function mountSpy() {
+    const mount = {
+      activate: vi.fn(),
+      deactivate: vi.fn(),
+      setUserPaused: vi.fn(),
+      setReducedMotion: vi.fn(),
+      destroy: vi.fn(),
+    };
+    const host = vi.fn(() => mount);
+    window.swsGpu = { version: 1, mount: host };
+    return { mount, host };
+  }
+  afterEach(() => {
+    delete window.swsGpu;
+  });
+
+  it('parses effect entries defensively', () => {
+    const parsed = withEffects([
+      entry,
+      { layerId: 1 },
+      'x',
+      {
+        ...entry,
+        quality: 'bogus',
+        continuous: false,
+        params: 'no',
+        assets: { bad: 1, ok: { url: '/u' } },
+      },
+    ]);
+    expect(parsed.effects).toHaveLength(2);
+    expect(parsed.effects[0]).toMatchObject({
+      layerId: 'fx',
+      seed: 5,
+      params: { count: 10 },
+      assets: { image: { url: '/i.jpg', width: 4, height: 3 } },
+    });
+    expect(parsed.effects[1]).toMatchObject({
+      quality: 'auto',
+      continuous: false,
+      params: {},
+      assets: { ok: { url: '/u', width: 0, height: 0 } },
+    });
+    expect(withEffects('nope').effects).toEqual([]);
+    expect(parseConfig(JSON.stringify({ ...config(false), effects: undefined }))?.effects).toEqual(
+      [],
+    );
+    expect(
+      withEffects(Array.from({ length: 200 }, (_, i) => ({ ...entry, layerId: `l${i}` }))).effects,
+    ).toHaveLength(150);
+  });
+
+  it('mounts after the first slide is ready and follows slide changes, the pause switch and reduced motion', async () => {
+    const { mount, host } = mountSpy();
+    const root = markup(3, true);
+    const instance = SliderInstance.create(root, withEffects([entry]));
+    expect(host).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(host).toHaveBeenCalledWith(
+      root,
+      expect.arrayContaining([expect.objectContaining({ layerId: 'fx' })]),
+      false,
+    );
+    const slides = Array.from(root.querySelectorAll<HTMLElement>('.sws-slide'));
+    expect(mount.activate).toHaveBeenCalledWith(slides[0]);
+    instance.goTo(1, true);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(mount.activate).toHaveBeenCalledWith(slides[1]);
+    expect(mount.deactivate).toHaveBeenCalledWith(slides[0]);
+    (root.querySelector('.sws-toggle') as HTMLButtonElement).click();
+    expect(mount.setUserPaused).toHaveBeenLastCalledWith(true);
+    (root.querySelector('.sws-toggle') as HTMLButtonElement).click();
+    expect(mount.setUserPaused).toHaveBeenLastCalledWith(false);
+    instance.destroy();
+    expect(mount.destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('does nothing without effects or without the optional bundle', async () => {
+    const { host } = mountSpy();
+    const plain = markup(2, false);
+    SliderInstance.create(plain, config(false));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(host).not.toHaveBeenCalled();
+    delete window.swsGpu;
+    const root = markup(2, false);
+    const instance = SliderInstance.create(root, withEffects([entry]));
+    await vi.advanceTimersByTimeAsync(0);
+    instance.goTo(1, true);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(active(root)).toBe(1);
+    instance.destroy();
+  });
+
+  it('starts with reduced motion on and mounts later when the bundle exists and the preference changes', async () => {
+    reduced = true;
+    const listeners: Array<() => void> = [];
+    const media = {
+      get matches() {
+        return reduced;
+      },
+      addEventListener: (_t: string, l: () => void) => listeners.push(l),
+      removeEventListener: vi.fn(),
+    };
+    window.matchMedia = vi.fn().mockImplementation(() => media);
+    const { mount, host } = mountSpy();
+    const root = markup(2, false);
+    const instance = SliderInstance.create(root, withEffects([entry]));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(host).toHaveBeenCalledWith(root, expect.anything(), true);
+    reduced = false;
+    listeners.forEach((listener) => listener());
+    expect(mount.setReducedMotion).toHaveBeenCalledWith(false);
+    instance.destroy();
+  });
+
+  it('keeps a user pause for effects that mount later', async () => {
+    const root = markup(2, true);
+    const instance = SliderInstance.create(root, withEffects([entry]));
+    (root.querySelector('.sws-toggle') as HTMLButtonElement).click();
+    const { mount } = mountSpy();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(mount.setUserPaused).toHaveBeenCalledWith(true);
+    instance.destroy();
+  });
+});
+
 describe('focus handling (M4.19)', () => {
   it('keeps focus in the slider when the focused slide content is left by a swipe or key', async () => {
     const root = markup(3, false);

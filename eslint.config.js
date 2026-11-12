@@ -72,6 +72,22 @@ export default tseslint.config(
     },
   },
   {
+    // The effect core is pure logic: no DOM, no GL, no clocks, no ambient randomness (ADR 0005).
+    files: ['assets/gpu/core/**/*.ts'],
+    rules: {
+      'no-restricted-globals': [
+        'error', 'window', 'document', 'navigator', 'fetch', 'localStorage', 'sessionStorage', 'performance',
+        'requestAnimationFrame', 'cancelAnimationFrame', 'setTimeout', 'setInterval', 'HTMLElement', 'HTMLCanvasElement',
+        'WebGL2RenderingContext', 'Worker', 'Date',
+      ],
+      'no-restricted-properties': ['error', { object: 'Math', property: 'random', message: 'Use the seeded generators of rng.ts.' }],
+      'no-restricted-imports': [
+        'error',
+        { patterns: [{ group: ['vue', 'vue/*', 'pinia', 'quasar', '@editor/*', '../device/*', '../stage/*', '../modules/*', '@gpu/device/*', '@gpu/stage/*', '@gpu/modules/*', '@shared/*'], message: 'assets/gpu/core must stay independent.' }] },
+      ],
+    },
+  },
+  {
     files: ['bin/**/*.mjs', 'tests/e2e/**/*.mjs', 'tools/**/*.ts', 'vite.*.config.ts', 'vitest.config.ts', 'eslint.config.js'],
     // E2E scripts also contain callbacks evaluated in the browser.
     languageOptions: { globals: { ...globals.node, ...globals.browser } },

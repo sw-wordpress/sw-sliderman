@@ -31,6 +31,8 @@ window.swsEditorConfig = {
   adminUrl: '',
   fontsOffline: false,
   restRoot: 'http://localhost/api/',
+  coreRestRoot: 'http://localhost/wp/v2/',
+  effects: [],
   nonce: 'test',
   locale: 'en_US',
   capabilities: ['sws_edit_sliders', 'sws_manage_fonts', 'sws_publish_sliders'],

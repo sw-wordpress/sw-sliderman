@@ -5,6 +5,7 @@ import { useEditorStore } from '@editor/stores/editor';
 import { richToHtml } from '@shared/richtext';
 import { focalPosition } from '@shared/css';
 import { __ } from '@editor/i18n';
+import EffectPreview from '@editor/features/effects/EffectPreview.vue';
 
 /**
  * Editor rendering of layer content with the frontend classes. Text is plain text with line
@@ -45,7 +46,9 @@ const image = computed(() => {
       v-if="image"
       class="sws-image"
       :class="`sws-fit-${layer.content.fit}`"
-      :style="{ objectPosition: focalPosition(layer.content.focalX, layer.content.focalY) ?? undefined }"
+      :style="{
+        objectPosition: focalPosition(layer.content.focalX, layer.content.focalY) ?? undefined,
+      }"
       :src="image"
       :alt="layer.content.alt"
       draggable="false"
@@ -61,6 +64,7 @@ const image = computed(() => {
     :class="`sws-shape--${layer.content.kind}`"
     aria-hidden="true"
   ></span>
+  <EffectPreview v-else-if="layer.type === 'effect'" :layer="layer" />
   <span v-else class="sws-button">{{ layer.content.label }}</span>
 </template>
 

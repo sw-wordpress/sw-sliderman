@@ -19,10 +19,10 @@
     "skipLibCheck": true,
     "jsx": "preserve",
     "noEmit": true,
-    "baseUrl": ".",
     "paths": {
-      "@shared/*": ["assets/shared/*"],
-      "@editor/*": ["assets/editor/*"]
+      "@shared/*": ["./assets/shared/*"],
+      "@editor/*": ["./assets/editor/*"],
+      "@gpu/*": ["./assets/gpu/*"]
     }
   },
   "include": [

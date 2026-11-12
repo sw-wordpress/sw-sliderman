@@ -28,6 +28,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@shared': fileURLToPath(new URL('./assets/shared', import.meta.url)),
+      '@gpu': fileURLToPath(new URL('./assets/gpu', import.meta.url)),
       '@editor': fileURLToPath(new URL('./assets/editor', import.meta.url)),
     },
   },

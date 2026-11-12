@@ -16,6 +16,7 @@ use SW\Slider\Domain\DocumentValidator;
 use SW\Slider\Fonts\DownloadPolicy;
 use SW\Slider\Fonts\FontCatalog;
 use SW\Slider\Fonts\CatalogUpdater;
+use SW\Slider\Infrastructure\EffectRegistry;
 use SW\Slider\Infrastructure\WpArtifactGuard;
 use SW\Slider\Infrastructure\WpFontJobs;
 use SW\Slider\Integration\The7;
@@ -77,9 +78,11 @@ final class Plugin {
 		$installer       = new FontInstaller( $catalog, $provider, $font_repo, $font_storage, static fn (): string => $system->now_gmt(), $current_offline );
 		$library         = new FontLibrary( $font_repo, $font_storage, static fn (): iterable => $sliders->all_documents(), static fn ( \Closure $operation ): mixed => \SW\Slider\Infrastructure\ResourceGuard::run( $wpdb, $operation ) );
 		$guard           = new WpArtifactGuard( $wpdb );
+		$effects         = new EffectRegistry( SWS_DIR, SWS_URL, SWS_VERSION );
+		$validator       = new DocumentValidator( $effects );
 		$service         = new SliderService(
 			$sliders,
-			new DocumentValidator(),
+			$validator,
 			new WpResourceChecker( $font_repo, $font_storage ),
 			new UploadsArtifactStore(),
 			new CssArtifactBuilder(),
@@ -88,7 +91,7 @@ final class Plugin {
 			new \SW\Slider\Domain\DocumentMigrator(),
 			$guard
 		);
-		$assets          = new Assets( $sliders, $font_repo, SWS_URL, SWS_DIR, SWS_VERSION );
+		$assets          = new Assets( $sliders, $font_repo, SWS_URL, SWS_DIR, SWS_VERSION, $effects );
 
 		( new Translations( SWS_DIR . 'languages' ) )->register();
 		( new Lifecycle() )->register();
@@ -96,7 +99,7 @@ final class Plugin {
 		( new PostTypes() )->register();
 		( new SliderWriteScope() )->register();
 		$assets->register();
-		$renderer = new SliderRenderer( $sliders, $assets );
+		$renderer = new SliderRenderer( $sliders, $assets, $effects, $validator );
 		( new Shortcode( $renderer ) )->register();
 		( new Block( $renderer, SWS_DIR ) )->register();
 		( new The7( $sliders, $renderer ) )->register();
@@ -107,7 +110,7 @@ final class Plugin {
 		$jobs->register();
 		( new FontManagementController( $catalog, $installer, $jobs, $current_offline ) )->register();
 		if ( is_admin() ) {
-			( new AdminPage( $font_repo, SWS_URL, SWS_DIR, SWS_VERSION, $offline ) )->register();
+			( new AdminPage( $font_repo, SWS_URL, SWS_DIR, SWS_VERSION, $offline, $effects ) )->register();
 		}
 	}
 }

@@ -1,0 +1,1569 @@
+{
+  "description": "Shared cases for assets/gpu/core/schema.ts and src/Domain/EffectSchema.php. A value {\"repeat\": s, \"times\": n} expands to s repeated n times. Issues are compared as sets.",
+  "schemas": {
+    "particle": {
+      "type": "object",
+      "required": [
+        "count",
+        "spawn"
+      ],
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000,
+          "default": 20000
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 64,
+          "default": "Nebel"
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "spawn": {
+          "type": "object",
+          "required": [
+            "shape"
+          ],
+          "properties": {
+            "shape": {
+              "type": "string",
+              "enum": [
+                "sphere",
+                "ring",
+                "disc"
+              ],
+              "default": "sphere",
+              "maxLength": 16
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0.01,
+              "maximum": 100,
+              "default": 1.2
+            },
+            "position": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": -100,
+                "maximum": 100
+              },
+              "minItems": 3,
+              "maxItems": 3,
+              "default": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        },
+        "appearance": {
+          "type": "object",
+          "properties": {
+            "color": {
+              "type": "string",
+              "maxLength": 7,
+              "format": "color",
+              "default": "#78b9ff"
+            },
+            "blend": {
+              "type": "string",
+              "enum": [
+                "normal",
+                "additive"
+              ],
+              "default": "additive",
+              "maxLength": 16
+            },
+            "id": {
+              "type": "string",
+              "maxLength": 64,
+              "format": "id"
+            }
+          }
+        },
+        "operators": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "type",
+                  "strength"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "maxLength": 16,
+                    "const": "vortex"
+                  },
+                  "strength": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10
+                  },
+                  "axis": {
+                    "type": "array",
+                    "items": {
+                      "type": "number",
+                      "minimum": -100,
+                      "maximum": 100
+                    },
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "default": [
+                      0,
+                      0,
+                      0
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "maxLength": 16,
+                    "const": "drag"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "default": 0.1
+                  }
+                }
+              }
+            ],
+            "discriminator": "type"
+          },
+          "default": []
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "name": "complete valid value",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "name": "minimal valid value",
+      "schema": "particle",
+      "value": {
+        "count": 1,
+        "spawn": {
+          "shape": "ring"
+        }
+      },
+      "issues": []
+    },
+    {
+      "name": "whole number written as float is an integer",
+      "schema": "particle",
+      "value": {
+        "count": 3.0,
+        "spawn": {
+          "shape": "disc"
+        }
+      },
+      "issues": []
+    },
+    {
+      "name": "emoji count as one character each",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": {
+          "repeat": "😀",
+          "times": 64
+        },
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "name": "missing required key",
+      "schema": "particle",
+      "value": {
+        "count": 5
+      },
+      "issues": [
+        {
+          "path": "/spawn",
+          "code": "required"
+        }
+      ]
+    },
+    {
+      "name": "missing nested required key",
+      "schema": "particle",
+      "value": {
+        "count": 5,
+        "spawn": {}
+      },
+      "issues": [
+        {
+          "path": "/spawn/shape",
+          "code": "required"
+        }
+      ]
+    },
+    {
+      "name": "unknown root key such as shader code",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ],
+        "shader": "void main(){}"
+      },
+      "issues": [
+        {
+          "path": "/shader",
+          "code": "unknown_key"
+        }
+      ]
+    },
+    {
+      "name": "unknown nested key",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ],
+          "extra": 1
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/spawn/extra",
+          "code": "unknown_key"
+        }
+      ]
+    },
+    {
+      "name": "slash and tilde in a key are escaped",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ],
+        "a/b": 1,
+        "c~d": 2
+      },
+      "issues": [
+        {
+          "path": "/a~1b",
+          "code": "unknown_key"
+        },
+        {
+          "path": "/c~0d",
+          "code": "unknown_key"
+        }
+      ]
+    },
+    {
+      "name": "count must be an integer (string)",
+      "schema": "particle",
+      "value": {
+        "count": "5",
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/count",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "count must be an integer (fraction)",
+      "schema": "particle",
+      "value": {
+        "count": 1.5,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/count",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "count below minimum",
+      "schema": "particle",
+      "value": {
+        "count": 0,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/count",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "count above maximum",
+      "schema": "particle",
+      "value": {
+        "count": 200000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/count",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "boolean wrong type",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": "yes",
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/enabled",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "string too long (65 code points)",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": {
+          "repeat": "a",
+          "times": 65
+        },
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/name",
+          "code": "length"
+        }
+      ]
+    },
+    {
+      "name": "emoji beyond the limit",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": {
+          "repeat": "😀",
+          "times": 65
+        },
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/name",
+          "code": "length"
+        }
+      ]
+    },
+    {
+      "name": "enum violation",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "cube",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/spawn/shape",
+          "code": "enum"
+        }
+      ]
+    },
+    {
+      "name": "colour format",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#12",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/appearance/color",
+          "code": "pattern"
+        }
+      ]
+    },
+    {
+      "name": "id format",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "-bad"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/appearance/id",
+          "code": "pattern"
+        }
+      ]
+    },
+    {
+      "name": "vector with two components",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            1,
+            2
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/spawn/position",
+          "code": "count"
+        }
+      ]
+    },
+    {
+      "name": "vector component not a number",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            1,
+            "2",
+            3
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/spawn/position/1",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "vector component out of range",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            1,
+            2,
+            500
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/spawn/position/2",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "object where an array is expected",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": {}
+      },
+      "issues": [
+        {
+          "path": "/operators",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "array where an object is expected",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": [],
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/spawn",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "null is not an object",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": null,
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 0.65,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/spawn",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "too many operators",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "drag"
+          },
+          {
+            "type": "drag"
+          },
+          {
+            "type": "drag"
+          },
+          {
+            "type": "drag"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/operators",
+          "code": "count"
+        }
+      ]
+    },
+    {
+      "name": "operator with unknown discriminator",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "magic"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/operators/0/type",
+          "code": "enum"
+        }
+      ]
+    },
+    {
+      "name": "operator without discriminator",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "strength": 1
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/operators/0/type",
+          "code": "required"
+        }
+      ]
+    },
+    {
+      "name": "operator that is not an object",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          "vortex"
+        ]
+      },
+      "issues": [
+        {
+          "path": "/operators/0",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "operator branch rules apply",
+      "schema": "particle",
+      "value": {
+        "count": 20000,
+        "name": "Blauer Nebel",
+        "enabled": true,
+        "spawn": {
+          "shape": "sphere",
+          "radius": 1.2,
+          "position": [
+            0,
+            0.5,
+            -1
+          ]
+        },
+        "appearance": {
+          "color": "#78B9FF",
+          "blend": "additive",
+          "id": "a-1"
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "strength": 99,
+            "extra": 1
+          },
+          {
+            "type": "drag",
+            "amount": "x"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "path": "/operators/0/strength",
+          "code": "range"
+        },
+        {
+          "path": "/operators/0/extra",
+          "code": "unknown_key"
+        },
+        {
+          "path": "/operators/1/amount",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "root must be an object",
+      "schema": "particle",
+      "value": [
+        1
+      ],
+      "issues": [
+        {
+          "path": "",
+          "code": "type"
+        }
+      ]
+    }
+  ],
+  "badSchemas": [
+    {
+      "name": "unknown keyword",
+      "schema": {
+        "type": "string",
+        "maxLength": 5,
+        "pattern": "x"
+      },
+      "paths": [
+        "/pattern"
+      ]
+    },
+    {
+      "name": "annotation keywords are allowed",
+      "schema": {
+        "type": "string",
+        "maxLength": 5,
+        "x-group": "a",
+        "title": "t",
+        "description": "d"
+      },
+      "paths": []
+    },
+    {
+      "name": "array without maxItems",
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "boolean"
+        }
+      },
+      "paths": [
+        "/maxItems"
+      ]
+    },
+    {
+      "name": "array without items",
+      "schema": {
+        "type": "array",
+        "maxItems": 2
+      },
+      "paths": [
+        "/items"
+      ]
+    },
+    {
+      "name": "number without bounds",
+      "schema": {
+        "type": "number"
+      },
+      "paths": [
+        "/minimum",
+        "/maximum"
+      ]
+    },
+    {
+      "name": "minimum above maximum",
+      "schema": {
+        "type": "integer",
+        "minimum": 5,
+        "maximum": 1
+      },
+      "paths": [
+        "/minimum"
+      ]
+    },
+    {
+      "name": "string without maxLength",
+      "schema": {
+        "type": "string"
+      },
+      "paths": [
+        "/maxLength"
+      ]
+    },
+    {
+      "name": "format must be known",
+      "schema": {
+        "type": "string",
+        "maxLength": 3,
+        "format": "email"
+      },
+      "paths": [
+        "/format"
+      ]
+    },
+    {
+      "name": "unknown type",
+      "schema": {
+        "type": "date"
+      },
+      "paths": [
+        "/type"
+      ]
+    },
+    {
+      "name": "missing type",
+      "schema": {
+        "maxLength": 3
+      },
+      "paths": [
+        "/type"
+      ]
+    },
+    {
+      "name": "object without properties",
+      "schema": {
+        "type": "object"
+      },
+      "paths": [
+        "/properties"
+      ]
+    },
+    {
+      "name": "required key not declared",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "b"
+        ]
+      },
+      "paths": [
+        "/required"
+      ]
+    },
+    {
+      "name": "keyword on the wrong type",
+      "schema": {
+        "type": "boolean",
+        "maxLength": 2
+      },
+      "paths": [
+        "/maxLength"
+      ]
+    },
+    {
+      "name": "empty enum",
+      "schema": {
+        "type": "string",
+        "maxLength": 3,
+        "enum": []
+      },
+      "paths": [
+        "/enum"
+      ]
+    },
+    {
+      "name": "default must be valid",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "default": 9
+          }
+        }
+      },
+      "paths": [
+        "/properties/n/default"
+      ]
+    },
+    {
+      "name": "oneOf without discriminator",
+      "schema": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "t": {
+                "type": "string",
+                "maxLength": 2,
+                "const": "a"
+              }
+            },
+            "required": [
+              "t"
+            ]
+          }
+        ]
+      },
+      "paths": [
+        "/discriminator"
+      ]
+    },
+    {
+      "name": "oneOf branch without const tag",
+      "schema": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "t": {
+                "type": "string",
+                "maxLength": 2
+              }
+            },
+            "required": [
+              "t"
+            ]
+          }
+        ],
+        "discriminator": "t"
+      },
+      "paths": [
+        "/oneOf/0/properties"
+      ]
+    },
+    {
+      "name": "duplicate oneOf tags",
+      "schema": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "t": {
+                "type": "string",
+                "maxLength": 2,
+                "const": "a"
+              }
+            },
+            "required": [
+              "t"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "t": {
+                "type": "string",
+                "maxLength": 2,
+                "const": "a"
+              }
+            },
+            "required": [
+              "t"
+            ]
+          }
+        ],
+        "discriminator": "t"
+      },
+      "paths": [
+        "/oneOf/1/properties"
+      ]
+    },
+    {
+      "name": "schema must be an object",
+      "schema": [],
+      "paths": [
+        ""
+      ]
+    },
+    {
+      "name": "nested problems are located",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "a/b": {
+            "type": "array",
+            "maxItems": 2,
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "paths": [
+        "/properties/a~1b/items/minimum",
+        "/properties/a~1b/items/maximum"
+      ]
+    }
+  ]
+}

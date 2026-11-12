@@ -28,6 +28,7 @@ import PercentSlider from '@editor/components/fields/PercentSlider.vue';
 import OverrideState from '@editor/components/fields/OverrideState.vue';
 import FocalPointField from '@editor/components/fields/FocalPointField.vue';
 import AccordionSection from '@editor/components/AccordionSection.vue';
+import EffectProperties from '@editor/features/effects/EffectProperties.vue';
 
 const props = defineProps<{ layer: Layer }>();
 const editor = useEditorStore();
@@ -292,6 +293,7 @@ const typeIcons: Record<Layer['type'], string> = {
   image: 'r_image',
   button: 'r_smart_button',
   shape: 'r_category',
+  effect: 'r_auto_awesome',
 };
 const typeIcon = computed(() => typeIcons[props.layer.type]);
 const typeLabel = computed(
@@ -301,6 +303,7 @@ const typeLabel = computed(
       image: __('Image layer'),
       button: __('Button layer'),
       shape: __('Shape layer'),
+      effect: __('Effect layer'),
     })[props.layer.type],
 );
 const contentSummary = computed(() => {
@@ -308,6 +311,7 @@ const contentSummary = computed(() => {
   if (l.type === 'text') return l.content.text.slice(0, 40);
   if (l.type === 'button') return l.content.label;
   if (l.type === 'image') return l.content.decorative ? __('Decorative') : l.content.alt;
+  if (l.type === 'effect') return l.content.effect;
   return l.content.kind === 'circle' ? __('Circle') : __('Rectangle');
 });
 const layoutSummary = computed(
@@ -376,7 +380,8 @@ const animationSummary = computed(() => {
     </header>
 
     <!-- content -->
-    <AccordionSection id="layer.content" :title="__('Content')" default-open>
+    <EffectProperties v-if="layer.type === 'effect'" :layer="layer" />
+    <AccordionSection v-else id="layer.content" :title="__('Content')" default-open>
       <template #summary>{{ contentSummary }}</template>
       <template v-if="layer.type === 'text'">
         <RichTextEditor
@@ -653,7 +658,7 @@ const animationSummary = computed(() => {
 
     <!-- typography -->
     <AccordionSection
-      v-if="layer.type !== 'image' && layer.type !== 'shape'"
+      v-if="layer.type !== 'image' && layer.type !== 'shape' && layer.type !== 'effect'"
       id="layer.typography"
       :title="__('Typography')"
     >

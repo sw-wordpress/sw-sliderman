@@ -29,7 +29,10 @@
         {
           "op": "set",
           "path": "",
-          "value": [1, 2]
+          "value": [
+            1,
+            2
+          ]
         }
       ],
       "issues": [
@@ -935,7 +938,9 @@
         {
           "op": "set",
           "path": "/slides/0/layers/0/content/rich",
-          "value": [{}]
+          "value": [
+            {}
+          ]
         }
       ],
       "issues": [
@@ -1529,6 +1534,939 @@
           "code": "animation_order"
         }
       ]
+    },
+    {
+      "name": "effect type must be a string",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/effect",
+          "value": 5
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/effect",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "effect type id format",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/effect",
+          "value": "Bad Type"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/effect",
+          "code": "pattern"
+        }
+      ]
+    },
+    {
+      "name": "effect type id too long",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/effect",
+          "value": {
+            "repeat": "a",
+            "times": 65
+          }
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/effect",
+          "code": "pattern"
+        }
+      ]
+    },
+    {
+      "name": "unknown effect content key (no code or shaders)",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/shader",
+          "value": "void main(){}"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/shader",
+          "code": "unknown_key"
+        }
+      ]
+    },
+    {
+      "name": "effect content requires its envelope",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "remove",
+          "path": "/slides/0/layers/2/content/params"
+        },
+        {
+          "op": "remove",
+          "path": "/slides/0/layers/2/content/seed"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/params",
+          "code": "required"
+        },
+        {
+          "path": "/slides/0/layers/2/content/seed",
+          "code": "required"
+        }
+      ]
+    },
+    {
+      "name": "effect schemaVersion below 1",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/schemaVersion",
+          "value": 0
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/schemaVersion",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "effect schemaVersion must be an integer",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/schemaVersion",
+          "value": 1.5
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/schemaVersion",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "effect seed is non-negative",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/seed",
+          "value": -1
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/seed",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "effect quality must be a known tier",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/quality",
+          "value": "extreme"
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/quality",
+          "code": "enum"
+        }
+      ]
+    },
+    {
+      "name": "effect alt text is bounded",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/alt",
+          "value": {
+            "repeat": "a",
+            "times": 301
+          }
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/alt",
+          "code": "length"
+        }
+      ]
+    },
+    {
+      "name": "effect fallback image is a positive id",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/fallbackImageId",
+          "value": 0
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/fallbackImageId",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "effect fallback image may be null",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/fallbackImageId",
+          "value": null
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "effect assets must be an object",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/assets",
+          "value": [
+            1
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/assets",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "effect assets are limited in number",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/assets",
+          "value": {
+            "a": 1,
+            "b": 2,
+            "c": 3,
+            "d": 4,
+            "e": 5
+          }
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/assets",
+          "code": "count"
+        }
+      ]
+    },
+    {
+      "name": "effect asset names are ids",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/assets",
+          "value": {
+            "-bad": 1
+          }
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/assets/-bad",
+          "code": "pattern"
+        }
+      ]
+    },
+    {
+      "name": "effect asset values are attachment ids",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/assets",
+          "value": {
+            "image": "x",
+            "other": 0
+          }
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/assets/image",
+          "code": "type"
+        },
+        {
+          "path": "/slides/0/layers/2/content/assets/other",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "effect params must be an object",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/params",
+          "value": [
+            1
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/params",
+          "code": "type"
+        }
+      ]
+    },
+    {
+      "name": "effect params follow the registered schema",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/params",
+          "value": {
+            "count": 0,
+            "extra": true,
+            "mode": "orbit"
+          }
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/params/count",
+          "code": "range"
+        },
+        {
+          "path": "/slides/0/layers/2/content/params/extra",
+          "code": "unknown_key"
+        },
+        {
+          "path": "/slides/0/layers/2/content/params/mode",
+          "code": "enum"
+        }
+      ]
+    },
+    {
+      "name": "effect params miss a required value",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/params",
+          "value": {}
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/params/count",
+          "code": "required"
+        }
+      ]
+    },
+    {
+      "name": "effect params are bounded in size (schema is then not consulted)",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/params/blob",
+          "value": {
+            "repeat": "x",
+            "times": 20000
+          }
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/params",
+          "code": "length"
+        }
+      ]
+    },
+    {
+      "name": "effect params are bounded in depth",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/params",
+          "value": {
+            "a": {
+              "b": {
+                "c": {
+                  "d": {
+                    "e": {
+                      "f": {
+                        "g": {
+                          "h": {
+                            "i": 1
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/params",
+          "code": "length"
+        }
+      ]
+    },
+    {
+      "name": "effect params of a newer schema version are only bounded (static fallback)",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/schemaVersion",
+          "value": 3
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "effect params of an older schema version are only bounded",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/schemaVersion",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/params",
+          "value": {
+            "legacy": true
+          }
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "an unknown effect type keeps its bounded params",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/effect",
+          "value": "other/thing"
+        },
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/params",
+          "value": {
+            "x": 1
+          }
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "an add-on type is validated by its schema",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/effect",
+          "value": "acme/glow"
+        },
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/schemaVersion",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "path": "/slides/0/layers/2/content/params",
+          "value": {
+            "strength": 2
+          }
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers/2/content/params/strength",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "a slide holds at most three effect layers",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers",
+          "value": [
+            {
+              "id": "f1",
+              "type": "effect",
+              "name": "Effekt",
+              "locked": false,
+              "content": {
+                "effect": "particle-field",
+                "schemaVersion": 2,
+                "seed": 7319,
+                "quality": "auto",
+                "params": {
+                  "count": 20000,
+                  "tint": "#78b9ff"
+                },
+                "preset": "orbital-mist",
+                "alt": "",
+                "fallbackImageId": 12,
+                "assets": {
+                  "image": 12
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 600,
+                "anchorX": "left",
+                "anchorY": "top",
+                "rotation": 0,
+                "visible": true
+              },
+              "style": {
+                "fontRef": null,
+                "fontSize": 20,
+                "lineHeight": 1.2,
+                "letterSpacing": 0,
+                "color": "#ffffff",
+                "textAlign": "center",
+                "backgroundColor": null,
+                "borderRadius": 0,
+                "paddingX": 0,
+                "paddingY": 0,
+                "opacity": 1
+              },
+              "overrides": {},
+              "animation": {
+                "enter": {
+                  "preset": "fade",
+                  "startMs": 0,
+                  "durationMs": 600,
+                  "easing": "ease-out",
+                  "distance": 0
+                },
+                "exit": {
+                  "mode": "slide-end"
+                }
+              }
+            },
+            {
+              "id": "f2",
+              "type": "effect",
+              "name": "Effekt",
+              "locked": false,
+              "content": {
+                "effect": "particle-field",
+                "schemaVersion": 2,
+                "seed": 7319,
+                "quality": "auto",
+                "params": {
+                  "count": 20000,
+                  "tint": "#78b9ff"
+                },
+                "preset": "orbital-mist",
+                "alt": "",
+                "fallbackImageId": 12,
+                "assets": {
+                  "image": 12
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 600,
+                "anchorX": "left",
+                "anchorY": "top",
+                "rotation": 0,
+                "visible": true
+              },
+              "style": {
+                "fontRef": null,
+                "fontSize": 20,
+                "lineHeight": 1.2,
+                "letterSpacing": 0,
+                "color": "#ffffff",
+                "textAlign": "center",
+                "backgroundColor": null,
+                "borderRadius": 0,
+                "paddingX": 0,
+                "paddingY": 0,
+                "opacity": 1
+              },
+              "overrides": {},
+              "animation": {
+                "enter": {
+                  "preset": "fade",
+                  "startMs": 0,
+                  "durationMs": 600,
+                  "easing": "ease-out",
+                  "distance": 0
+                },
+                "exit": {
+                  "mode": "slide-end"
+                }
+              }
+            },
+            {
+              "id": "f3",
+              "type": "effect",
+              "name": "Effekt",
+              "locked": false,
+              "content": {
+                "effect": "particle-field",
+                "schemaVersion": 2,
+                "seed": 7319,
+                "quality": "auto",
+                "params": {
+                  "count": 20000,
+                  "tint": "#78b9ff"
+                },
+                "preset": "orbital-mist",
+                "alt": "",
+                "fallbackImageId": 12,
+                "assets": {
+                  "image": 12
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 600,
+                "anchorX": "left",
+                "anchorY": "top",
+                "rotation": 0,
+                "visible": true
+              },
+              "style": {
+                "fontRef": null,
+                "fontSize": 20,
+                "lineHeight": 1.2,
+                "letterSpacing": 0,
+                "color": "#ffffff",
+                "textAlign": "center",
+                "backgroundColor": null,
+                "borderRadius": 0,
+                "paddingX": 0,
+                "paddingY": 0,
+                "opacity": 1
+              },
+              "overrides": {},
+              "animation": {
+                "enter": {
+                  "preset": "fade",
+                  "startMs": 0,
+                  "durationMs": 600,
+                  "easing": "ease-out",
+                  "distance": 0
+                },
+                "exit": {
+                  "mode": "slide-end"
+                }
+              }
+            },
+            {
+              "id": "f4",
+              "type": "effect",
+              "name": "Effekt",
+              "locked": false,
+              "content": {
+                "effect": "particle-field",
+                "schemaVersion": 2,
+                "seed": 7319,
+                "quality": "auto",
+                "params": {
+                  "count": 20000,
+                  "tint": "#78b9ff"
+                },
+                "preset": "orbital-mist",
+                "alt": "",
+                "fallbackImageId": 12,
+                "assets": {
+                  "image": 12
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 600,
+                "anchorX": "left",
+                "anchorY": "top",
+                "rotation": 0,
+                "visible": true
+              },
+              "style": {
+                "fontRef": null,
+                "fontSize": 20,
+                "lineHeight": 1.2,
+                "letterSpacing": 0,
+                "color": "#ffffff",
+                "textAlign": "center",
+                "backgroundColor": null,
+                "borderRadius": 0,
+                "paddingX": 0,
+                "paddingY": 0,
+                "opacity": 1
+              },
+              "overrides": {},
+              "animation": {
+                "enter": {
+                  "preset": "fade",
+                  "startMs": 0,
+                  "durationMs": 600,
+                  "easing": "ease-out",
+                  "distance": 0
+                },
+                "exit": {
+                  "mode": "slide-end"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "path": "/slides/0/layers",
+          "code": "count"
+        }
+      ]
+    },
+    {
+      "name": "three effect layers are fine",
+      "base": "effect",
+      "ops": [
+        {
+          "op": "set",
+          "path": "/slides/0/layers",
+          "value": [
+            {
+              "id": "f1",
+              "type": "effect",
+              "name": "Effekt",
+              "locked": false,
+              "content": {
+                "effect": "particle-field",
+                "schemaVersion": 2,
+                "seed": 7319,
+                "quality": "auto",
+                "params": {
+                  "count": 20000,
+                  "tint": "#78b9ff"
+                },
+                "preset": "orbital-mist",
+                "alt": "",
+                "fallbackImageId": 12,
+                "assets": {
+                  "image": 12
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 600,
+                "anchorX": "left",
+                "anchorY": "top",
+                "rotation": 0,
+                "visible": true
+              },
+              "style": {
+                "fontRef": null,
+                "fontSize": 20,
+                "lineHeight": 1.2,
+                "letterSpacing": 0,
+                "color": "#ffffff",
+                "textAlign": "center",
+                "backgroundColor": null,
+                "borderRadius": 0,
+                "paddingX": 0,
+                "paddingY": 0,
+                "opacity": 1
+              },
+              "overrides": {},
+              "animation": {
+                "enter": {
+                  "preset": "fade",
+                  "startMs": 0,
+                  "durationMs": 600,
+                  "easing": "ease-out",
+                  "distance": 0
+                },
+                "exit": {
+                  "mode": "slide-end"
+                }
+              }
+            },
+            {
+              "id": "f2",
+              "type": "effect",
+              "name": "Effekt",
+              "locked": false,
+              "content": {
+                "effect": "particle-field",
+                "schemaVersion": 2,
+                "seed": 7319,
+                "quality": "auto",
+                "params": {
+                  "count": 20000,
+                  "tint": "#78b9ff"
+                },
+                "preset": "orbital-mist",
+                "alt": "",
+                "fallbackImageId": 12,
+                "assets": {
+                  "image": 12
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 600,
+                "anchorX": "left",
+                "anchorY": "top",
+                "rotation": 0,
+                "visible": true
+              },
+              "style": {
+                "fontRef": null,
+                "fontSize": 20,
+                "lineHeight": 1.2,
+                "letterSpacing": 0,
+                "color": "#ffffff",
+                "textAlign": "center",
+                "backgroundColor": null,
+                "borderRadius": 0,
+                "paddingX": 0,
+                "paddingY": 0,
+                "opacity": 1
+              },
+              "overrides": {},
+              "animation": {
+                "enter": {
+                  "preset": "fade",
+                  "startMs": 0,
+                  "durationMs": 600,
+                  "easing": "ease-out",
+                  "distance": 0
+                },
+                "exit": {
+                  "mode": "slide-end"
+                }
+              }
+            },
+            {
+              "id": "f3",
+              "type": "effect",
+              "name": "Effekt",
+              "locked": false,
+              "content": {
+                "effect": "particle-field",
+                "schemaVersion": 2,
+                "seed": 7319,
+                "quality": "auto",
+                "params": {
+                  "count": 20000,
+                  "tint": "#78b9ff"
+                },
+                "preset": "orbital-mist",
+                "alt": "",
+                "fallbackImageId": 12,
+                "assets": {
+                  "image": 12
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 600,
+                "anchorX": "left",
+                "anchorY": "top",
+                "rotation": 0,
+                "visible": true
+              },
+              "style": {
+                "fontRef": null,
+                "fontSize": 20,
+                "lineHeight": 1.2,
+                "letterSpacing": 0,
+                "color": "#ffffff",
+                "textAlign": "center",
+                "backgroundColor": null,
+                "borderRadius": 0,
+                "paddingX": 0,
+                "paddingY": 0,
+                "opacity": 1
+              },
+              "overrides": {},
+              "animation": {
+                "enter": {
+                  "preset": "fade",
+                  "startMs": 0,
+                  "durationMs": 600,
+                  "easing": "ease-out",
+                  "distance": 0
+                },
+                "exit": {
+                  "mode": "slide-end"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "issues": []
     }
   ]
 }

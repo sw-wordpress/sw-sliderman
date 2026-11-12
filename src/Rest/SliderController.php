@@ -419,6 +419,11 @@ final class SliderController {
 			foreach ( $slide['layers'] as $layer ) {
 				if ( 'image' === $layer['type'] ) {
 					$ids[] = $layer['content']['attachmentId'];
+				} elseif ( 'effect' === $layer['type'] ) {
+					$ids[] = $layer['content']['fallbackImageId'] ?? null;
+					foreach ( (array) ( $layer['content']['assets'] ?? array() ) as $attachment ) {
+						$ids[] = $attachment;
+					}
 				}
 			}
 		}

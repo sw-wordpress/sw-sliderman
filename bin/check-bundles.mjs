@@ -56,6 +56,28 @@ const editorJs = files(join(root, 'build/editor'))
 const versionedEffectsImport = /import\(["'][^"']*heroEffects[^"']*\?ver=["']\s*\+\s*encodeURIComponent\(window\.swsEditorConfig\.version\)\)/;
 if (!versionedEffectsImport.test(editorJs)) failures.push('editor effects import lacks the central plugin version');
 
+// The GPU platform bundle is optional and loaded only on effect pages; it has its own budget and
+// must not contain editor code or remote hosts. Effect modules are budgeted individually.
+const gpuPath = join(root, 'build/gpu/gpu.js');
+if (!existsSync(gpuPath)) failures.push('build/gpu/gpu.js is missing');
+else {
+  const gpuJs = readFileSync(gpuPath);
+  const gpuGzip = gzipSync(gpuJs).length;
+  console.log(`gpu platform ${kib(gpuJs.length)} KiB (${kib(gpuGzip)} KiB gzip, budget 30)`);
+  if (gpuGzip > 30 * 1024) failures.push('gpu.js exceeds 30 KiB gzip');
+  const text = gpuJs.toString('utf8');
+  for (const marker of ['__VUE', 'createApp', 'defineStore', 'pinia', 'quasar']) {
+    if (text.includes(marker)) failures.push(`gpu.js contains editor code marker "${marker}"`);
+  }
+  if (remoteFont.test(text)) failures.push('gpu.js references a remote font host');
+}
+for (const file of existsSync(join(root, 'build/gpu')) ? files(join(root, 'build/gpu')) : []) {
+  if (file.endsWith('gpu.js') || !file.endsWith('.js')) continue;
+  const size = gzipSync(readFileSync(file)).length;
+  console.log(`gpu module ${file.split('/').pop()} ${kib(size)} KiB gzip (budget 25)`);
+  if (size > 25 * 1024) failures.push(`${file} exceeds 25 KiB gzip`);
+}
+
 // The block ships from build/block (assets/ is not part of the release ZIP) and must match its source.
 for (const file of ['block.json', 'editor.js', 'editor.asset.php']) {
   const built = join(root, 'build/block', file);

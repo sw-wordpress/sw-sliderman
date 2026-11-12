@@ -9,6 +9,7 @@ export default defineConfig({
     alias: {
       '@shared': fileURLToPath(new URL('./assets/shared', import.meta.url)),
       '@editor': fileURLToPath(new URL('./assets/editor', import.meta.url)),
+      '@gpu': fileURLToPath(new URL('./assets/gpu', import.meta.url)),
     },
   },
   test: {

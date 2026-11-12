@@ -39,6 +39,14 @@ final class WpResourceChecker implements ResourceChecker {
 				$issues[] = new ValidationIssue( '/slides/' . $slide_index . '/background/attachmentId', 'missing_resource' );
 			}
 			foreach ( $slide['layers'] as $layer_index => $layer ) {
+				if ( 'effect' === $layer['type'] ) {
+					foreach ( $this->effect_attachments( $layer['content'] ) as $path => $attachment ) {
+						if ( ! $this->has_image( $attachment ) ) {
+							$issues[] = new ValidationIssue( '/slides/' . $slide_index . '/layers/' . $layer_index . '/content/' . $path, 'missing_resource' );
+						}
+					}
+					continue;
+				}
 				if ( 'image' !== $layer['type'] ) {
 					continue;
 				}
@@ -49,6 +57,27 @@ final class WpResourceChecker implements ResourceChecker {
 			}
 		}
 		return $issues;
+	}
+
+	/**
+	 * Attachment ids an effect layer references (fallback image and named assets), keyed by JSON path.
+	 *
+	 * @param array<string, mixed> $content Effect layer content.
+	 * @return array<string, int>
+	 */
+	private function effect_attachments( array $content ): array {
+		$found = array();
+		if ( isset( $content['fallbackImageId'] ) && is_int( $content['fallbackImageId'] ) ) {
+			$found['fallbackImageId'] = $content['fallbackImageId'];
+		}
+		if ( isset( $content['assets'] ) && is_array( $content['assets'] ) ) {
+			foreach ( $content['assets'] as $key => $id ) {
+				if ( is_int( $id ) ) {
+					$found[ 'assets/' . $key ] = $id;
+				}
+			}
+		}
+		return $found;
 	}
 
 	private function has_image( int $id ): bool {

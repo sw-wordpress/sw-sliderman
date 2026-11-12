@@ -64,4 +64,8 @@ final class Limits {
 	public const SHADOW_OFFSET_MAX         = 200;
 	public const SHADOW_BLUR_MAX           = 100;
 	public const ROTATION_MAX              = 360;
+	public const EFFECT_PARAMS_BYTES       = 16384;
+	public const EFFECT_PARAMS_DEPTH       = 8;
+	public const EFFECT_LAYERS_PER_SLIDE   = 3;
+	public const EFFECT_ASSETS             = 4;
 }

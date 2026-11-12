@@ -1,0 +1,987 @@
+{
+  "type": "particle-field",
+  "label": "Particle field",
+  "description": "GPU-simulated particles: shapes, flows, vortices and pointer forces; can rebuild a picture.",
+  "category": "particles",
+  "schemaVersion": 1,
+  "continuous": true,
+  "module": "particle-field.js",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "count": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 200000,
+        "default": 20000,
+        "title": "Particle count"
+      },
+      "spawn": {
+        "type": "object",
+        "properties": {
+          "shape": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "point",
+              "disc",
+              "ring",
+              "sphere-surface",
+              "sphere-volume",
+              "box",
+              "line",
+              "view"
+            ],
+            "default": "view",
+            "title": "Shape"
+          },
+          "radius": {
+            "type": "number",
+            "minimum": 0.01,
+            "maximum": 50,
+            "default": 1.2,
+            "title": "Radius"
+          },
+          "size": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0.01,
+              "maximum": 100
+            },
+            "minItems": 3,
+            "maxItems": 3,
+            "default": [
+              2,
+              2,
+              2
+            ],
+            "title": "Size (x, y, z)"
+          },
+          "position": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": -50,
+              "maximum": 50
+            },
+            "minItems": 3,
+            "maxItems": 3,
+            "default": [
+              0,
+              0,
+              0
+            ],
+            "title": "Position (x, y, z)"
+          },
+          "velocity": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "maxLength": 24,
+                "enum": [
+                  "none",
+                  "radial",
+                  "tangential",
+                  "random"
+                ],
+                "default": "none",
+                "title": "Direction"
+              },
+              "speed": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 20,
+                "default": 0,
+                "title": "Speed"
+              }
+            },
+            "title": "Initial velocity"
+          },
+          "coverage": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 2,
+            "default": 1,
+            "title": "Coverage of the area"
+          }
+        },
+        "title": "Spawn"
+      },
+      "lifecycle": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "persistent",
+              "emitter"
+            ],
+            "default": "persistent",
+            "title": "Mode"
+          },
+          "minSeconds": {
+            "type": "number",
+            "minimum": 0.2,
+            "maximum": 60,
+            "default": 2,
+            "title": "Shortest life (s)"
+          },
+          "maxSeconds": {
+            "type": "number",
+            "minimum": 0.2,
+            "maximum": 60,
+            "default": 6,
+            "title": "Longest life (s)"
+          }
+        },
+        "title": "Lifecycle"
+      },
+      "operators": {
+        "type": "array",
+        "maxItems": 8,
+        "items": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "maxLength": 16,
+                  "const": "drag"
+                },
+                "amount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10,
+                  "default": 0.4,
+                  "x-unit": "1/s",
+                  "title": "Amount"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "title": "Drag"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "maxLength": 16,
+                  "const": "spring-home"
+                },
+                "stiffness": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 50,
+                  "default": 2,
+                  "title": "Stiffness"
+                },
+                "damping": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10,
+                  "default": 0.6,
+                  "title": "Damping"
+                },
+                "maxForce": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 200,
+                  "default": 30,
+                  "title": "Maximum force"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "title": "Return to origin"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "maxLength": 16,
+                  "const": "vortex"
+                },
+                "axis": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": -1,
+                    "maximum": 1
+                  },
+                  "minItems": 3,
+                  "maxItems": 3,
+                  "default": [
+                    0,
+                    1,
+                    0
+                  ],
+                  "title": "Axis (x, y, z)"
+                },
+                "center": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": -50,
+                    "maximum": 50
+                  },
+                  "minItems": 3,
+                  "maxItems": 3,
+                  "default": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "title": "Centre (x, y, z)"
+                },
+                "strength": {
+                  "type": "number",
+                  "minimum": -20,
+                  "maximum": 20,
+                  "default": 1,
+                  "title": "Swirl"
+                },
+                "pull": {
+                  "type": "number",
+                  "minimum": -20,
+                  "maximum": 20,
+                  "default": 0.2,
+                  "title": "Pull to axis"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "title": "Vortex"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "maxLength": 16,
+                  "const": "flow-field"
+                },
+                "frequency": {
+                  "type": "number",
+                  "minimum": 0.01,
+                  "maximum": 10,
+                  "default": 0.8,
+                  "title": "Detail"
+                },
+                "amplitude": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 20,
+                  "default": 1,
+                  "title": "Strength"
+                },
+                "speed": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 5,
+                  "default": 0.3,
+                  "title": "Change speed"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "title": "Flow field"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "maxLength": 16,
+                  "const": "gravity-wells"
+                },
+                "wells": {
+                  "type": "array",
+                  "maxItems": 3,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "position": {
+                        "type": "array",
+                        "items": {
+                          "type": "number",
+                          "minimum": -50,
+                          "maximum": 50
+                        },
+                        "minItems": 3,
+                        "maxItems": 3,
+                        "default": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "title": "Position (x, y, z)"
+                      },
+                      "mass": {
+                        "type": "number",
+                        "minimum": -50,
+                        "maximum": 50,
+                        "default": 1,
+                        "title": "Mass (negative repels)"
+                      }
+                    },
+                    "required": [
+                      "position",
+                      "mass"
+                    ]
+                  },
+                  "default": [],
+                  "title": "Wells"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "title": "Gravity wells"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "maxLength": 16,
+                  "const": "speed-limit"
+                },
+                "max": {
+                  "type": "number",
+                  "minimum": 0.05,
+                  "maximum": 50,
+                  "default": 6,
+                  "title": "Maximum speed"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "title": "Speed limit"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "maxLength": 16,
+                  "const": "bounds"
+                },
+                "mode": {
+                  "type": "string",
+                  "maxLength": 24,
+                  "enum": [
+                    "wrap",
+                    "bounce",
+                    "respawn"
+                  ],
+                  "default": "wrap",
+                  "title": "When leaving"
+                },
+                "radius": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 100,
+                  "default": 4,
+                  "title": "Radius"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "title": "Boundary"
+            }
+          ],
+          "discriminator": "type"
+        },
+        "default": [],
+        "title": "Forces and behaviour"
+      },
+      "appearance": {
+        "type": "object",
+        "properties": {
+          "style": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "soft-disc",
+              "glow",
+              "pixel"
+            ],
+            "default": "soft-disc",
+            "title": "Style"
+          },
+          "sizeMin": {
+            "type": "number",
+            "minimum": 0.5,
+            "maximum": 64,
+            "default": 1.5,
+            "title": "Smallest size (px)"
+          },
+          "sizeMax": {
+            "type": "number",
+            "minimum": 0.5,
+            "maximum": 64,
+            "default": 3.5,
+            "title": "Largest size (px)"
+          },
+          "colorMode": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "solid",
+              "speed",
+              "life",
+              "palette",
+              "image"
+            ],
+            "default": "solid",
+            "title": "Colour from"
+          },
+          "color": {
+            "type": "string",
+            "maxLength": 7,
+            "format": "color",
+            "default": "#78b9ff",
+            "title": "Colour"
+          },
+          "color2": {
+            "type": "string",
+            "maxLength": 7,
+            "format": "color",
+            "default": "#ffffff",
+            "title": "Second colour"
+          },
+          "palette": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "type": "string",
+              "maxLength": 7,
+              "format": "color",
+              "default": "#ffffff"
+            },
+            "default": [
+              "#78b9ff",
+              "#ffffff"
+            ],
+            "title": "Palette"
+          },
+          "blend": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "additive",
+              "normal"
+            ],
+            "default": "additive",
+            "title": "Blending"
+          },
+          "opacity": {
+            "type": "number",
+            "minimum": 0.01,
+            "maximum": 1,
+            "default": 0.8,
+            "title": "Opacity"
+          },
+          "depthFade": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.3,
+            "title": "Depth fade"
+          }
+        },
+        "title": "Appearance"
+      },
+      "camera": {
+        "type": "object",
+        "properties": {
+          "projection": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "perspective",
+              "orthographic"
+            ],
+            "default": "perspective",
+            "title": "Projection"
+          },
+          "distance": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 5.5,
+            "title": "Distance"
+          },
+          "fov": {
+            "type": "number",
+            "minimum": 10,
+            "maximum": 120,
+            "default": 50,
+            "title": "Field of view (°)"
+          },
+          "orbitSpeed": {
+            "type": "number",
+            "minimum": -2,
+            "maximum": 2,
+            "default": 0,
+            "title": "Orbit speed (rad/s)"
+          },
+          "tilt": {
+            "type": "number",
+            "minimum": -1.5,
+            "maximum": 1.5,
+            "default": 0,
+            "title": "Tilt (rad)"
+          }
+        },
+        "title": "Camera"
+      },
+      "interaction": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "none",
+              "repel",
+              "attract",
+              "swirl",
+              "magnet"
+            ],
+            "default": "none",
+            "title": "Pointer effect"
+          },
+          "radius": {
+            "type": "number",
+            "minimum": 0.05,
+            "maximum": 10,
+            "default": 0.8,
+            "title": "Radius"
+          },
+          "strength": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 200,
+            "default": 4,
+            "title": "Strength"
+          },
+          "polarity": {
+            "type": "number",
+            "minimum": -1,
+            "maximum": 1,
+            "default": 1,
+            "title": "Polarity"
+          },
+          "speedBoost": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10,
+            "default": 2,
+            "title": "Movement boost"
+          }
+        },
+        "title": "Pointer"
+      },
+      "image": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": false,
+            "title": "Rebuild the image from particles"
+          },
+          "fit": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "contain",
+              "cover"
+            ],
+            "default": "contain",
+            "title": "Fit"
+          },
+          "scale": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 2,
+            "default": 0.9,
+            "title": "Scale"
+          },
+          "sampling": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "uniform",
+              "luminance",
+              "inverse-luminance"
+            ],
+            "default": "uniform",
+            "title": "Distribution"
+          },
+          "depth": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3,
+            "default": 0,
+            "title": "Relief depth"
+          },
+          "assemble": {
+            "type": "string",
+            "maxLength": 24,
+            "enum": [
+              "rest",
+              "scatter"
+            ],
+            "default": "rest",
+            "title": "Start"
+          },
+          "colorBoost": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3,
+            "default": 1,
+            "title": "Colour boost"
+          }
+        },
+        "title": "Image"
+      }
+    },
+    "required": [
+      "count"
+    ]
+  },
+  "presets": [
+    {
+      "id": "orbital-mist",
+      "name": "Orbital mist",
+      "description": "Soft, rotating particle swarm with a spherical silhouette.",
+      "seed": 7319,
+      "params": {
+        "count": 20000,
+        "spawn": {
+          "shape": "sphere-volume",
+          "radius": 2.0
+        },
+        "operators": [
+          {
+            "type": "spring-home",
+            "stiffness": 0.35,
+            "damping": 0.5
+          },
+          {
+            "type": "vortex",
+            "axis": [
+              0,
+              1,
+              0
+            ],
+            "strength": 1.4,
+            "pull": 0.0
+          },
+          {
+            "type": "drag",
+            "amount": 0.2
+          }
+        ],
+        "appearance": {
+          "style": "soft-disc",
+          "sizeMin": 1.2,
+          "sizeMax": 3,
+          "color": "#78b9ff",
+          "color2": "#ffffff",
+          "colorMode": "speed",
+          "opacity": 0.7
+        },
+        "camera": {
+          "orbitSpeed": 0.12,
+          "tilt": 0.25
+        },
+        "interaction": {
+          "mode": "repel",
+          "radius": 0.9,
+          "strength": 6
+        }
+      }
+    },
+    {
+      "id": "vortex-ribbons",
+      "name": "Vortex ribbons",
+      "description": "Spiral flows around a central axis.",
+      "seed": 4242,
+      "params": {
+        "count": 24000,
+        "spawn": {
+          "shape": "view",
+          "velocity": {
+            "mode": "tangential",
+            "speed": 0.8
+          }
+        },
+        "operators": [
+          {
+            "type": "vortex",
+            "axis": [
+              0,
+              0,
+              1
+            ],
+            "strength": 2.2,
+            "pull": 0.5
+          },
+          {
+            "type": "speed-limit",
+            "max": 3.5
+          },
+          {
+            "type": "drag",
+            "amount": 0.15
+          }
+        ],
+        "appearance": {
+          "style": "glow",
+          "sizeMin": 1,
+          "sizeMax": 2.6,
+          "colorMode": "speed",
+          "color": "#7c5cff",
+          "color2": "#5cf2ff",
+          "opacity": 0.55
+        },
+        "camera": {
+          "orbitSpeed": 0.05,
+          "tilt": 0.5
+        }
+      }
+    },
+    {
+      "id": "ember-drift",
+      "name": "Embers",
+      "description": "Warm particles rise with turbulence and fade out.",
+      "seed": 913,
+      "params": {
+        "count": 9000,
+        "spawn": {
+          "shape": "view",
+          "velocity": {
+            "mode": "random",
+            "speed": 0.4
+          },
+          "size": [
+            2,
+            2,
+            3
+          ]
+        },
+        "lifecycle": {
+          "mode": "emitter",
+          "minSeconds": 1.5,
+          "maxSeconds": 4.5
+        },
+        "operators": [
+          {
+            "type": "flow-field",
+            "frequency": 0.9,
+            "amplitude": 1.8,
+            "speed": 0.4
+          },
+          {
+            "type": "gravity-wells",
+            "wells": [
+              {
+                "position": [
+                  0,
+                  6,
+                  0
+                ],
+                "mass": 0.8
+              }
+            ]
+          },
+          {
+            "type": "drag",
+            "amount": 0.6
+          }
+        ],
+        "appearance": {
+          "style": "glow",
+          "sizeMin": 1,
+          "sizeMax": 3.2,
+          "colorMode": "life",
+          "color": "#ffd27a",
+          "color2": "#ff3d1f",
+          "opacity": 0.9,
+          "depthFade": 0.1
+        }
+      }
+    },
+    {
+      "id": "radiant-pulse",
+      "name": "Radiant pulse",
+      "description": "Radial burst (trigger the impulse), then slowing down and gathering.",
+      "seed": 2718,
+      "params": {
+        "count": 16000,
+        "spawn": {
+          "shape": "sphere-surface",
+          "radius": 1.6
+        },
+        "operators": [
+          {
+            "type": "spring-home",
+            "stiffness": 1.6,
+            "damping": 1.1
+          },
+          {
+            "type": "drag",
+            "amount": 0.8
+          }
+        ],
+        "appearance": {
+          "style": "soft-disc",
+          "sizeMin": 1.4,
+          "sizeMax": 3.4,
+          "colorMode": "speed",
+          "color": "#9ff0ff",
+          "color2": "#ffffff",
+          "opacity": 0.75
+        },
+        "camera": {
+          "orbitSpeed": 0.08
+        },
+        "interaction": {
+          "mode": "attract",
+          "radius": 1.1,
+          "strength": 8
+        }
+      }
+    },
+    {
+      "id": "photo-grains",
+      "name": "Photo grains",
+      "description": "The picture builds from thousands of coloured points; the pointer whirls them up and they settle again. Choose a picture under \"Media\".",
+      "seed": 8128,
+      "params": {
+        "count": 50000,
+        "spawn": {
+          "shape": "view"
+        },
+        "image": {
+          "enabled": true,
+          "fit": "contain",
+          "scale": 0.92,
+          "sampling": "uniform",
+          "assemble": "scatter",
+          "depth": 0.25
+        },
+        "operators": [
+          {
+            "type": "spring-home",
+            "stiffness": 2.5,
+            "damping": 1.1,
+            "maxForce": 40
+          },
+          {
+            "type": "flow-field",
+            "frequency": 1.4,
+            "amplitude": 0.7,
+            "speed": 0.3
+          },
+          {
+            "type": "drag",
+            "amount": 0.6
+          }
+        ],
+        "appearance": {
+          "style": "soft-disc",
+          "sizeMin": 0.9,
+          "sizeMax": 1.7,
+          "colorMode": "image",
+          "blend": "normal",
+          "opacity": 0.8,
+          "depthFade": 0
+        },
+        "camera": {
+          "projection": "orthographic",
+          "distance": 5,
+          "fov": 50
+        },
+        "interaction": {
+          "mode": "swirl",
+          "radius": 0.8,
+          "strength": 14
+        }
+      }
+    },
+    {
+      "id": "magnetic-canvas",
+      "name": "Magnetic canvas",
+      "description": "The pointer pulls picture points out along curved field lines; they return. Choose a picture under \"Media\".",
+      "seed": 3141,
+      "params": {
+        "count": 60000,
+        "image": {
+          "enabled": true,
+          "fit": "contain",
+          "scale": 0.92,
+          "sampling": "luminance",
+          "assemble": "rest",
+          "depth": 0
+        },
+        "operators": [
+          {
+            "type": "spring-home",
+            "stiffness": 5,
+            "damping": 2.2,
+            "maxForce": 60
+          },
+          {
+            "type": "drag",
+            "amount": 0.6
+          }
+        ],
+        "appearance": {
+          "style": "soft-disc",
+          "sizeMin": 1,
+          "sizeMax": 1.8,
+          "colorMode": "image",
+          "blend": "normal",
+          "opacity": 1,
+          "depthFade": 0
+        },
+        "camera": {
+          "projection": "orthographic",
+          "distance": 5,
+          "fov": 50
+        },
+        "interaction": {
+          "mode": "magnet",
+          "radius": 1.1,
+          "strength": 6,
+          "polarity": 1,
+          "speedBoost": 3
+        },
+        "spawn": {
+          "shape": "view"
+        }
+      }
+    }
+  ],
+  "assets": [
+    {
+      "key": "image",
+      "label": "Image to rebuild"
+    }
+  ]
+}
