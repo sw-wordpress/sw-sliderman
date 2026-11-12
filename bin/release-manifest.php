@@ -36,7 +36,7 @@ function sws_sign_release( array $argv ): void {
 				throw new RuntimeException( 'Key ID is already used by a different public key.' );
 			}
 			$keys[ $key_id ] = base64_encode( $public );
-			$contents        = "<?php\n/** Public Ed25519 verification keys. */\nreturn " . var_export( $keys, true ) . ";\n";
+			$contents        = "<?php\n/** Public Ed25519 verification keys. */\ndeclare(strict_types=1);\n\nreturn " . var_export( $keys, true ) . ";\n";
 			if ( file_put_contents( $file, $contents, LOCK_EX ) !== strlen( $contents ) ) {
 				throw new RuntimeException( 'Cannot write public keyring.' );
 			}

@@ -78,7 +78,7 @@ foreach ($incoming as $id => $key) {
     }
     $existing[$id] = $key;
 }
-$contents = "<?php\n/** Public Ed25519 verification keys. */\nreturn " . var_export($existing, true) . ";\n";
+$contents = "<?php\n/** Public Ed25519 verification keys. */\ndeclare(strict_types=1);\n\nreturn " . var_export($existing, true) . ";\n";
 if (file_put_contents($target, $contents, LOCK_EX) !== strlen($contents)) {
     throw new RuntimeException('Öffentlicher Schlüsselring konnte nicht geschrieben werden.');
 }

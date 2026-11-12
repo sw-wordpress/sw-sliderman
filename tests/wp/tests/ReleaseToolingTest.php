@@ -138,6 +138,7 @@ final class ReleaseSigningKeyTest extends SWS_Release_TestCase {
                 self::assertSame($before, file_get_contents($file));
             } else {
                 $actual = require $file;
+                self::assertStringContainsString("declare(strict_types=1);", file_get_contents($file));
                 self::assertSame(['historical' => $historical, 'build' => $public], $actual);
             }
         } finally {
@@ -210,6 +211,7 @@ BASH
             [$exit, $output] = $this->execute(['bash', '-c', $scripts[1]], null, $environment);
             self::assertSame(0, $exit, $output);
             $keys = require $target;
+            self::assertStringContainsString("declare(strict_types=1);", file_get_contents($target));
             self::assertSame($historical, $keys['historical']);
             self::assertSame(32, strlen(base64_decode($keys['sw-sliderman-2026-11'], true)));
             self::assertStringNotContainsString($secret, file_get_contents($target));
