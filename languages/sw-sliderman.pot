@@ -1,4 +1,4 @@
-# Copyright (C) 2026 sw-wordpress
+# Copyright (C) 2026 Stefan Warnat
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
@@ -16,7 +16,7 @@ msgstr ""
 
 #. Plugin Name of the plugin
 #: sw-sliderman.php
-#: src/Admin/AdminPage.php:49
+#: src/Admin/AdminPage.php:51
 #: src/Rendering/SliderRenderer.php:123
 msgid "SW Sliderman"
 msgstr ""
@@ -28,22 +28,27 @@ msgstr ""
 
 #. Author of the plugin
 #: sw-sliderman.php
-msgid "sw-wordpress"
+msgid "Stefan Warnat"
 msgstr ""
 
-#: src/Admin/AdminPage.php:50
+#. Author URI of the plugin
+#: sw-sliderman.php
+msgid "https://stefanwarnat.de"
+msgstr ""
+
+#: src/Admin/AdminPage.php:52
 msgid "Sliderman"
 msgstr ""
 
-#: src/Admin/AdminPage.php:65
+#: src/Admin/AdminPage.php:67
 msgid "You do not have permission to access this page."
 msgstr ""
 
-#: src/Admin/AdminPage.php:68
+#: src/Admin/AdminPage.php:70
 msgid "The SW Sliderman editor has not been built. Install the release package or run \"npm run build\"."
 msgstr ""
 
-#: src/Admin/AdminPage.php:71
+#: src/Admin/AdminPage.php:73
 msgid "The slider editor requires JavaScript."
 msgstr ""
 
@@ -67,6 +72,164 @@ msgstr ""
 
 #: src/Infrastructure/PostTypes.php:56
 msgid "Installed font"
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateManifest.php:82
+msgid "Release verification failed."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdatePackage.php:28
+msgid "ZIP size or SHA-256 mismatch, or ZIP verification is unavailable."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdatePackage.php:32
+msgid "Invalid ZIP archive."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdatePackage.php:98
+msgid "Unsafe ZIP paths, types, limits or plugin headers."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateProvider.php:53
+msgid "Manual updates only"
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateProvider.php:71
+msgid "GitHub installation requires a manual WordPress admin action."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateProvider.php:74
+msgid "Automatic GitHub installation is blocked."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateProvider.php:91
+msgid "A valid manual WordPress update action is required."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateProvider.php:185
+msgid "Signed GitHub release. Install manually through WordPress."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateProvider.php:213
+msgid "Checking signed releases …"
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateProvider.php:214
+msgid "Update check completed."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateProvider.php:215
+msgid "GitHub could not be reached. Try again later."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateProvider.php:241
+msgid "Check for updates now"
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateProvider.php:243
+msgid "Reload the plugin list to show available updates"
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateProvider.php:251
+msgid "Public release key or required extensions missing. GitHub updates are blocked."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateProvider.php:254
+msgid "No successful update check yet."
+msgstr ""
+
+#. translators: %s: elapsed time since the last successful check.
+#: src/Infrastructure/Updates/UpdateProvider.php:257
+#, php-format
+msgid "Last successful check: %s ago."
+msgstr ""
+
+#. translators: %s: elapsed time since the last attempt, including failures.
+#: src/Infrastructure/Updates/UpdateProvider.php:261
+#, php-format
+msgid "Last attempt: %s ago."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateService.php:38
+msgid "Update checks require an authorized admin session."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateService.php:41
+msgid "Public release key or Sodium is missing. GitHub updates are blocked."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateService.php:45
+msgid "An update check is already running."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateService.php:50
+msgid "The previous update attempt is still within the check interval."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateService.php:54
+#: src/Infrastructure/Updates/UpdateService.php:61
+msgid "Update state or lock is unavailable. The check was stopped safely."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateService.php:66
+msgid "Signed release metadata checked. Install manually through the Plugins screen."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateService.php:68
+msgid "Invalid release response."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateService.php:87
+msgid "No valid stable release was returned."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateService.php:96
+msgid "Release manifest or signature is missing."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateService.php:112
+msgid "A previously verified newer version cannot be rolled back."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateService.php:131
+msgid "Check for updates again before installing."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateService.php:137
+msgid "Outdated release offer."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateService.php:156
+msgid "Package, version or system requirements do not match."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateService.php:163
+msgid "Temporary update file is unavailable."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateService.php:184
+#: src/Infrastructure/Updates/UpdateTransport.php:41
+msgid "GitHub could not be reached."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateTransport.php:21
+msgid "Update URL is not allowed."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateTransport.php:47
+msgid "Invalid update redirect."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateTransport.php:53
+msgid "GitHub HTTP response: "
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateTransport.php:59
+msgid "Update response exceeds the size limit."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateTransport.php:63
+msgid "Too many update redirects."
 msgstr ""
 
 #: src/Integration/The7.php:67
@@ -316,11 +479,11 @@ msgid "The version is missing or invalid."
 msgstr ""
 
 #. translators: 1: required PHP version, 2: current PHP version
-#: sw-sliderman.php:34
+#: sw-sliderman.php:38
 #, php-format
 msgid "SW Sliderman requires PHP %1$s or newer. You are running PHP %2$s."
 msgstr ""
 
-#: sw-sliderman.php:53
+#: sw-sliderman.php:57
 msgid "SW Sliderman: the vendor directory is missing. Install the release package or run \"composer install\"."
 msgstr ""

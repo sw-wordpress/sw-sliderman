@@ -30,6 +30,10 @@ import FocalPointField from '@editor/components/fields/FocalPointField.vue';
 import AccordionSection from '@editor/components/AccordionSection.vue';
 import EffectProperties from '@editor/features/effects/EffectProperties.vue';
 
+// vue-tsc 3.3.14 misparses URL strings in template attributes (vuejs/language-tools#6322).
+const imageLinkErrorMessage = __('Use https://, mailto:, tel:, / or #.');
+const buttonLinkErrorMessage = __('Allowed: https://…, http://…, mailto:, tel:, /path or #anchor');
+
 const props = defineProps<{ layer: Layer }>();
 const editor = useEditorStore();
 const { available: installations, refresh: refreshFonts } = useInstalledFonts();
@@ -484,7 +488,7 @@ const animationSummary = computed(() => {
             :label="__('Link address')"
             :maxlength="LIMITS.urlLength"
             :error="!imageLinkValid"
-            :error-message="__('Use https://, mailto:, tel:, / or #.')"
+            :error-message="imageLinkErrorMessage"
             @change="(v: string | number | null) => setImageLink('linkUrl', String(v ?? ''))"
           />
           <q-toggle
@@ -528,7 +532,7 @@ const animationSummary = computed(() => {
           type="url"
           :label="__('Link')"
           :error="!urlValid"
-          :error-message="__('Allowed: https://…, http://…, mailto:, tel:, /path or #anchor')"
+          :error-message="buttonLinkErrorMessage"
           :maxlength="LIMITS.urlLength"
           @change="(v: string) => setButton('url', String(v))"
         />

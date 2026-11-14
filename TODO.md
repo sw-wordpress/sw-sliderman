@@ -441,3 +441,14 @@ Nächste notwendige Änderung:
 - [ ] G8 Erweiterung: `gradient-warp`, WebGPU-Backend, Resonanz, Bindungen, weitere Presets.
 - [ ] G9 Stefan prüft die Demo (Bildeffekt, Maus, Pause, Reduced Motion).
 
+
+## Verifizierte manuelle GitHub-Updates – 12.11.2026
+
+- [x] Eigene Quelle `sw-wordpress/sw-sliderman`/`1438174384`, isolierte Schlüssel-/Speicher-/Hooknamen, signierte Metadaten und ZIP-Prüfung vor nativer Core-Installation.
+- [x] Prüfschaltfläche und lokaler Status direkt in der WordPress-Pluginzeile (auch Netzwerk); keine Updatebedienung im Slider-Editor, keine automatische Installation.
+- [x] Private WordPress-/Multisite- und Browserprüfungen, Coverage >80 % für PHP und TS/JS, echtes ZIP mit Wegwerfschlüssel verifiziert; PR-Tests und geschützter Draft-/Signierworkflow. Details/Grenzen: [Prüfprotokoll](docs/GITHUB-UPDATES-TESTS.md).
+- [ ] Öffentlicher Betreiberschlüssel `sw-sliderman-2026-11` ist hinterlegt; geschütztes `plugin-releases`, Signierkonfiguration, Vertrauensverteilung und erster signierter Release bleiben zu bestätigen. [Betrieb und kopierbare Befehle](docs/GITHUB-UPDATES-BETRIEB.md).
+- [x] `make release VERSION=X.Y.Z[.W]`: Versionsabgleich, annotierter Tag und atomarer Push; isolierte Erfolgs-/Abbruchtests, kein echter Release ausgelöst.
+- [ ] Stefan nimmt die Bedienung in der Pluginübersicht praktisch ab (Prüfschritte im Prüfprotokoll). Bestehende M0-/Release-Abnahmepunkte bleiben davon unberührt.
+
+- [x] MR #23: CI mit sauberer npm-Installation geprüft (Zsh, ESLint, TypeScript 6/vue-tsc); Cache-Grenze, Download-Cleanup und atomare Zustandsübernahme mit neuen WordPress-/Multisite-Regressionsfällen korrigiert. Lokale Ergebnisse: [Prüfprotokoll](docs/GITHUB-UPDATES-TESTS.md); gehosteter Status im PR.

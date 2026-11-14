@@ -17,6 +17,8 @@ import { richExtensions } from './richExtensions';
 const props = defineProps<{ rich?: readonly RichParagraph[] | undefined; text: string }>();
 const emit = defineEmits<{ (e: 'commit', rich: RichParagraph[]): void }>();
 
+// Keep URL strings out of template attributes until vuejs/language-tools#6322 is fixed.
+const linkErrorMessage = __('Use https://, mailto:, tel:, / or #.');
 const COMMIT_DELAY_MS = 600;
 const model = computed<readonly RichParagraph[]>(() => props.rich ?? textToRich(props.text));
 let committed: readonly RichParagraph[] = model.value;
@@ -179,7 +181,7 @@ function removeLink(): void {
               :maxlength="LIMITS.urlLength"
               :label="__('Link address')"
               :error="linkUrl !== '' && !linkValid"
-              :error-message="__('Use https://, mailto:, tel:, / or #.')"
+              :error-message="linkErrorMessage"
             />
             <q-toggle v-model="linkNewTab" :label="__('Open in a new tab')" />
           </q-card-section>

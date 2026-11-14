@@ -11,6 +11,7 @@
     <coverage>
         <include>
             <directory suffix=".php">../../src</directory>
+            <directory suffix=".php">../../includes</directory>
             <file>../../sw-sliderman.php</file>
             <file>../../uninstall.php</file>
         </include>

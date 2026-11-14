@@ -15,6 +15,7 @@
     <source>
         <include>
             <directory>src</directory>
+            <directory>includes</directory>
             <file>sw-sliderman.php</file>
             <file>uninstall.php</file>
         </include>

@@ -26,7 +26,7 @@ export function detectCapabilities(
   nav: { gpu?: unknown } = typeof navigator === 'undefined' ? {} : (navigator as { gpu?: unknown }),
 ): Capabilities {
   const webgpu = 'gpu' in nav && nav.gpu !== undefined;
-  let gl: WebGL2RenderingContext | null = null;
+  let gl: WebGL2RenderingContext | null;
   try {
     gl = createCanvas().getContext('webgl2', { failIfMajorPerformanceCaveat: true });
   } catch {
