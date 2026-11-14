@@ -29,11 +29,11 @@ final class UpdateStore {
 	/**
 	 * @param array<string,mixed> $state
 	 */
-	public static function write( array $state ): void {
+	public static function write( array $state ): bool {
 		if ( is_multisite() ) {
-			update_site_option( self::name(), $state );
+			return update_site_option( self::name(), $state );
 		} else {
-			update_option( self::name(), $state, false );
+			return update_option( self::name(), $state, false );
 		}
 	}
 
@@ -41,12 +41,7 @@ final class UpdateStore {
 	 * @return array{token:string,expires:int}|false
 	 */
 	public static function acquire(): array|false {
-		global $wpdb;
-		// sitemeta has no unique key. Serialize its add/check sequence across DB connections.
-		$mutex = 'sws_updates_' . hash( 'sha256', $wpdb->base_prefix . ':' . get_current_network_id() );
-		$mutex = substr( $mutex, 0, 64 );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Atomic network lock, no cached SQL result.
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $mutex ) ) ) {
+		if ( ! self::lock_mutex() ) {
 			return false;
 		}
 		try {
@@ -64,9 +59,44 @@ final class UpdateStore {
 			$added = is_multisite() ? add_site_option( self::name( true ), $lock ) : add_option( self::name( true ), $lock, '', false );
 			return $added ? $lock : false;
 		} finally {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release connection-owned acquisition mutex.
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $mutex ) );
+			self::unlock_mutex();
 		}
+	}
+
+	/**
+	 * Check ownership and publish under the same mutex used by lease takeover.
+	 * An expired worker cannot overwrite a successor between its check and write.
+	 *
+	 * @param array<string,mixed> $state New persistent state.
+	 * @param array<string,mixed> $lock Exact lease held by the caller.
+	 */
+	public static function write_if_owned( array $state, array $lock ): bool {
+		if ( ! self::lock_mutex() ) {
+			return false;
+		}
+		try {
+			return self::owns( $lock ) && ( self::write( $state ) || self::read() === $state );
+		} finally {
+			self::unlock_mutex();
+		}
+	}
+
+	private static function mutex_name(): string {
+		global $wpdb;
+		return substr( 'sws_updates_' . hash( 'sha256', $wpdb->base_prefix . ':' . get_current_network_id() ), 0, 64 );
+	}
+
+	private static function lock_mutex(): bool {
+		global $wpdb;
+		// sitemeta has no unique key; serialize lease acquisition and state publication.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Connection-owned mutex, no cached SQL result.
+		return '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', self::mutex_name() ) );
+	}
+
+	private static function unlock_mutex(): void {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release connection-owned mutex.
+		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', self::mutex_name() ) );
 	}
 
 	/** @param array<string,mixed> $lock Exact lease acquired by this request. */

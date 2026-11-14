@@ -50,23 +50,23 @@ final class UpdateService {
 				return new WP_Error( 'updates_throttled', __( 'The previous update attempt is still within the check interval.', 'sw-sliderman' ) );
 			}
 			$state['last_attempt'] = time();
-			UpdateStore::write( $state );
-			$result = self::retrieve( $state );
-			if ( ! UpdateStore::owns( $lock ) ) {
-				return new WP_Error( 'updates_lease_expired', __( 'Update check lease expired. The result was discarded.', 'sw-sliderman' ) );
+			if ( ! UpdateStore::write_if_owned( $state, $lock ) ) {
+				return new WP_Error( 'updates_state_unavailable', __( 'Update state or lock is unavailable. The check was stopped safely.', 'sw-sliderman' ) );
 			}
+			$result = self::retrieve( $state );
 			if ( is_wp_error( $result ) ) {
 				$state['error'] = $result->get_error_message();
-				UpdateStore::write( $state );
+			}
+			if ( ! UpdateStore::write_if_owned( is_wp_error( $result ) ? $state : $result, $lock ) ) {
+				return new WP_Error( 'updates_state_unavailable', __( 'Update state or lock is unavailable. The check was stopped safely.', 'sw-sliderman' ) );
+			}
+			if ( is_wp_error( $result ) ) {
 				return $result;
 			}
-			UpdateStore::write( $result );
 			return array( 'message' => __( 'Signed release metadata checked. Install manually through the Plugins screen.', 'sw-sliderman' ) );
 		} catch ( Throwable $error ) {
 			$state['error'] = __( 'Invalid release response.', 'sw-sliderman' );
-			if ( UpdateStore::owns( $lock ) ) {
-				UpdateStore::write( $state );
-			}
+			UpdateStore::write_if_owned( $state, $lock );
 			return new WP_Error( 'invalid_release', $state['error'] );
 		} finally {
 			UpdateStore::release( $lock );
@@ -162,15 +162,7 @@ final class UpdateService {
 			}
 			return new WP_Error( 'update_tempfile', __( 'Temporary update file is unavailable.', 'sw-sliderman' ) );
 		}
-		$result = UpdateTransport::fetch( $url, $package['bytes'], $file );
-		if ( ! is_wp_error( $result ) ) {
-			$result = UpdatePackage::verify( $file, $package );
-		}
-		if ( is_wp_error( $result ) ) {
-			wp_delete_file( $file );
-			return $result;
-		}
-		// Core consumes the archive during this request. Clean up even on an interrupted upgrade.
+		// Register cleanup before third-party HTTP filters can throw or abort the request.
 		register_shutdown_function(
 			static function () use ( $file ): void {
 				if ( is_file( $file ) ) {
@@ -178,6 +170,23 @@ final class UpdateService {
 				}
 			}
 		);
+		$verified = false;
+		try {
+			$result = UpdateTransport::fetch( $url, $package['bytes'], $file );
+			if ( ! is_wp_error( $result ) ) {
+				$result = UpdatePackage::verify( $file, $package );
+			}
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+			$verified = true;
+		} catch ( Throwable $error ) {
+			return new WP_Error( 'update_network_error', __( 'GitHub could not be reached.', 'sw-sliderman' ) );
+		} finally {
+			if ( ! $verified ) {
+				wp_delete_file( $file );
+			}
+		}
 		return $file;
 	}
 

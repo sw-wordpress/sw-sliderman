@@ -166,15 +166,16 @@ msgstr ""
 msgid "The previous update attempt is still within the check interval."
 msgstr ""
 
-#: src/Infrastructure/Updates/UpdateService.php:56
-msgid "Update check lease expired. The result was discarded."
-msgstr ""
-
-#: src/Infrastructure/Updates/UpdateService.php:64
-msgid "Signed release metadata checked. Install manually through the Plugins screen."
+#: src/Infrastructure/Updates/UpdateService.php:54
+#: src/Infrastructure/Updates/UpdateService.php:61
+msgid "Update state or lock is unavailable. The check was stopped safely."
 msgstr ""
 
 #: src/Infrastructure/Updates/UpdateService.php:66
+msgid "Signed release metadata checked. Install manually through the Plugins screen."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateService.php:68
 msgid "Invalid release response."
 msgstr ""
 
@@ -206,12 +207,13 @@ msgstr ""
 msgid "Temporary update file is unavailable."
 msgstr ""
 
-#: src/Infrastructure/Updates/UpdateTransport.php:21
-msgid "Update URL is not allowed."
-msgstr ""
-
+#: src/Infrastructure/Updates/UpdateService.php:184
 #: src/Infrastructure/Updates/UpdateTransport.php:41
 msgid "GitHub could not be reached."
+msgstr ""
+
+#: src/Infrastructure/Updates/UpdateTransport.php:21
+msgid "Update URL is not allowed."
 msgstr ""
 
 #: src/Infrastructure/Updates/UpdateTransport.php:47

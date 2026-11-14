@@ -1,13 +1,13 @@
 # Verifikation der GitHub-Updates
 
-Stand: 12.11.2026. Referenz lokal aus ChurchTools Suite Commit `49dc66f` gelesen; GitHub-API bestätigt Zielrepository `sw-wordpress/sw-sliderman`, ID `1438174384`.
+Stand: 14.11.2026. Referenz lokal aus ChurchTools Suite Commit `49dc66f` gelesen; GitHub-API bestätigt Zielrepository `sw-wordpress/sw-sliderman`, ID `1438174384`.
 
 | Automatischer Nachweis | Ergebnis |
 | --- | --- |
 | `composer check` | PHPCS ohne Fehler (Warnungen gemäß bestehender Konfiguration), PHPStan Level 8, 232 Unit-/Vertragstests bestanden |
-| WordPress, private MariaDB | 206 Tests bestanden; darunter Release-Werkzeuge und echte native Einzel-/AJAX-/Sammelupdates ausschließlich unter `tests/wp/vendor` |
-| Multisite, anschließend auf derselben privaten DB | 64 Updater-Tests bestanden; Netzwerkrechte, unmarkiertes Admin-AJAX, Pluginübersicht, Lock und Deaktivierung |
-| PHP-Coverage, Unit + WordPress + Multisite | 88,76 % Zeilen; alle produktiven PHP-Dateien einschließlich `includes` einbezogen, keine neue Ausnahme/Baseline |
+| WordPress, private MariaDB | 210 Tests bestanden; darunter Release-Werkzeuge und echte native Einzel-/AJAX-/Sammelupdates ausschließlich unter `tests/wp/vendor` |
+| Multisite, anschließend auf derselben privaten DB | 68 Updater-Tests bestanden; Netzwerkrechte, unmarkiertes Admin-AJAX, Pluginübersicht, Lock und Deaktivierung |
+| PHP-Coverage, Unit + WordPress + Multisite | 88,81 % Zeilen; alle produktiven PHP-Dateien einschließlich `includes` einbezogen, keine neue Ausnahme/Baseline |
 | `npm run lint`, `typecheck`, `coverage`, `build` | 537 Tests bestanden, 91,14 % Zeilen; neue Prüflogik 100 % Zeilen; drei bestehende Vue-Lintwarnungen |
 | Übersetzungen | `bin/i18n.sh update` und `check` erfolgreich; 112 PHP-/519 Editor-Einträge übersetzt; bestehende PO-Datumswarnung |
 | Chromium `tests/e2e/verified-updates.mjs` | Pluginzeile, manueller/verspäteter Hintergrundauftrag, Single-Flight, Status, Neuladelink und unveränderte native Navigation; simuliertes HTTP |
@@ -15,6 +15,8 @@ Stand: 12.11.2026. Referenz lokal aus ChurchTools Suite Commit `49dc66f` gelesen
 | `tests/verify-built-release.php` am echten ZIP | Wegwerfsignatur und Paket vom Laufzeitprüfer akzeptiert; Abbruch ohne Signier-Secret/Sodium/ZIP-Unterstützung; Paket-Smokecheck bestanden |
 | `make release VERSION=X.Y.Z[.W]` | Versionsabgleich, Commit/Tag und atomarer Push in temporären Repositories; Dirty-Tree, Downgrade, bestehende Tags, fehlendes Remote und abgewiesener Branch-Push geprüft; 28 Release-Werkzeugtests bestanden |
 | Drei dokumentierte Schlüsselblöcke | Isoliert in `/tmp`, Wegwerfschlüssel, Bash/Zsh und simuliertes `gh`: 0700/0600, Überschreibschutz, Schlüsselerhalt, widersprüchliche IDs abgelehnt, private Übergabe per stdin |
+
+Review-Korrekturen zu [PR #23](https://github.com/sw-wordpress/sw-sliderman/pull/23): Zsh wird in allen PHP-CI-Jobs explizit installiert. Nach `npm ci` wurden ESLint-Fehler, die TypeScript-6-Pfadkonfiguration und der bestätigte [vue-tsc-Codegeneratorfehler #6322](https://github.com/vuejs/language-tools/issues/6322) ohne Abschalten von Prüfungen behoben. Cache-Angebote verfallen nun auch in der Anzeige exakt nach sieben Tagen; Download-Ausnahmen räumen temporäre Dateien auf. Zustandsschreiben und Lease-Übernahme verwenden denselben DB-Mutex; bei Speicherfehlern startet kein HTTP-Aufruf. Neue Regressionstests sichern diese Grenzen in Single-Site und Multisite ab.
 
 `VerifiedUpdatesTest` prüft gültige/ungültige Signaturen, bytegenaue erneute Prüfung, Repository-/Release-/Asset-/Slug-/Versionsbindungen, doppelte JSON-Schlüssel/Assets, Cachealter/Rollback, Nonces, Fähigkeiten, Frontend/Cron/REST/CLI, Fehlerdrosselung trotz Transient-Löschung, Lease-Übernahme und verspätete Ergebnisse. ZIP-Fälle umfassen manipulierte Bytes, Traversal, fremde Wurzeln, Case-Kollisionen, Datei-/Ordnerkonflikte, Symlinks, Kompressionslimits und Header. Transportfälle prüfen fremde Hosts/Repositorys, HTTP/Ports/Userinfo/Fragmente, Redirect- und Antwortlimits.
 

@@ -82,7 +82,6 @@
   "Public release key or Sodium is missing. GitHub updates are blocked.": "Öffentlicher Release-Schlüssel oder Sodium fehlt. GitHub-Updates sind gesperrt.",
   "An update check is already running.": "Eine Update-Prüfung läuft bereits.",
   "The previous update attempt is still within the check interval.": "Die letzte Update-Prüfung liegt noch innerhalb des Prüfintervalls.",
-  "Update check lease expired. The result was discarded.": "Prüfung dauerte zu lange. Ergebnis wurde nicht übernommen.",
   "Signed release metadata checked. Install manually through the Plugins screen.": "Signierte Release-Informationen geprüft. Installation ausschließlich über die Plugin-Verwaltung.",
   "Invalid release response.": "Ungültige Release-Antwort.",
   "No valid stable release was returned.": "Keine gültige stabile Release-Antwort.",
@@ -111,5 +110,6 @@
   "Reload the plugin list to show available updates": "Plugin-Liste neu laden, um verfügbare Updates anzuzeigen",
   "No successful update check yet.": "Noch keine erfolgreiche Update-Prüfung.",
   "Last successful check: %s ago.": "Letzte erfolgreiche Prüfung: vor %s.",
-  "Last attempt: %s ago.": "Letzter Prüfversuch: vor %s."
+  "Last attempt: %s ago.": "Letzter Prüfversuch: vor %s.",
+  "Update state or lock is unavailable. The check was stopped safely.": "Update-Zustand oder Sperre ist nicht verfügbar. Die Prüfung wurde sicher abgebrochen."
 }

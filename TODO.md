@@ -450,3 +450,5 @@ Nächste notwendige Änderung:
 - [ ] Öffentlicher Betreiberschlüssel `sw-sliderman-2026-11` ist hinterlegt; geschütztes `plugin-releases`, Signierkonfiguration, Vertrauensverteilung und erster signierter Release bleiben zu bestätigen. [Betrieb und kopierbare Befehle](docs/GITHUB-UPDATES-BETRIEB.md).
 - [x] `make release VERSION=X.Y.Z[.W]`: Versionsabgleich, annotierter Tag und atomarer Push; isolierte Erfolgs-/Abbruchtests, kein echter Release ausgelöst.
 - [ ] Stefan nimmt die Bedienung in der Pluginübersicht praktisch ab (Prüfschritte im Prüfprotokoll). Bestehende M0-/Release-Abnahmepunkte bleiben davon unberührt.
+
+- [x] MR #23: CI mit sauberer npm-Installation geprüft (Zsh, ESLint, TypeScript 6/vue-tsc); Cache-Grenze, Download-Cleanup und atomare Zustandsübernahme mit neuen WordPress-/Multisite-Regressionsfällen korrigiert. Lokale Ergebnisse: [Prüfprotokoll](docs/GITHUB-UPDATES-TESTS.md); gehosteter Status im PR.

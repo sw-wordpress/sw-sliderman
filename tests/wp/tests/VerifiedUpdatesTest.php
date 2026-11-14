@@ -601,4 +601,96 @@ final class VerifiedUpdatesTest extends WP_UnitTestCase {
 		}
 	}
 
+	public function test_cached_offer_is_hidden_at_expiry_and_for_future_cache_timestamps(): void {
+		$this->assertIsArray( UpdateService::check() );
+		$file = array_key_first( UpdateProvider::descriptors() );
+		$state = UpdateStore::read();
+		foreach ( array( time() - 7 * DAY_IN_SECONDS, time() + 300 ) as $success ) {
+			$state['last_success'] = $success;
+			UpdateStore::write( $state );
+			$offers = UpdateProvider::offers( (object) array( 'checked' => array( $file => SWS_VERSION ) ) );
+			$this->assertArrayNotHasKey( $file, $offers->response ?? array() );
+			$this->assertWPError( UpdateService::verified_snapshot() );
+		}
+	}
+
+	public function test_throwing_download_filters_cannot_leak_temporary_packages(): void {
+		$this->assertIsArray( UpdateService::check() );
+		$temp = null;
+		add_filter( 'pre_http_request', static function ( $reply, $args ) use ( &$temp ) {
+			if ( ! empty( $args['stream'] ) ) {
+				$temp = $args['filename'];
+				throw new RuntimeException( 'Simulated download failure' );
+			}
+			return $reply;
+		}, 30, 2 );
+		$url = UpdateManifest::url( $this->manifest, $this->manifest['packages'][0] );
+		try {
+			$result = UpdateService::download( $url, array( 'slug' => 'sw-sliderman', 'version' => SWS_VERSION ) );
+		} catch ( Throwable $error ) {
+			$result = $error;
+		}
+		$this->assertIsString( $temp );
+		$this->assertFileDoesNotExist( $temp );
+		$this->assertWPError( $result );
+	}
+
+	public function test_state_publication_rejects_old_owners_and_holds_the_acquisition_mutex(): void {
+		global $wpdb;
+		$owner = UpdateStore::acquire();
+		$this->assertIsArray( $owner );
+		$peer = new wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+		$mutex = substr( 'sws_updates_' . hash( 'sha256', $wpdb->base_prefix . ':' . get_current_network_id() ), 0, 64 );
+		$blocked = false;
+		$hook = is_multisite() ? 'pre_update_site_option_' . UpdateStore::STATE : 'pre_update_option_' . UpdateStore::STATE;
+		// Seed an existing option so update_site_option invokes its pre-update filter too.
+		UpdateStore::write( array( 'seed' => true ) );
+		$observe = static function ( $value ) use ( $peer, $mutex, &$blocked ) {
+			$blocked = '0' === (string) $peer->get_var( $peer->prepare( 'SELECT GET_LOCK(%s, 0)', $mutex ) );
+			if ( ! $blocked ) $peer->get_var( $peer->prepare( 'SELECT RELEASE_LOCK(%s)', $mutex ) );
+			return $value;
+		};
+		add_filter( $hook, $observe );
+		try {
+			$this->assertTrue( UpdateStore::write_if_owned( array( 'accepted' => true ), $owner ) );
+			$this->assertTrue( $blocked );
+			UpdateStore::release( $owner );
+			$next = UpdateStore::acquire();
+			$this->assertIsArray( $next );
+			$this->assertFalse( UpdateStore::write_if_owned( array( 'stale' => true ), $owner ) );
+			$this->assertSame( array( 'accepted' => true ), UpdateStore::read() );
+			UpdateStore::release( $next );
+		} finally {
+			remove_filter( $hook, $observe );
+			$peer->close();
+		}
+	}
+
+	public function test_state_write_failures_stop_checks_before_any_http_request(): void {
+		global $wpdb;
+		$initial = array( 'last_attempt' => 0 );
+		UpdateStore::write( $initial );
+		$writing = false;
+		$hook = is_multisite() ? 'pre_update_site_option_' . UpdateStore::STATE : 'pre_update_option_' . UpdateStore::STATE;
+		$observe = static function ( $value ) use ( &$writing ) {
+			$writing = true;
+			return $value;
+		};
+		$table = is_multisite() ? $wpdb->sitemeta : $wpdb->options;
+		$reject = static function ( $query ) use ( &$writing, $table ) {
+			return $writing && str_starts_with( $query, 'UPDATE `' . $table . '`' ) ? '' : $query;
+		};
+		add_filter( $hook, $observe );
+		add_filter( 'query', $reject );
+		try {
+			$this->assertWPError( UpdateService::check() );
+			$this->assertTrue( $writing );
+			$this->assertCount( 0, $this->requests );
+			$this->assertSame( $initial, UpdateStore::read() );
+		} finally {
+			remove_filter( $hook, $observe );
+			remove_filter( 'query', $reject );
+		}
+	}
+
 }

@@ -114,7 +114,7 @@ final class UpdateProvider {
 				continue;
 			}
 			unset( $transient->response[ $file ], $transient->no_update[ $file ] );
-			if ( empty( $state['last_success'] ) || time() - $state['last_success'] > 7 * DAY_IN_SECONDS || empty( $state['manifest'] ) || ! UpdateService::keys() ) {
+			if ( empty( $state['last_success'] ) || $state['last_success'] > time() || time() - $state['last_success'] >= 7 * DAY_IN_SECONDS || empty( $state['manifest'] ) || ! UpdateService::keys() ) {
 				continue;
 			}
 			$package = UpdateManifest::package( $state['manifest'], $descriptor['slug'] );
