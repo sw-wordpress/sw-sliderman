@@ -34,6 +34,8 @@ jobs:
       run: |-
         sudo apt-get install -y --no-install-recommends gettext >/dev/null
         bash bin/i18n.sh check
+    - name: Install release documentation test shell
+      run: sudo apt-get update && sudo apt-get install -y --no-install-recommends zsh
     - name: Install isolated WordPress test dependencies
       run: composer install --working-dir=tests/wp --prefer-dist --no-interaction --no-progress
     - name: Unit and contract coverage
@@ -89,6 +91,8 @@ jobs:
         extensions: mysqli, mbstring, json, gd, zip, sodium
         tools: composer:v2
         coverage: none
+    - name: Install release documentation test shell
+      run: sudo apt-get update && sudo apt-get install -y --no-install-recommends zsh
     - name: Install WordPress test dependencies
       working-directory: tests/wp
       run: |-

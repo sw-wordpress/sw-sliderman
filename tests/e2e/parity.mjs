@@ -52,7 +52,7 @@ const browser = await chromium.launch({ executablePath: chrome(), args: ['--no-s
 const admin = await browser.newContext({ viewport: { width: 1600, height: 1000 }, locale: 'de-DE' });
 await admin.addCookies(auth.cookies.map((c) => ({ ...c, domain: 'localhost', path: '/' })));
 const page = await admin.newPage();
-let sliderId = 0;
+let sliderId;
 
 try {
   await page.goto(auth.admin);
