@@ -393,6 +393,8 @@ Review-Korrektur: Auch der dynamische Editor-Effektimport erhält die zentrale P
 
 ## Definition of Done pro Funktion
 
+**Dependency-Audit / PR #18 (12.11.2026):** Vitest/Coverage 5.1.0 mit neu erzeugtem npm-Lockfile; Tiptap und sämtliche Buildziele erhalten. Node-Voraussetzungen und TypeScript-6-Pfade angepasst, redundante Initialisierungen entfernt; `vue-tsc` wegen [Upstream-Regression](https://github.com/vuejs/language-tools/issues/6322) auf 3.3.13 gepinnt. Nachweise: frisches `npm ci`, Lint, Typprüfung, 528 Frontend-Tests (84,66 % Zeilen), Build/Bundlecheck, i18n und ZIP-Smoke-Test; `composer check`, 114 WordPress-Tests, PHP-Coverage 88,43 %. Audit: keine High-/Critical-Befunde, produktive Pakete ohne Befund; moderate Tooling-Befunde bleiben separat offen. Stefans praktische Prüfung bleibt ausstehend.
+
 - [ ] Dokumentmodell, Servervalidierung und Editor verwenden denselben Vertrag.
 - [ ] Vorschau, Frontend und responsive Vererbung liefern konsistente Ergebnisse.
 - [ ] Undo/Redo, Speichern, Revision, Duplizieren und Import/Export berücksichtigen die Funktion.

@@ -20,7 +20,9 @@ Status: M0 accepted; M1 foundation and persistence implemented; evidence and rem
 | Block in the block editor | Playwright against the dev site (creates and removes `E2E Block*` sliders/pages) | `node tests/e2e/block.mjs` |
 | Runtime regressions | Playwright with intercepted fixtures, no WordPress writes (after build) | `node tests/e2e/runtime-regressions.mjs` |
 
-Node 18.18 is enough locally (versions pinned like sw-backupit); CI uses Node 22.
+Vitest 5 requires Node 22.12+ (22.x), 24.x or 26+ locally; CI uses Node 22.
+
+`vue-tsc` stays pinned to 3.3.13 until the [3.3.14 template codegen regression](https://github.com/vuejs/language-tools/issues/6322) is fixed; URL strings in template attributes otherwise produce false `.value` errors.
 
 ## Contract fixtures
 
