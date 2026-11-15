@@ -21,7 +21,7 @@
     "coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@quasar/extras": "^1.17.0",
+    "@quasar/extras": "^2.1.0",
     "@tiptap/core": "3.33.0",
     "@tiptap/extension-bold": "3.33.0",
     "@tiptap/extension-document": "3.33.0",
