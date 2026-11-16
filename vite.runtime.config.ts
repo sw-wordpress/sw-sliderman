@@ -1,4 +1,3 @@
-import { fileURLToPath, URL } from 'node:url';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
@@ -9,22 +8,22 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   publicDir: false,
   resolve: {
-    alias: { '@shared': fileURLToPath(new URL('./assets/shared', import.meta.url)) },
+    alias: { '@shared': resolve(import.meta.dirname, 'assets/shared') },
   },
   build: {
-    outDir: resolve(__dirname, 'build/runtime'),
+    outDir: resolve(import.meta.dirname, 'build/runtime'),
     emptyOutDir: true,
     sourcemap: false,
     target: 'es2020',
     cssCodeSplit: false,
     lib: {
-      entry: resolve(__dirname, 'assets/runtime/index.ts'),
+      entry: resolve(import.meta.dirname, 'assets/runtime/index.ts'),
       name: 'swsRuntime',
       formats: ['iife'],
       fileName: () => 'runtime.js',
       cssFileName: 'runtime',
     },
-    rollupOptions: {
+    rolldownOptions: {
       output: { assetFileNames: 'runtime[extname]' },
     },
   },

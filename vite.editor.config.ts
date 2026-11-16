@@ -1,10 +1,9 @@
-import { fileURLToPath, URL } from 'node:url';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { quasar, transformAssetUrls } from '@quasar/vite-plugin';
-import { swsScope } from './tools/postcssScope';
-import { versionedEffects } from './tools/versionedEffects';
+import { swsScope } from './tools/postcssScope.ts';
+import { versionedEffects } from './tools/versionedEffects.ts';
 
 /** Ship only the woff2 icon font (all supported browsers); drops the legacy woff. */
 function woff2Only() {
@@ -27,15 +26,15 @@ export default defineConfig({
   plugins: [woff2Only(), versionedEffects(), vue({ template: { transformAssetUrls } }), quasar()],
   resolve: {
     alias: {
-      '@shared': fileURLToPath(new URL('./assets/shared', import.meta.url)),
-      '@gpu': fileURLToPath(new URL('./assets/gpu', import.meta.url)),
-      '@editor': fileURLToPath(new URL('./assets/editor', import.meta.url)),
+      '@shared': resolve(import.meta.dirname, 'assets/shared'),
+      '@gpu': resolve(import.meta.dirname, 'assets/gpu'),
+      '@editor': resolve(import.meta.dirname, 'assets/editor'),
     },
   },
   css: { postcss: { plugins: [swsScope()] } },
   server: { port: 5174, host: '127.0.0.1' },
   build: {
-    outDir: resolve(__dirname, 'build/editor'),
+    outDir: resolve(import.meta.dirname, 'build/editor'),
     emptyOutDir: true,
     manifest: true,
     cssCodeSplit: false,
@@ -43,8 +42,8 @@ export default defineConfig({
     target: 'es2020',
     modulePreload: { polyfill: false },
     chunkSizeWarningLimit: 900,
-    rollupOptions: {
-      input: { editor: resolve(__dirname, 'assets/editor/main.ts') },
+    rolldownOptions: {
+      input: { editor: resolve(import.meta.dirname, 'assets/editor/main.ts') },
       output: {
         entryFileNames: 'editor.js',
         chunkFileNames: 'chunks/[name]-[hash].js',

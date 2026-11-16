@@ -101,7 +101,7 @@ AI agents must follow the project rules before changing code:
 
 ## Development
 
-Requirements: PHP 8.2+, Composer, Node.js 22.12+ (22.x), 24.x or 26+ with npm; MariaDB for the WordPress test suite.
+Requirements: PHP 8.2+, Composer, Node.js 22.22.2+ (22.x), 24.15+ (24.x) or 26+ with npm; MariaDB for the WordPress test suite. `.nvmrc` selects Node 22.
 
 ```sh
 composer install && npm ci

@@ -1,4 +1,3 @@
-import { fileURLToPath, URL } from 'node:url';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
@@ -6,14 +5,14 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   publicDir: false,
   resolve: {
-    alias: { '@shared': fileURLToPath(new URL('./assets/shared', import.meta.url)) },
+    alias: { '@shared': resolve(import.meta.dirname, 'assets/shared') },
   },
   build: {
-    outDir: resolve(__dirname, 'build/runtime'),
+    outDir: resolve(import.meta.dirname, 'build/runtime'),
     emptyOutDir: false,
     target: 'es2020',
     lib: {
-      entry: resolve(__dirname, 'assets/effects/index.ts'),
+      entry: resolve(import.meta.dirname, 'assets/effects/index.ts'),
       name: 'swsEffects',
       formats: ['iife'],
       fileName: () => 'effects.js',

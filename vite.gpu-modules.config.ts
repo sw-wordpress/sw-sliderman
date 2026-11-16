@@ -1,5 +1,4 @@
 import { readdirSync, existsSync } from 'node:fs';
-import { fileURLToPath, URL } from 'node:url';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
@@ -8,7 +7,7 @@ import { defineConfig } from 'vite';
  * self-contained ES file `build/gpu/<name>.js`, loaded on demand by the platform. Runs after
  * vite.gpu.config.ts (which empties build/gpu); budgets per module in bin/check-bundles.mjs.
  */
-const modulesDir = resolve(__dirname, 'assets/gpu/modules');
+const modulesDir = resolve(import.meta.dirname, 'assets/gpu/modules');
 const entries = Object.fromEntries(
   readdirSync(modulesDir)
     .filter((name) => existsSync(resolve(modulesDir, name, 'index.ts')))
@@ -19,16 +18,16 @@ export default defineConfig({
   publicDir: false,
   resolve: {
     alias: {
-      '@shared': fileURLToPath(new URL('./assets/shared', import.meta.url)),
-      '@gpu': fileURLToPath(new URL('./assets/gpu', import.meta.url)),
+      '@shared': resolve(import.meta.dirname, 'assets/shared'),
+      '@gpu': resolve(import.meta.dirname, 'assets/gpu'),
     },
   },
   build: {
-    outDir: resolve(__dirname, 'build/gpu'),
+    outDir: resolve(import.meta.dirname, 'build/gpu'),
     emptyOutDir: false,
     sourcemap: false,
     target: 'es2020',
     lib: { entry: entries, formats: ['es'], fileName: (_format, name) => `${name}.js` },
-    rollupOptions: { output: { inlineDynamicImports: false } },
+    rolldownOptions: { output: { codeSplitting: true } },
   },
 });

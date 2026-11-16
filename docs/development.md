@@ -8,9 +8,9 @@ Status: M0 accepted; M1 foundation and persistence implemented; evidence and rem
 | PHP types | PHPStan level 8 + phpstan-wordpress | `composer stan` |
 | PHP unit/contract | PHPUnit 11, no WordPress (`tests/php`) | `composer test` |
 | WordPress integration | wp-phpunit, PHPUnit 9.6 (`tests/wp`), private MariaDB | `bin/test-db.sh start`, `composer test:wp` |
-| TS/Vue | ESLint 9, Prettier, vue-tsc (strict, `exactOptionalPropertyTypes`) | `npm run lint`, `npm run typecheck` |
+| TS/Vue | ESLint 10, Prettier, vue-tsc (strict, `exactOptionalPropertyTypes`) | `npm run lint`, `npm run typecheck` |
 | TS unit/contract | Vitest + jsdom (`tests/unit`) | `npm test` |
-| Build | Vite 6: editor (ES module), runtime (IIFE) | `npm run build` |
+| Build | Vite 8 + Vue plugin 6 + Quasar plugin 2: editor/GPU modules (ES), runtime/effects/GPU platform/admin (IIFE) | `npm run build` |
 | Block files | `assets/block` copied to `build/block` (shipped; `assets/` is not) | `node bin/build-block.mjs` (part of the build) |
 | Bundle guard | runtime budget, import boundary, no remote fonts, scoped admin CSS | `node bin/check-bundles.mjs` (part of the build) |
 | E2E | Playwright against the local site | `node tests/e2e/editor.mjs` |
@@ -20,7 +20,11 @@ Status: M0 accepted; M1 foundation and persistence implemented; evidence and rem
 | Block in the block editor | Playwright against the dev site (creates and removes `E2E Block*` sliders/pages) | `node tests/e2e/block.mjs` |
 | Runtime regressions | Playwright with intercepted fixtures, no WordPress writes (after build) | `node tests/e2e/runtime-regressions.mjs` |
 
-Vitest 5 requires Node 22.12+ (22.x), 24.x or 26+ locally; CI uses Node 22.
+The locked toolchain requires Node 22.22.2+ (22.x), 24.15+ (24.x) or 26+ (`engines.node`, constrained by jsdom 31); `.nvmrc` and CI use Node 22. Run `nvm install && nvm use` before `npm ci`.
+
+TypeScript stays on the supported JS-API release 6.0.3 established by [PR #18](https://github.com/sw-wordpress/sw-sliderman/pull/18). Issue #2's earlier 5.9 instruction is obsolete: `typescript-eslint` supports TypeScript <6.1 and the typecheck passes with 6.0.3; Dependabot still ignores the native TypeScript 7 compiler.
+
+Vite configs use `rolldownOptions`, `codeSplitting`, `import.meta.dirname` and explicit local `.ts` imports. Rolldown does not support `renderDynamicImport`; `tools/versionedEffects.ts` uses `renderChunk` before hashing to retain the central plugin version on lazy editor imports. `tests/unit/build-toolchain.test.ts` and `tests/e2e/editor-effects-version.mjs` guard this behavior.
 
 `vue-tsc` stays pinned to 3.3.13 until the [3.3.14 template codegen regression](https://github.com/vuejs/language-tools/issues/6322) is fixed; URL strings in template attributes otherwise produce false `.value` errors.
 

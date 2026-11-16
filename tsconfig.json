@@ -19,6 +19,7 @@
     "skipLibCheck": true,
     "jsx": "preserve",
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "paths": {
       "@shared/*": ["./assets/shared/*"],
       "@editor/*": ["./assets/editor/*"],

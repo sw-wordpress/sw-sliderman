@@ -1,4 +1,4 @@
-import { fileURLToPath, URL } from 'node:url';
+import { resolve } from 'node:path';
 import { defineConfig } from 'vitest/config';
 import vue from '@vitejs/plugin-vue';
 import { quasar } from '@quasar/vite-plugin';
@@ -7,9 +7,9 @@ export default defineConfig({
   plugins: [vue(), quasar()],
   resolve: {
     alias: {
-      '@shared': fileURLToPath(new URL('./assets/shared', import.meta.url)),
-      '@editor': fileURLToPath(new URL('./assets/editor', import.meta.url)),
-      '@gpu': fileURLToPath(new URL('./assets/gpu', import.meta.url)),
+      '@shared': resolve(import.meta.dirname, 'assets/shared'),
+      '@editor': resolve(import.meta.dirname, 'assets/editor'),
+      '@gpu': resolve(import.meta.dirname, 'assets/gpu'),
     },
   },
   test: {
