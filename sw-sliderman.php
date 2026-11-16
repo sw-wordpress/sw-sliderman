@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       SW Sliderman
  * Description:       Responsive layer slider with a visual editor, container-based mobile layouts and locally hosted Google Fonts.
- * Version:           0.1.0
+ * Version:           0.7.0
  * Requires at least: 6.6
  * Update URI:        https://github.com/sw-wordpress/sw-sliderman
  * Requires PHP:      8.2
@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'SWS_VERSION', '0.1.0' );
+define( 'SWS_VERSION', '0.7.0' );
 define( 'SWS_FILE', __FILE__ );
 define( 'SWS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SWS_URL', plugin_dir_url( __FILE__ ) );
