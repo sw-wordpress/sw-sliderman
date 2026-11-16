@@ -395,6 +395,8 @@ Review-Korrektur: Auch der dynamische Editor-Effektimport erhält die zentrale P
 
 **Dependency-Audit / PR #18 (12.11.2026):** Vitest/Coverage 5.1.0 mit neu erzeugtem npm-Lockfile; Tiptap und sämtliche Buildziele erhalten. Node-Voraussetzungen und TypeScript-6-Pfade angepasst, redundante Initialisierungen entfernt; `vue-tsc` wegen [Upstream-Regression](https://github.com/vuejs/language-tools/issues/6322) auf 3.3.13 gepinnt. Nachweise: frisches `npm ci`, Lint, Typprüfung, 528 Frontend-Tests (84,66 % Zeilen), Build/Bundlecheck, i18n und ZIP-Smoke-Test; `composer check`, 114 WordPress-Tests, PHP-Coverage 88,43 %. Audit: keine High-/Critical-Befunde, produktive Pakete ohne Befund; moderate Tooling-Befunde bleiben separat offen. Stefans praktische Prüfung bleibt ausstehend.
 
+**Toolchain / Issue #2 (16.11.2026):** Vite 8.3.8, Vue-Plugin 6.0.11, Quasar-Plugin 2.0.2 und Rolldown-Konfiguration; TypeScript 6 bleibt erhalten ([Begründung](docs/development.md)). Versionierte Lazy-Imports und Bundleguard mit Rot-/Grün-Regressionen abgesichert. Unter Node 22.23.5: sauberes `npm ci --engine-strict`, Lint/Typprüfung, 539 Tests, 84,83 % Zeilen, Build/Bundlechecks, JS-i18n und lokale Chromium-Fixtures für Editor, Runtime, Accessibility und GPU bestanden. Audit: 13 moderate Dev-Befunde, produktiv 0. Offen: echter WordPress-Smoke und PHP-Prüfungen mangels PHP/Composer/MariaDB/Dev-Site; vollständiges i18n benötigt `msgfmt`. Stefans Abnahme bleibt separat offen.
+
 - [ ] Dokumentmodell, Servervalidierung und Editor verwenden denselben Vertrag.
 - [ ] Vorschau, Frontend und responsive Vererbung liefern konsistente Ergebnisse.
 - [ ] Undo/Redo, Speichern, Revision, Duplizieren und Import/Export berücksichtigen die Funktion.

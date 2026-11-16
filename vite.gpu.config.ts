@@ -1,4 +1,3 @@
-import { fileURLToPath, URL } from 'node:url';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
@@ -11,18 +10,18 @@ export default defineConfig({
   publicDir: false,
   resolve: {
     alias: {
-      '@shared': fileURLToPath(new URL('./assets/shared', import.meta.url)),
-      '@gpu': fileURLToPath(new URL('./assets/gpu', import.meta.url)),
+      '@shared': resolve(import.meta.dirname, 'assets/shared'),
+      '@gpu': resolve(import.meta.dirname, 'assets/gpu'),
     },
   },
   build: {
-    outDir: resolve(__dirname, 'build/gpu'),
+    outDir: resolve(import.meta.dirname, 'build/gpu'),
     emptyOutDir: true,
     sourcemap: false,
     target: 'es2020',
     cssCodeSplit: false,
     lib: {
-      entry: resolve(__dirname, 'assets/gpu/index.ts'),
+      entry: resolve(import.meta.dirname, 'assets/gpu/index.ts'),
       name: 'swsGpu',
       formats: ['iife'],
       fileName: () => 'gpu.js',
