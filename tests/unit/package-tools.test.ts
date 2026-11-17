@@ -101,6 +101,28 @@ describe('package tools', () => {
     wrapper.unmount();
   });
 
+  it('lets the user cancel while the import is still running', async () => {
+    const pending = new Promise<number>(() => {});
+    vi.mocked(packages.commit).mockReturnValue(pending);
+    vi.mocked(packages.cancel).mockResolvedValue(null);
+    const wrapper = render();
+    await flushPromises();
+    wrapper.findComponent(QFile).vm.$emit('update:modelValue', new File(['PK'], 'hero.zip'));
+    await flushPromises();
+    await button(wrapper, 'Check package').trigger('click');
+    await flushPromises();
+    await button(wrapper, 'Import as new draft').trigger('click');
+    await flushPromises();
+    const cancel = button(wrapper, 'Cancel import');
+    expect(cancel.props('disable')).toBe(false);
+    await cancel.trigger('click');
+    await flushPromises();
+    expect(packages.cancel).toHaveBeenCalledWith(token);
+    await flushPromises();
+    expect(mocks.push).not.toHaveBeenCalled();
+    wrapper.unmount();
+  });
+
   it('requires local replacements for incomplete packages and can cancel staging', async () => {
     vi.mocked(packages.preview).mockResolvedValue({
       ...complete,

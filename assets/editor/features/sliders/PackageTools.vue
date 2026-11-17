@@ -316,7 +316,7 @@ async function createTemplate(): Promise<void> {
         :loading="busy"
         @click="commit"
       />
-      <q-btn no-caps :label="__('Cancel import')" :disable="busy" @click="cancel" />
+      <q-btn no-caps :label="__('Cancel import')" :disable="busy && !importing" @click="cancel" />
     </div>
   </SwsCard>
 </template>

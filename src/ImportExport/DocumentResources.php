@@ -34,7 +34,7 @@ final class DocumentResources {
 				$slide->background->attachmentId = $map( $slide->background->attachmentId );
 			}
 			foreach ( $slide->layers as $layer ) {
-				if ( 'image' === $layer->type ) {
+				if ( 'image' === $layer->type && is_int( $layer->content->attachmentId ) ) {
 					$layer->content->attachmentId = $map( $layer->content->attachmentId );
 				}
 				if ( 'effect' === $layer->type ) {

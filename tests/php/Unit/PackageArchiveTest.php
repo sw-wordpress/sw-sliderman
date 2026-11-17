@@ -200,6 +200,18 @@ final class PackageArchiveTest extends TestCase {
 		self::assertSame( $expected, DocumentResources::media_ids( $document ) );
 	}
 
+	public function test_unassigned_image_layer_survives_media_remapping(): void {
+		$document                      = Fixtures::object( 'documents/valid/effect.json' );
+		$layer                         = (object) array(
+			'type'    => 'image',
+			'content' => (object) array( 'attachmentId' => null ),
+		);
+		$document->slides[0]->layers[] = $layer;
+		self::assertNotEmpty( DocumentResources::media_ids( $document ) );
+		DocumentResources::map_media( $document, static fn ( int $id ): int => $id + 1000 );
+		self::assertNull( $layer->content->attachmentId );
+	}
+
 	public function test_invalid_image_and_oversize_dimensions_rejected(): void {
 		$this->expectException( PackageError::class );
 		PackageArchive::image_mime( '<?php echo 1;', 'media/fake.png' );
