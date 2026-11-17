@@ -111,5 +111,21 @@
   "No successful update check yet.": "Noch keine erfolgreiche Update-Prüfung.",
   "Last successful check: %s ago.": "Letzte erfolgreiche Prüfung: vor %s.",
   "Last attempt: %s ago.": "Letzter Prüfversuch: vor %s.",
-  "Update state or lock is unavailable. The check was stopped safely.": "Update-Zustand oder Sperre ist nicht verfügbar. Die Prüfung wurde sicher abgebrochen."
+  "Update state or lock is unavailable. The check was stopped safely.": "Update-Zustand oder Sperre ist nicht verfügbar. Die Prüfung wurde sicher abgebrochen.",
+  "This package format or required plugin version is not supported. Update the plugin before importing.": "Dieses Paketformat oder die erforderliche Plugin-Version wird nicht unterstützt. Vor dem Import ist ein Plugin-Update erforderlich.",
+  "ZIP support (PHP ZipArchive) is required for slider packages.": "Für Slider-Pakete ist ZIP-Unterstützung (PHP ZipArchive) erforderlich.",
+  "The package exceeds the file count, size or compression limits.": "Das Paket überschreitet die Grenzen für Dateianzahl, Größe oder Kompression.",
+  "A writable temporary directory outside the web root is required.": "Ein beschreibbares temporäres Verzeichnis außerhalb des Web-Verzeichnisses ist erforderlich.",
+  "Assign every missing image and font to a suitable local resource before importing.": "Vor dem Import müssen alle fehlenden Bilder und Schriften passenden lokalen Ressourcen zugeordnet werden.",
+  "The package session expired or is not accessible. Upload the archive again.": "Die Paketsitzung ist abgelaufen oder nicht zugänglich. Das Archiv muss erneut hochgeladen werden.",
+  "The import outcome is unknown. Check the slider list before starting another import.": "Das Importergebnis ist unbekannt. Vor einem weiteren Import muss die Slider-Übersicht geprüft werden.",
+  "The package or its resources could not be stored.": "Das Paket oder seine Ressourcen konnten nicht gespeichert werden.",
+  "The package is damaged or contains unsafe paths, files, hashes or resource declarations.": "Das Paket ist beschädigt oder enthält unsichere Pfade, Dateien, Hashes oder Ressourcenangaben.",
+  "Image slider": "Bildslider",
+  "Text and button hero": "Hero mit Text und Button",
+  "Event announcement": "Veranstaltungshinweis",
+  "The import was cancelled. No slider was created.": "Der Import wurde abgebrochen. Es wurde kein Slider angelegt.",
+  "Import permission is no longer available.": "Die Importberechtigung ist nicht mehr vorhanden.",
+  "The import exceeded its time limit. The package can be checked and retried.": "Der Import hat sein Zeitlimit überschritten. Das Paket kann geprüft und erneut importiert werden.",
+  "Imported resources require local upload URLs on the website and editor origin.": "Importierte Ressourcen benötigen lokale Upload-URLs auf der Herkunft von Website und Editor."
 }

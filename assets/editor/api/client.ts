@@ -102,7 +102,9 @@ export class ApiClient {
       credentials: 'same-origin',
       signal: timeout.signal,
     };
-    if (options.body !== undefined) {
+    if (options.body instanceof FormData) {
+      init.body = options.body;
+    } else if (options.body !== undefined) {
       headers['Content-Type'] = 'application/json';
       init.body = JSON.stringify(options.body);
     }
@@ -144,7 +146,11 @@ export class ApiClient {
   get(path: string, query: Query = {}, signal?: AbortSignal): Promise<unknown> {
     return this.request('GET', path, signal ? { query, signal } : { query });
   }
-  post(path: string, body: unknown = {}, options: Omit<RequestOptions, 'body'> = {}): Promise<unknown> {
+  post(
+    path: string,
+    body: unknown = {},
+    options: Omit<RequestOptions, 'body'> = {},
+  ): Promise<unknown> {
     return this.request('POST', path, { ...options, body });
   }
   put(path: string, body: unknown, options: Omit<RequestOptions, 'body'> = {}): Promise<unknown> {

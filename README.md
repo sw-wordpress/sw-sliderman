@@ -19,6 +19,7 @@ Preview in early development, not ready for production sites.
 - **Desktop, tablet and mobile layouts** — Adjust single properties per screen size; everything else is inherited.
 - **Drafts and revisions** — Visitors only see the published version; earlier revisions can be restored.
 - **Local Google Fonts** — Fonts are downloaded once to your server; visitors never contact Google.
+- **Local templates and portable ZIPs** — Start from three bundled examples or transfer sliders with images, local fonts and licenses. [Import/export guide](docs/packages.md).
 - **Lightweight frontend** — Sliders are shown without jQuery or other script libraries.
 
 ## Languages
@@ -38,13 +39,13 @@ English, German.
 
 ### Requirements
 
-PHP 8.2+ with JSON, WordPress 6.6+, MySQL or MariaDB with InnoDB tables, single-site installation (multisite not tested yet).
+PHP 8.2+ with JSON (`ZipArchive` for slider packages), WordPress 6.6+, MySQL or MariaDB with InnoDB tables, single-site installation (multisite not tested yet).
 
 ### Settings
 
 The only setting is **Offline mode** under **Sliderman → Fonts → Font downloads**; it blocks new font downloads,
-installed fonts keep working. Access is controlled by the capabilities `sws_edit_sliders`, `sws_publish_sliders`
-and `sws_manage_fonts`, granted to administrators on activation.
+installed fonts keep working. Access is controlled by the capabilities `sws_edit_sliders`, `sws_publish_sliders`,
+`sws_manage_fonts` and `sws_import_sliders`, granted to administrators on activation/upgrade. Imports also require media upload permission.
 
 The plugin has no `wp-config.php` constants of its own.
 
@@ -65,7 +66,7 @@ This synchronizes the plugin header and `SWS_VERSION`, commits a version change,
 ### Background tasks
 
 Font installations and catalog updates run via WP-Cron. While **Sliderman → Fonts** is open, the page processes
-queued jobs itself, so downloads also work with `DISABLE_WP_CRON`.
+queued jobs itself, so downloads also work with `DISABLE_WP_CRON`. Confirmed package imports likewise use Cron and a browser fallback; their status survives a reload of the same tab.
 
 ### Integrations
 

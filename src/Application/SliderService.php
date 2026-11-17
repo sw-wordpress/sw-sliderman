@@ -62,6 +62,39 @@ final class SliderService {
 		return $this->repository->create( $title, CanonicalJson::encode( $tree ) );
 	}
 
+	/** Creates a new, unpublished document; all document-local identities are replaced.
+	 *
+	 * @param mixed $document Imported or bundled document tree.
+	 */
+	public function import_draft( string $title, mixed $document ): int {
+		$issues = $this->validator->validate( $document );
+		if ( array() !== $issues ) {
+			throw new InvalidDocument( $issues );
+		}
+		$tree     = CanonicalJson::decode_tree( CanonicalJson::encode( $document ) );
+		$tree->id = $this->system->uuid();
+		$fonts    = array();
+		foreach ( $tree->fontRefs as $ref ) {
+			$old           = $ref->id;
+			$ref->id       = $this->system->uuid();
+			$fonts[ $old ] = $ref->id;
+		}
+		foreach ( $tree->slides as $slide ) {
+			$slide->id = $this->system->uuid();
+			foreach ( $slide->layers as $layer ) {
+				$layer->id = $this->system->uuid();
+				if ( null !== $layer->style->fontRef ) {
+					$layer->style->fontRef = $fonts[ $layer->style->fontRef ];
+				}
+			}
+		}
+		$issues = $this->validator->validate( $tree );
+		if ( array() !== $issues ) {
+			throw new InvalidDocument( $issues );
+		}
+		return $this->repository->create( $title, CanonicalJson::encode( $tree ) );
+	}
+
 	public function get( int $id ): StoredSlider {
 		$slider = $this->repository->find( $id );
 		if ( null === $slider ) {

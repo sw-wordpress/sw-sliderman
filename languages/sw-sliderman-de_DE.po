@@ -341,112 +341,164 @@ msgstr "Slide %d anzeigen"
 msgid "Next slide"
 msgstr "Nächster Slide"
 
+#: src/Rest/Errors.php:33
+msgid "Imported resources require local upload URLs on the website and editor origin."
+msgstr "Importierte Ressourcen benötigen lokale Upload-URLs auf der Herkunft von Website und Editor."
+
 #: src/Rest/Errors.php:34
+msgid "The import was cancelled. No slider was created."
+msgstr "Der Import wurde abgebrochen. Es wurde kein Slider angelegt."
+
+#: src/Rest/Errors.php:35
+msgid "Import permission is no longer available."
+msgstr "Die Importberechtigung ist nicht mehr vorhanden."
+
+#: src/Rest/Errors.php:36
+msgid "The import exceeded its time limit. The package can be checked and retried."
+msgstr "Der Import hat sein Zeitlimit überschritten. Das Paket kann geprüft und erneut importiert werden."
+
+#: src/Rest/Errors.php:37
+msgid "This package format or required plugin version is not supported. Update the plugin before importing."
+msgstr "Dieses Paketformat oder die erforderliche Plugin-Version wird nicht unterstützt. Vor dem Import ist ein Plugin-Update erforderlich."
+
+#: src/Rest/Errors.php:38
+msgid "ZIP support (PHP ZipArchive) is required for slider packages."
+msgstr "Für Slider-Pakete ist ZIP-Unterstützung (PHP ZipArchive) erforderlich."
+
+#: src/Rest/Errors.php:39
+msgid "The package exceeds the file count, size or compression limits."
+msgstr "Das Paket überschreitet die Grenzen für Dateianzahl, Größe oder Kompression."
+
+#: src/Rest/Errors.php:40
+msgid "A writable temporary directory outside the web root is required."
+msgstr "Ein beschreibbares temporäres Verzeichnis außerhalb des Web-Verzeichnisses ist erforderlich."
+
+#: src/Rest/Errors.php:41
+msgid "Assign every missing image and font to a suitable local resource before importing."
+msgstr "Vor dem Import müssen alle fehlenden Bilder und Schriften passenden lokalen Ressourcen zugeordnet werden."
+
+#: src/Rest/Errors.php:42
+msgid "The package session expired or is not accessible. Upload the archive again."
+msgstr "Die Paketsitzung ist abgelaufen oder nicht zugänglich. Das Archiv muss erneut hochgeladen werden."
+
+#: src/Rest/Errors.php:43
+msgid "The import outcome is unknown. Check the slider list before starting another import."
+msgstr "Das Importergebnis ist unbekannt. Vor einem weiteren Import muss die Slider-Übersicht geprüft werden."
+
+#: src/Rest/Errors.php:44
+msgid "The package or its resources could not be stored."
+msgstr "Das Paket oder seine Ressourcen konnten nicht gespeichert werden."
+
+#: src/Rest/Errors.php:46
+msgid "The package is damaged or contains unsafe paths, files, hashes or resource declarations."
+msgstr "Das Paket ist beschädigt oder enthält unsichere Pfade, Dateien, Hashes oder Ressourcenangaben."
+
+#: src/Rest/Errors.php:51
 msgid "The slider was changed elsewhere. Reload it or export your changes."
 msgstr "Der Slider wurde an anderer Stelle geändert. Neu laden oder die eigenen Änderungen exportieren."
 
-#: src/Rest/Errors.php:44
+#: src/Rest/Errors.php:61
 msgid "The slider contains invalid or missing data."
 msgstr "Der Slider enthält ungültige oder fehlende Daten."
 
-#: src/Rest/Errors.php:52
+#: src/Rest/Errors.php:69
 msgid "The slider does not exist."
 msgstr "Der Slider existiert nicht."
 
-#: src/Rest/Errors.php:55
+#: src/Rest/Errors.php:72
 msgid "The changes could not be stored. The last published version was not changed."
 msgstr "Die Änderungen konnten nicht gespeichert werden. Die letzte veröffentlichte Version wurde nicht verändert."
 
-#: src/Rest/Errors.php:59
+#: src/Rest/Errors.php:76
 msgid "The slider is being saved by another request. Please try again."
 msgstr "Der Slider wird gerade von einer anderen Anfrage gespeichert. Bitte erneut versuchen."
 
-#: src/Rest/Errors.php:69
+#: src/Rest/Errors.php:86
 msgid "An unexpected error occurred."
 msgstr "Ein unerwarteter Fehler ist aufgetreten."
 
-#: src/Rest/Errors.php:79
+#: src/Rest/Errors.php:96
 msgid "The file is not a supported static WOFF2 font."
 msgstr "Die Datei ist keine unterstützte statische WOFF2-Schrift."
 
-#: src/Rest/Errors.php:80
+#: src/Rest/Errors.php:97
 msgid "The font installation could not be stored. Existing installations were not changed."
 msgstr "Die Schriftinstallation konnte nicht gespeichert werden. Bestehende Installationen wurden nicht geändert."
 
-#: src/Rest/Errors.php:81
+#: src/Rest/Errors.php:98
 msgid "The local font files could not be written or verified."
 msgstr "Die lokalen Schriftdateien konnten nicht geschrieben oder geprüft werden."
 
-#: src/Rest/Errors.php:82
+#: src/Rest/Errors.php:99
 msgid "Font use could not be checked because stored slider data is damaged or unsupported."
 msgstr "Die Schriftverwendung konnte wegen beschädigter oder nicht unterstützter Slider-Daten nicht geprüft werden."
 
-#: src/Rest/Errors.php:83
+#: src/Rest/Errors.php:100
 msgid "The catalog response could not be verified. The previous catalog remains active."
 msgstr "Die Katalogantwort konnte nicht geprüft werden. Der bisherige Katalog bleibt aktiv."
 
-#: src/Rest/Errors.php:84
+#: src/Rest/Errors.php:101
 msgid "Font management permission is no longer available."
 msgstr "Die Berechtigung zur Schriftverwaltung ist nicht mehr vorhanden."
 
-#: src/Rest/Errors.php:85
+#: src/Rest/Errors.php:102
 msgid "The font job does not exist."
 msgstr "Der Schriftauftrag existiert nicht."
 
-#: src/Rest/Errors.php:86
+#: src/Rest/Errors.php:103
 msgid "Too many font jobs are active. Wait for a job to finish."
 msgstr "Zu viele Schriftaufträge sind aktiv. Den Abschluss eines Auftrags abwarten."
 
-#: src/Rest/Errors.php:87
+#: src/Rest/Errors.php:104
 msgid "The font job exceeded its time limit. Existing installations remain available."
 msgstr "Der Schriftauftrag hat sein Zeitlimit überschritten. Bestehende Installationen bleiben verfügbar."
 
-#: src/Rest/Errors.php:88
+#: src/Rest/Errors.php:105
 msgid "The font job could not be scheduled."
 msgstr "Der Schriftauftrag konnte nicht eingeplant werden."
 
-#: src/Rest/Errors.php:90
+#: src/Rest/Errors.php:107
 #: src/Rest/FontController.php:129
 msgid "The font selection is invalid."
 msgstr "Die Schriftauswahl ist ungültig."
 
-#: src/Rest/Errors.php:91
+#: src/Rest/Errors.php:108
 msgid "The font family is not in the local catalog."
 msgstr "Die Schriftfamilie ist nicht im lokalen Katalog enthalten."
 
-#: src/Rest/Errors.php:92
+#: src/Rest/Errors.php:109
 msgid "The font installation does not exist."
 msgstr "Die Schriftinstallation existiert nicht."
 
-#: src/Rest/Errors.php:93
+#: src/Rest/Errors.php:110
 msgid "A selected style or weight is not available for this family."
 msgstr "Ein gewählter Schnitt ist für diese Familie nicht verfügbar."
 
-#: src/Rest/Errors.php:94
+#: src/Rest/Errors.php:111
 msgid "A selected character set is not available for this family."
 msgstr "Ein gewählter Zeichensatz ist für diese Familie nicht verfügbar."
 
-#: src/Rest/Errors.php:95
+#: src/Rest/Errors.php:112
 msgid "This family is only available as a variable font, which is not supported yet."
 msgstr "Diese Familie ist nur als variable Schrift verfügbar; das wird noch nicht unterstützt."
 
-#: src/Rest/Errors.php:96
+#: src/Rest/Errors.php:113
 msgid "Font downloads are disabled (offline mode)."
 msgstr "Font-Downloads sind deaktiviert (Offline-Modus)."
 
-#: src/Rest/Errors.php:97
+#: src/Rest/Errors.php:114
 msgid "This family is already being installed."
 msgstr "Diese Familie wird bereits installiert."
 
-#: src/Rest/Errors.php:98
+#: src/Rest/Errors.php:115
 msgid "The font is still used by a slider, a revision or a published version."
 msgstr "Die Schrift wird noch von einem Slider, einer Revision oder einem veröffentlichten Stand verwendet."
 
-#: src/Rest/Errors.php:99
+#: src/Rest/Errors.php:116
 msgid "The license of this family could not be verified."
 msgstr "Die Lizenz dieser Familie konnte nicht geprüft werden."
 
-#: src/Rest/Errors.php:101
+#: src/Rest/Errors.php:118
 msgid "The font could not be downloaded or verified. Existing installations were not changed."
 msgstr "Die Schrift konnte nicht heruntergeladen oder geprüft werden. Bestehende Installationen wurden nicht verändert."
 
@@ -473,6 +525,18 @@ msgstr "Bitte einen Namen mit höchstens 200 Zeichen eingeben."
 #: src/Rest/JsonBody.php:53
 msgid "The version is missing or invalid."
 msgstr "Die Version fehlt oder ist ungültig."
+
+#: src/Rest/TemplateController.php:57
+msgid "Image slider"
+msgstr "Bildslider"
+
+#: src/Rest/TemplateController.php:62
+msgid "Text and button hero"
+msgstr "Hero mit Text und Button"
+
+#: src/Rest/TemplateController.php:67
+msgid "Event announcement"
+msgstr "Veranstaltungshinweis"
 
 #. translators: 1: required PHP version, 2: current PHP version
 #: sw-sliderman.php:38

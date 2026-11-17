@@ -21,7 +21,7 @@ final class Lifecycle {
 	public const VERSION_OPTION = 'sws_db_version';
 
 	/** Data/upgrade version, independent of the plugin version. */
-	public const DATA_VERSION = 2;
+	public const DATA_VERSION = 3;
 
 	public static function activate(): void {
 		self::upgrade();
@@ -31,6 +31,8 @@ final class Lifecycle {
 		// Sliders, fonts and revisions are intentionally kept; only the cleanup task is removed.
 		\SW\Slider\Infrastructure\Updates\UpdateProvider::deactivate();
 		ArtifactCleanup::unschedule();
+		wp_clear_scheduled_hook( \SW\Slider\Rest\PackageController::CLEANUP );
+		wp_unschedule_hook( WpPackageJobs::HOOK );
 	}
 
 	public function register(): void {
@@ -45,6 +47,9 @@ final class Lifecycle {
 
 	private static function upgrade(): void {
 		Capabilities::grant_defaults();
+		if ( ! wp_next_scheduled( \SW\Slider\Rest\PackageController::CLEANUP ) ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', \SW\Slider\Rest\PackageController::CLEANUP );
+		}
 		ArtifactCleanup::schedule();
 		update_option( self::VERSION_OPTION, self::DATA_VERSION, true );
 	}

@@ -45,6 +45,12 @@ use SW\Slider\Rendering\Shortcode;
 use SW\Slider\Rendering\SliderRenderer;
 use SW\Slider\Rest\FontController;
 use SW\Slider\Rest\SliderController;
+use SW\Slider\Rest\PackageController;
+use SW\Slider\Rest\TemplateController;
+use SW\Slider\ImportExport\PackageExporter;
+use SW\Slider\ImportExport\PackageImporter;
+use SW\Slider\ImportExport\PrivateWorkspace;
+use SW\Slider\Infrastructure\WpPackageJobs;
 
 /**
  * Wires the concrete implementations and registers all hooks in one place (CODE-STYLE 3.1/5).
@@ -107,6 +113,17 @@ final class Plugin {
 		( new The7( $sliders, $renderer ) )->register();
 		( new DraftPreview( $service, $renderer ) )->register();
 		( new SliderController( $service ) )->register();
+		$package_workspace = static fn (): PrivateWorkspace => new PrivateWorkspace( sys_get_temp_dir() );
+		$package_importer  = new PackageImporter( $service, $validator, $installer, $font_repo, $font_storage, SWS_VERSION );
+		$package_jobs      = new WpPackageJobs( $package_importer, $package_workspace );
+		$package_jobs->register();
+		( new PackageController(
+			new PackageExporter( $service, $font_repo, $font_storage, SWS_VERSION ),
+			$package_importer,
+			$package_jobs,
+			$package_workspace
+		) )->register();
+		( new TemplateController( $package_importer, $package_workspace, SWS_DIR . 'templates' ) )->register();
 		( new FontController( $catalog, $installer, $library, $offline ) )->register();
 		$jobs = new WpFontJobs( $installer, new CatalogUpdater( $catalog, $installer ), $font_repo, $current_offline );
 		$jobs->register();

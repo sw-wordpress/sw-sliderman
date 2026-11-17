@@ -2,7 +2,7 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: SW Sliderman 0.1.0\n"
+"Project-Id-Version: SW Sliderman 0.7.0\n"
 "Report-Msgid-Bugs-To: \n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -345,112 +345,164 @@ msgstr ""
 msgid "Next slide"
 msgstr ""
 
+#: src/Rest/Errors.php:33
+msgid "Imported resources require local upload URLs on the website and editor origin."
+msgstr ""
+
 #: src/Rest/Errors.php:34
-msgid "The slider was changed elsewhere. Reload it or export your changes."
+msgid "The import was cancelled. No slider was created."
+msgstr ""
+
+#: src/Rest/Errors.php:35
+msgid "Import permission is no longer available."
+msgstr ""
+
+#: src/Rest/Errors.php:36
+msgid "The import exceeded its time limit. The package can be checked and retried."
+msgstr ""
+
+#: src/Rest/Errors.php:37
+msgid "This package format or required plugin version is not supported. Update the plugin before importing."
+msgstr ""
+
+#: src/Rest/Errors.php:38
+msgid "ZIP support (PHP ZipArchive) is required for slider packages."
+msgstr ""
+
+#: src/Rest/Errors.php:39
+msgid "The package exceeds the file count, size or compression limits."
+msgstr ""
+
+#: src/Rest/Errors.php:40
+msgid "A writable temporary directory outside the web root is required."
+msgstr ""
+
+#: src/Rest/Errors.php:41
+msgid "Assign every missing image and font to a suitable local resource before importing."
+msgstr ""
+
+#: src/Rest/Errors.php:42
+msgid "The package session expired or is not accessible. Upload the archive again."
+msgstr ""
+
+#: src/Rest/Errors.php:43
+msgid "The import outcome is unknown. Check the slider list before starting another import."
 msgstr ""
 
 #: src/Rest/Errors.php:44
+msgid "The package or its resources could not be stored."
+msgstr ""
+
+#: src/Rest/Errors.php:46
+msgid "The package is damaged or contains unsafe paths, files, hashes or resource declarations."
+msgstr ""
+
+#: src/Rest/Errors.php:51
+msgid "The slider was changed elsewhere. Reload it or export your changes."
+msgstr ""
+
+#: src/Rest/Errors.php:61
 msgid "The slider contains invalid or missing data."
 msgstr ""
 
-#: src/Rest/Errors.php:52
+#: src/Rest/Errors.php:69
 msgid "The slider does not exist."
 msgstr ""
 
-#: src/Rest/Errors.php:55
+#: src/Rest/Errors.php:72
 msgid "The changes could not be stored. The last published version was not changed."
 msgstr ""
 
-#: src/Rest/Errors.php:59
+#: src/Rest/Errors.php:76
 msgid "The slider is being saved by another request. Please try again."
 msgstr ""
 
-#: src/Rest/Errors.php:69
+#: src/Rest/Errors.php:86
 msgid "An unexpected error occurred."
 msgstr ""
 
-#: src/Rest/Errors.php:79
+#: src/Rest/Errors.php:96
 msgid "The file is not a supported static WOFF2 font."
 msgstr ""
 
-#: src/Rest/Errors.php:80
+#: src/Rest/Errors.php:97
 msgid "The font installation could not be stored. Existing installations were not changed."
 msgstr ""
 
-#: src/Rest/Errors.php:81
+#: src/Rest/Errors.php:98
 msgid "The local font files could not be written or verified."
 msgstr ""
 
-#: src/Rest/Errors.php:82
+#: src/Rest/Errors.php:99
 msgid "Font use could not be checked because stored slider data is damaged or unsupported."
 msgstr ""
 
-#: src/Rest/Errors.php:83
+#: src/Rest/Errors.php:100
 msgid "The catalog response could not be verified. The previous catalog remains active."
 msgstr ""
 
-#: src/Rest/Errors.php:84
+#: src/Rest/Errors.php:101
 msgid "Font management permission is no longer available."
 msgstr ""
 
-#: src/Rest/Errors.php:85
+#: src/Rest/Errors.php:102
 msgid "The font job does not exist."
 msgstr ""
 
-#: src/Rest/Errors.php:86
+#: src/Rest/Errors.php:103
 msgid "Too many font jobs are active. Wait for a job to finish."
 msgstr ""
 
-#: src/Rest/Errors.php:87
+#: src/Rest/Errors.php:104
 msgid "The font job exceeded its time limit. Existing installations remain available."
 msgstr ""
 
-#: src/Rest/Errors.php:88
+#: src/Rest/Errors.php:105
 msgid "The font job could not be scheduled."
 msgstr ""
 
-#: src/Rest/Errors.php:90
+#: src/Rest/Errors.php:107
 #: src/Rest/FontController.php:129
 msgid "The font selection is invalid."
 msgstr ""
 
-#: src/Rest/Errors.php:91
+#: src/Rest/Errors.php:108
 msgid "The font family is not in the local catalog."
 msgstr ""
 
-#: src/Rest/Errors.php:92
+#: src/Rest/Errors.php:109
 msgid "The font installation does not exist."
 msgstr ""
 
-#: src/Rest/Errors.php:93
+#: src/Rest/Errors.php:110
 msgid "A selected style or weight is not available for this family."
 msgstr ""
 
-#: src/Rest/Errors.php:94
+#: src/Rest/Errors.php:111
 msgid "A selected character set is not available for this family."
 msgstr ""
 
-#: src/Rest/Errors.php:95
+#: src/Rest/Errors.php:112
 msgid "This family is only available as a variable font, which is not supported yet."
 msgstr ""
 
-#: src/Rest/Errors.php:96
+#: src/Rest/Errors.php:113
 msgid "Font downloads are disabled (offline mode)."
 msgstr ""
 
-#: src/Rest/Errors.php:97
+#: src/Rest/Errors.php:114
 msgid "This family is already being installed."
 msgstr ""
 
-#: src/Rest/Errors.php:98
+#: src/Rest/Errors.php:115
 msgid "The font is still used by a slider, a revision or a published version."
 msgstr ""
 
-#: src/Rest/Errors.php:99
+#: src/Rest/Errors.php:116
 msgid "The license of this family could not be verified."
 msgstr ""
 
-#: src/Rest/Errors.php:101
+#: src/Rest/Errors.php:118
 msgid "The font could not be downloaded or verified. Existing installations were not changed."
 msgstr ""
 
@@ -476,6 +528,18 @@ msgstr ""
 
 #: src/Rest/JsonBody.php:53
 msgid "The version is missing or invalid."
+msgstr ""
+
+#: src/Rest/TemplateController.php:57
+msgid "Image slider"
+msgstr ""
+
+#: src/Rest/TemplateController.php:62
+msgid "Text and button hero"
+msgstr ""
+
+#: src/Rest/TemplateController.php:67
+msgid "Event announcement"
 msgstr ""
 
 #. translators: 1: required PHP version, 2: current PHP version
