@@ -191,16 +191,19 @@ async function createTemplate(): Promise<void> {
 </script>
 
 <template>
-  <SwsCard v-if="allowed" class="q-mb-lg">
-    <h2>{{ __('Templates and packages') }}</h2>
-    <p>
-      {{
-        __('Imports create a new unpublished slider. No resources are downloaded from the network.')
-      }}
-    </p>
-    <div class="row q-gutter-md items-start">
+  <SwsCard
+    v-if="allowed"
+    class="q-mb-lg"
+    :title="__('Templates and packages')"
+    :subtitle="
+      __('Imports create a new unpublished slider. No resources are downloaded from the network.')
+    "
+    icon="r_inventory_2"
+  >
+    <div class="row q-gutter-md items-center">
       <q-select
         v-model="template"
+        dense
         :options="templates"
         option-value="id"
         option-label="name"
@@ -219,6 +222,8 @@ async function createTemplate(): Promise<void> {
       />
       <q-file
         v-model="file"
+        style="min-width: 220px"
+        dense
         outlined
         accept=".zip,application/zip"
         :label="__('Slider ZIP archive')"
@@ -234,7 +239,7 @@ async function createTemplate(): Promise<void> {
     </div>
     <p v-if="error" role="alert">{{ error }}</p>
     <div v-if="preview" class="q-mt-md">
-      <h3>{{ preview.title }}</h3>
+      <h3 class="sws-package-preview__title">{{ preview.title }}</h3>
       <p v-if="progress?.message" role="alert">{{ progress.message }}</p>
       <p v-if="progress && progress.total > 0" role="status">
         {{
@@ -315,3 +320,12 @@ async function createTemplate(): Promise<void> {
     </div>
   </SwsCard>
 </template>
+
+<style scoped>
+.sws-package-preview__title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+</style>

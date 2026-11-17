@@ -288,6 +288,8 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 
 **Technisch nachgewiesen (17.11.2026):** Format 1, geschütztes Staging, Ressourcen-/Hashprüfung, Zuordnung, ID-Remapping, Deduplizierung, neuer Entwurf und drei lokale Vorlagen. Persistierte Importaufträge mit Cron/Browser-Runner, Fortschritt, Wiederaufnahme der Sitzung und Abbruch. Nachweise: `PackageArchiveTest`, `PackageFontsTest`, `PackagesTest`, `package-api/-tools.test.ts`; `bin/test-packages-roundtrip.sh` mit zwei getrennten Datenbanken/Domains/Uploadwurzeln; echter Chromium-Upload/Download mit dekodierten lokalen Bildern/Fonts bei gesperrtem Server-HTTP. PHP: 260 Unit-Tests, 223 WordPress-Fälle (ein explizit separat ausgeführter Zweitinstallationstest), 88,09 % Zeilen; TS/JS: 551 Tests, 84,72 %. Analyse, Build/Bundlecheck und i18n bestanden. Format, Grenzen und konkrete praktische Prüfschritte: [Slider-Pakete](docs/packages.md). Stefans praktische Abnahme bleibt offen.
 
+**Darstellung korrigiert (17.11.2026):** Standard-Kartenkopf statt ungestyltem `h2`; Titel und Paketvorschau mit 16 px, kompakte ausgerichtete Felder und lesbares Dateifeld beim Umbrechen. Nachweise: `package-tools.test.ts`, `tests/e2e/package-layout.mjs` mit echtem CSS bei 1440/375 px; 552 Frontend-Tests, 84,72 % Zeilen, Lint/Typprüfung, Build/Bundlecheck und i18n bestanden. Empfohlene Sichtprüfung durch Stefan: Slider-Übersicht neu laden → kompakter Kartentitel und ausgerichtete Bedienelemente; optional ZIP prüfen → normale Vorschauüberschrift.
+
 **Abnahmekriterium:** Ein vollständig exportierter Slider lässt sich auf einer zweiten Installation ohne Google- oder sonstige Ressourcendownloads verwenden.
 
 ## M6 – Stabilisierung und Release 1.0

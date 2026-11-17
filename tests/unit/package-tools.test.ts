@@ -59,6 +59,19 @@ describe('package tools', () => {
     wrapper.unmount();
   });
 
+  it('uses the standard card heading and compact, aligned package controls', async () => {
+    const wrapper = render();
+    await flushPromises();
+    expect(wrapper.get('.sws-card__header h2').text()).toBe('Templates and packages');
+    expect(wrapper.find('.sws-card__body h2').exists()).toBe(false);
+    expect(wrapper.get('.sws-card__subtitle').text()).toContain(
+      'Imports create a new unpublished slider.',
+    );
+    expect(wrapper.findComponent(QSelect).props('dense')).toBe(true);
+    expect(wrapper.findComponent(QFile).props('dense')).toBe(true);
+    wrapper.unmount();
+  });
+
   it('creates a separate slider from a local template', async () => {
     vi.mocked(packages.fromTemplate).mockResolvedValue(15);
     const wrapper = render();
