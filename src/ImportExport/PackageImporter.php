@@ -119,9 +119,8 @@ final class PackageImporter {
 			if ( null === $item['file'] || ! wp_attachment_is_image( $item['id'] ) || ! current_user_can( 'read_post', $item['id'] ) ) {
 				continue;
 			}
-			$file     = get_attached_file( $item['id'], true );
 			$expected = pathinfo( $item['file'], PATHINFO_FILENAME );
-			if ( ! $this->usable_image( $item['id'] ) || ! is_string( $file ) || ! hash_equals( $expected, (string) hash_file( 'sha256', $file ) ) ) {
+			if ( ! $this->image_matches( $item['id'], $expected ) ) {
 				$conflicts[] = '' === $item['alt'] ? (string) $item['id'] : $item['alt'];
 			}
 		}
@@ -156,7 +155,7 @@ final class PackageImporter {
 				continue;
 			}
 			$target = $media_map[ $item['id'] ] ?? null;
-			if ( ! is_int( $target ) || ! $this->usable_image( $target ) ) {
+			if ( ! is_int( $target ) || null === $this->usable_image_path( $target ) ) {
 				throw new PackageError( 'mapping' );
 			}
 			$media[ $item['id'] ] = $target;
@@ -262,12 +261,39 @@ final class PackageImporter {
 		}
 	}
 
-	private function usable_image( int $id ): bool {
-		$file    = get_attached_file( $id, true );
-		$real    = is_string( $file ) ? realpath( $file ) : false;
+	private function usable_image_path( int $id ): ?string {
+		if ( ! wp_attachment_is_image( $id ) || ! current_user_can( 'read_post', $id ) || ! UploadPaths::same_origin( (string) wp_get_attachment_url( $id ), home_url( '/' ) ) ) {
+			return null;
+		}
+		return $this->local_image_path( get_attached_file( $id, true ) );
+	}
+
+	private function local_image_path( mixed $file ): ?string {
+		if ( ! is_string( $file ) || is_link( $file ) ) {
+			return null;
+		}
+		$real    = realpath( $file );
 		$uploads = wp_upload_dir( null, false );
 		$base    = realpath( (string) $uploads['basedir'] );
-		return wp_attachment_is_image( $id ) && current_user_can( 'read_post', $id ) && false !== $real && false !== $base && str_starts_with( $real, $base . '/' ) && is_file( $real ) && ! is_link( $file ) && filesize( $real ) <= Limits::FONT_JOB_BYTES && UploadPaths::same_origin( (string) wp_get_attachment_url( $id ), home_url( '/' ) );
+		if ( false === $real || false === $base || ! str_starts_with( $real, $base . '/' ) || ! is_file( $real ) || ! is_readable( $real ) ) {
+			return null;
+		}
+		$size = filesize( $real );
+		return false !== $size && $size <= Limits::FONT_JOB_BYTES ? $real : null;
+	}
+
+	private function image_matches( int $id, string $hash ): bool {
+		$attached = $this->usable_image_path( $id );
+		if ( null === $attached ) {
+			return false;
+		}
+		if ( hash_equals( $hash, (string) hash_file( 'sha256', $attached ) ) ) {
+			return true;
+		}
+		// WordPress can retain the uploaded bytes separately from the scaled or converted file.
+		$original = $this->local_image_path( wp_get_original_image_path( $id, true ) );
+		return null !== $original && $original !== $attached
+			&& hash_equals( $hash, (string) hash_file( 'sha256', $original ) ) && false !== wp_getimagesize( $attached );
 	}
 
 	private function identical_image( string $hash ): ?int {
@@ -282,7 +308,7 @@ final class PackageImporter {
 			)
 		); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- bounded, explicit import action.
 		foreach ( $ids as $id ) {
-			if ( $this->usable_image( $id ) && hash_equals( $hash, (string) hash_file( 'sha256', (string) get_attached_file( $id, true ) ) ) ) {
+			if ( $this->image_matches( $id, $hash ) ) {
 				return $id;
 			}
 		}

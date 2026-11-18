@@ -290,7 +290,7 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 
 **Darstellung korrigiert (17.11.2026):** Standard-Kartenkopf statt ungestyltem `h2`; Titel und Paketvorschau mit 16 px, kompakte ausgerichtete Felder und lesbares Dateifeld beim Umbrechen. Nachweise: `package-tools.test.ts`, `tests/e2e/package-layout.mjs` mit echtem CSS bei 1440/375 px; 552 Frontend-Tests, 84,72 % Zeilen, Lint/Typprüfung, Build/Bundlecheck und i18n bestanden. Empfohlene Sichtprüfung durch Stefan: Slider-Übersicht neu laden → kompakter Kartentitel und ausgerichtete Bedienelemente; optional ZIP prüfen → normale Vorschauüberschrift.
 
-**PR #33 (18.11.2026):** Regressionstests sichern die Ergebnis-ID bei überlappendem Cron-Lauf und Browser-Runner oder Abbruch. Vue Router 4.6.5 beseitigt den Produktionsbefund im npm-Audit. Zeilenabdeckung: PHP 88,29 %, TS/JS 84,79 %.
+**PR #33 (18.11.2026):** Regressionstests sichern die Ergebnis-ID bei überlappendem Cron-Lauf und Browser-Runner oder Abbruch sowie die Wiederverwendung von durch WordPress skalierten Bildern. Vue Router 4.6.5 beseitigt den Produktionsbefund im npm-Audit.
 
 **Abnahmekriterium:** Ein vollständig exportierter Slider lässt sich auf einer zweiten Installation ohne Google- oder sonstige Ressourcendownloads verwenden.
 

@@ -155,6 +155,61 @@ final class PackagesTest extends WP_UnitTestCase {
 		self::assertNull( $this->sliders->get( $copy )->published );
 	}
 
+	public function test_repeated_import_reuses_scaled_image_only_while_its_attachment_is_usable(): void {
+		$slider = $this->import( SWS_DIR . 'templates/image-slider.zip' );
+		$stored = $this->sliders->get( $slider );
+		$document = CanonicalJson::decode_tree( $stored->document_json );
+		$image = imagecreatetruecolor( 400, 250 );
+		$source = $this->dir . '/resource.bin';
+		self::assertTrue( imagejpeg( $image, $source ) );
+
+		add_filter( 'big_image_size_threshold', '__return_false' );
+		try {
+			$source_id = media_handle_sideload( array( 'name' => 'package-image.jpg', 'tmp_name' => $source ), 0 );
+		} finally {
+			remove_filter( 'big_image_size_threshold', '__return_false' );
+		}
+		self::assertIsInt( $source_id );
+		$this->created[] = $source_id;
+		$document->slides[0]->background->attachmentId = $source_id;
+		$this->sliders->save_draft( $slider, 'Package with a scaled image', $document, $stored->version );
+		$archive = $this->dir . '/package.zip';
+		$this->exporter->write( $slider, true, $archive );
+
+		$threshold = static fn (): int => 200;
+		add_filter( 'big_image_size_threshold', $threshold );
+		try {
+			$first = $this->import( $archive );
+			$first_doc = CanonicalJson::decode_tree( $this->sliders->get( $first )->document_json );
+			$first_id = $first_doc->slides[0]->background->attachmentId;
+			$attached = get_attached_file( $first_id, true );
+			$original = wp_get_original_image_path( $first_id, true );
+			self::assertNotSame( $attached, $original, 'WordPress created a separate scaled file.' );
+			self::assertSame( hash_file( 'sha256', get_attached_file( $source_id, true ) ), hash_file( 'sha256', $original ) );
+
+			$package = new PackageArchive( $archive );
+			try {
+				$manifest = $this->importer->inspect( $package )['manifest'];
+			} finally {
+				$package->close();
+			}
+			$manifest['media'][0]['id'] = $first_id;
+			self::assertSame( array(), $this->importer->conflicts( $manifest ), 'The existing scaled image matches when both sites use the same attachment ID.' );
+
+			$second = $this->import( $archive );
+			$second_doc = CanonicalJson::decode_tree( $this->sliders->get( $second )->document_json );
+			self::assertSame( $first_id, $second_doc->slides[0]->background->attachmentId );
+
+			file_put_contents( $attached, 'damaged image' );
+			self::assertSame( array( (string) $first_id ), $this->importer->conflicts( $manifest ) );
+			$third = $this->import( $archive );
+			$third_doc = CanonicalJson::decode_tree( $this->sliders->get( $third )->document_json );
+			self::assertNotSame( $first_id, $third_doc->slides[0]->background->attachmentId );
+		} finally {
+			remove_filter( 'big_image_size_threshold', $threshold );
+		}
+	}
+
 	public function test_templates_create_independent_drafts_and_rest_permissions(): void {
 		$list = rest_do_request( '/sw-sliderman/v1/templates' );
 		self::assertCount( 3, $list->get_data() );
