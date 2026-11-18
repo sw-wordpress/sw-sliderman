@@ -298,6 +298,8 @@ Exportformat: ZIP mit `manifest.json`, `slider.json`, Medien, Fonts und Lizenzda
 
 Import prüft vollständig, zeigt Zusammenfassung und Konflikte, remappt IDs und erstellt einen neuen unveröffentlichten Slider. Keine Überschreibung bestehender Slider ohne eigene spätere Funktion. Keine automatischen externen Downloads. Unvollständige Pakete benötigen Ressourcenzuordnung oder bleiben unveröffentlicht. Commit erfolgt erst nach erfolgreicher Prüfung und Dateiübernahme; Abbruch entfernt ausschließlich eigens angelegte temporäre Ressourcen.
 
+M5-Format, Grenzen, Auftragsverhalten und Prüfschritte: [Slider-Pakete](docs/packages.md).
+
 ## 15. Dynamische Inhalte und weitere Medien ab M8
 
 Erster Datenanbieter: öffentlich lesbare WordPress-Beiträge mit Titel, Auszug, Beitragsbild, Datum und Permalink. Query-Einstellungen sind typisiert und beschränkt; keine freie SQL-, PHP-, Shortcode- oder Templateausführung. Ein Quellbeitrag kann einen Slide erzeugen. Quellenanzahl begrenzen und Ergebnisse cachen.

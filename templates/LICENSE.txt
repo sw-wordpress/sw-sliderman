@@ -1,0 +1,6 @@
+All three template documents and the original geometric PNG illustration were created
+for SW Sliderman. The documents are distributed under GPL-2.0-or-later, like the plugin.
+The geometric illustration is dedicated to the public domain under CC0-1.0:
+https://creativecommons.org/publicdomain/zero/1.0/
+No remote resources, third-party photographs or bundled fonts are required.
+Rebuild deterministically with: python3 bin/build-templates.py

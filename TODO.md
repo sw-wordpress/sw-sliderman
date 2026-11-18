@@ -272,19 +272,25 @@ Die praktische M0-Abnahme bleibt dokumentiert. M2–M6 und die Releasefreigabe s
 
 **Ziel:** Slider inklusive Medien und lokal installierter Fonts portabel übertragen.
 
-- [ ] M5.01 Versioniertes Archivmanifest mit Schema-, Plugin- und Dateiangaben definieren.
-- [ ] M5.02 ZIP-Export mit Dokument, Medien, erforderlichen Fontdateien und Lizenzinformationen implementieren.
-- [ ] M5.03 Optionalen Export ohne Dateien eindeutig als unvollständig kennzeichnen.
-- [ ] M5.04 Import in geschütztem Staging mit Größen-/Dateianzahl-/Entpacklimits prüfen.
-- [ ] M5.05 ZIP Slip, Symlinks, ZIP Bombs, ausführbare Dateien, ungültige MIME-Typen und Hashabweichungen abweisen.
-- [ ] M5.06 IDs remappen, identische Assets anhand geprüfter Hashes deduplizieren und Konflikte anzeigen.
-- [ ] M5.07 Fehlende Dateien zuordnen lassen; kein automatisches Nachladen aus dem Netz.
-- [ ] M5.08 Import atomar als neuen Entwurf übernehmen; bei Abbruch nur eigene temporäre Ressourcen entfernen.
-- [ ] M5.09 Drei eigene lokale Vorlagen mit korrekt lizenzierten Assets erstellen.
-- [ ] M5.10 Vorlage instanziieren, verändern und exportieren; Original bleibt unverändert.
-- [ ] M5.11 Roundtrip zwischen zwei getrennten WordPress-Installationen mit anderer Domain/Uploadbasis prüfen.
-- [ ] M5.12 Nach Import externe Verbindungen sperren; Medien und Fonts müssen vollständig funktionieren.
-- [ ] M5.13 Nicht unterstützte neuere Formate und beschädigte Pakete mit verständlicher Diagnose ablehnen.
+- [x] M5.01 Versioniertes Archivmanifest mit Schema-, Plugin- und Dateiangaben definieren.
+- [x] M5.02 ZIP-Export mit Dokument, Medien, erforderlichen Fontdateien und Lizenzinformationen implementieren.
+- [x] M5.03 Optionalen Export ohne Dateien eindeutig als unvollständig kennzeichnen.
+- [x] M5.04 Import in geschütztem Staging mit Größen-/Dateianzahl-/Entpacklimits prüfen.
+- [x] M5.05 ZIP Slip, Symlinks, ZIP Bombs, ausführbare Dateien, ungültige MIME-Typen und Hashabweichungen abweisen.
+- [x] M5.06 IDs remappen, identische Assets anhand geprüfter Hashes deduplizieren und Konflikte anzeigen.
+- [x] M5.07 Fehlende Dateien zuordnen lassen; kein automatisches Nachladen aus dem Netz.
+- [x] M5.08 Import atomar als neuen Entwurf übernehmen; bei Abbruch nur eigene temporäre Ressourcen entfernen.
+- [x] M5.09 Drei eigene lokale Vorlagen mit korrekt lizenzierten Assets erstellen.
+- [x] M5.10 Vorlage instanziieren, verändern und exportieren; Original bleibt unverändert.
+- [x] M5.11 Roundtrip zwischen zwei getrennten WordPress-Installationen mit anderer Domain/Uploadbasis prüfen.
+- [x] M5.12 Nach Import externe Verbindungen sperren; Medien und Fonts müssen vollständig funktionieren.
+- [x] M5.13 Nicht unterstützte neuere Formate und beschädigte Pakete mit verständlicher Diagnose ablehnen.
+
+**Technisch nachgewiesen (17.11.2026):** Format 1, geschütztes Staging, Ressourcen-/Hashprüfung, Zuordnung, ID-Remapping, Deduplizierung, neuer Entwurf und drei lokale Vorlagen. Persistierte Importaufträge mit Cron/Browser-Runner, Fortschritt, Wiederaufnahme der Sitzung und Abbruch. Nachweise: `PackageArchiveTest`, `PackageFontsTest`, `PackagesTest`, `package-api/-tools.test.ts`; `bin/test-packages-roundtrip.sh` mit zwei getrennten Datenbanken/Domains/Uploadwurzeln; echter Chromium-Upload/Download mit dekodierten lokalen Bildern/Fonts bei gesperrtem Server-HTTP. PHP: 260 Unit-Tests, 223 WordPress-Fälle (ein explizit separat ausgeführter Zweitinstallationstest), 88,09 % Zeilen; TS/JS: 551 Tests, 84,72 %. Analyse, Build/Bundlecheck und i18n bestanden. Format, Grenzen und konkrete praktische Prüfschritte: [Slider-Pakete](docs/packages.md). Stefans praktische Abnahme bleibt offen.
+
+**Darstellung korrigiert (17.11.2026):** Standard-Kartenkopf statt ungestyltem `h2`; Titel und Paketvorschau mit 16 px, kompakte ausgerichtete Felder und lesbares Dateifeld beim Umbrechen. Nachweise: `package-tools.test.ts`, `tests/e2e/package-layout.mjs` mit echtem CSS bei 1440/375 px; 552 Frontend-Tests, 84,72 % Zeilen, Lint/Typprüfung, Build/Bundlecheck und i18n bestanden. Empfohlene Sichtprüfung durch Stefan: Slider-Übersicht neu laden → kompakter Kartentitel und ausgerichtete Bedienelemente; optional ZIP prüfen → normale Vorschauüberschrift.
+
+**PR #33 (18.11.2026):** Regressionstests sichern die Ergebnis-ID bei überlappendem Cron-Lauf und Browser-Runner oder Abbruch, die Wiederverwendung skalierter Bilder und die Verarbeitung von Effektebenen ohne optionale Bildressourcen. Vue Router 4.6.5 beseitigt den Produktionsbefund im npm-Audit.
 
 **Abnahmekriterium:** Ein vollständig exportierter Slider lässt sich auf einer zweiten Installation ohne Google- oder sonstige Ressourcendownloads verwenden.
 

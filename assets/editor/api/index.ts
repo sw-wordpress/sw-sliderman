@@ -1,6 +1,7 @@
 import { getConfig } from '@editor/config';
 import { ApiClient, type Transport } from './client';
 import { fontsApi } from './fonts';
+import { packagesApi } from './packages';
 import { slidersApi } from './sliders';
 
 let client: ApiClient | null = null;
@@ -23,3 +24,5 @@ const transport: Transport = {
 
 export const sliders = slidersApi(transport);
 export const fonts = fontsApi(transport);
+
+export const packages = packagesApi(transport);

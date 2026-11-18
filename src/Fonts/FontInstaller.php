@@ -233,11 +233,74 @@ final class FontInstaller {
 	}
 
 	/**
+	 * Import a fully verified archive installation; regenerates CSS and preserves provenance.
+	 *
+	 * @param Installation                $installation Validated by PackageFonts.
+	 * @param \Closure(string,int):string $read Reads a verified font or license entry.
+	 * @return array{installation:Installation,ownedRegistry:bool,ownedDirectory:bool}
+	 */
+	public function import_package( array $installation, \Closure $read ): array {
+		$key   = 'install_' . $installation['familyId'];
+		$token = $this->repository->acquire_lock( $key, self::LOCK_TTL_SECONDS );
+		if ( null === $token ) {
+			throw new FontError( 'sws_font_install_running' );
+		}
+		$temp            = null;
+		$owned_registry  = false;
+		$owned_directory = false;
+		try {
+			$temp = $this->storage->create_temp();
+			foreach ( $installation['variants'] as $variant ) {
+				foreach ( $variant['files'] as $file ) {
+					$bytes = $read( $file['file'], $file['sizeBytes'] );
+					if ( ! Woff2::is_static( $bytes ) || ! hash_equals( $file['sha256'], hash( 'sha256', $bytes ) ) ) {
+						throw new FontError( 'sws_font_invalid_file' );
+					}
+					$this->storage->write( $temp, $file['file'], $bytes );
+				}
+			}
+			$license = $read( 'LICENSE.txt', 131072 );
+			if ( strlen( trim( $license ) ) < 20 || 1 !== preg_match( '//u', $license ) || ! preg_match( '/licen[cs]e|lizenz|copyright/i', $license ) ) {
+				throw new FontError( 'sws_font_license_missing' );
+			}
+			$result = $this->commit(
+				array(
+					'id'          => $installation['familyId'],
+					'family'      => $installation['family'],
+					'category'    => $installation['category'],
+					'license'     => $installation['license']['id'],
+					'licensePath' => $installation['license']['sourcePath'],
+				),
+				$installation['variants'],
+				$license,
+				$temp,
+				$installation['source']['provider'],
+				$installation['source']['catalogVersion'],
+				static function ( bool $created ) use ( &$owned_registry, &$owned_directory ): void {
+					$owned_registry  = true;
+					$owned_directory = $created;
+				}
+			);
+			return array(
+				'installation'   => $result,
+				'ownedRegistry'  => $owned_registry,
+				'ownedDirectory' => $owned_directory,
+			);
+		} finally {
+			if ( null !== $temp ) {
+				$this->storage->discard( $temp );
+			}
+			$this->repository->release_lock( $key, $token );
+		}
+	}
+
+	/**
 	 * @param array{id:string,family:string,license:string,licensePath:string,category:string}                                                  $family Catalog or manual identity.
 	 * @param list<array{weight:int,style:string,files:list<array{subset:string,unicodeRange:string,file:string,sha256:string,sizeBytes:int}>}> $variants Complete files.
+	 * @param Closure(bool):void|null                                                                                                           $ownership Tracks resources created by this commit.
 	 * @return Installation
 	 */
-	private function commit( array $family, array $variants, string $license, string $temp, string $provider, string $catalog_version ): array {
+	private function commit( array $family, array $variants, string $license, string $temp, string $provider, string $catalog_version, ?Closure $ownership = null ): array {
 		$hash     = hash( 'sha256', $family['id'] . "\n" . $family['license'] . "\n" . CanonicalJson::encode( $variants ) . "\n" . hash( 'sha256', $license ) );
 		$id       = $family['id'] . '-' . substr( $hash, 0, 10 );
 		$existing = $this->repository->find( $id );
@@ -275,6 +338,9 @@ final class FontInstaller {
 				return $existing;
 			}
 			$this->repository->save( $installation );
+			if ( null !== $ownership ) {
+				$ownership( $created );
+			}
 			return $installation;
 		} catch ( Throwable $error ) {
 			if ( $created && null === $existing ) {

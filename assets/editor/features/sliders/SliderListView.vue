@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import { sliders } from '@editor/api';
+import { packages, sliders } from '@editor/api';
 import { ApiError } from '@editor/api/client';
 import type { SliderStatus, SliderSummary } from '@editor/api/sliders';
 import { __, sprintf } from '@editor/i18n';
@@ -12,6 +12,7 @@ import SwsCard from '@editor/components/ui/SwsCard.vue';
 import EmptyState from '@editor/components/ui/EmptyState.vue';
 import ErrorState from '@editor/components/ui/ErrorState.vue';
 import ConfirmDialog from '@editor/components/ui/ConfirmDialog.vue';
+import PackageTools from './PackageTools.vue';
 import CopyButton from '@editor/components/ui/CopyButton.vue';
 
 const router = useRouter();
@@ -104,6 +105,18 @@ async function duplicate(item: SliderSummary): Promise<void> {
   }
 }
 
+async function exportPackage(item: SliderSummary, includeFiles: boolean): Promise<void> {
+  try {
+    const url = await packages.export(item.id, includeFiles);
+    window.location.assign(url);
+  } catch (cause) {
+    $q.notify({
+      type: 'negative',
+      message: cause instanceof Error ? cause.message : String(cause),
+    });
+  }
+}
+
 async function trash(): Promise<void> {
   const target = trashTarget.value;
   if (!target) return;
@@ -173,6 +186,8 @@ async function purge(): Promise<void> {
         @click="createOpen = true"
       />
     </PageHeader>
+
+    <PackageTools />
 
     <SwsCard :padding="false">
       <template #header>
@@ -302,6 +317,21 @@ async function purge(): Promise<void> {
               </q-btn>
             </td>
             <td v-else data-label="" class="sws-list__actions">
+              <q-btn flat dense round icon="r_download" :aria-label="__('Export slider')">
+                <q-menu
+                  ><q-list>
+                    <q-item v-close-popup clickable @click="exportPackage(item, true)"
+                      ><q-item-section>{{ __('Complete ZIP with files') }}</q-item-section></q-item
+                    >
+                    <q-item v-close-popup clickable @click="exportPackage(item, false)"
+                      ><q-item-section>{{
+                        __('Incomplete ZIP without files')
+                      }}</q-item-section></q-item
+                    >
+                  </q-list></q-menu
+                >
+                <q-tooltip>{{ __('Export slider') }}</q-tooltip>
+              </q-btn>
               <q-btn
                 flat
                 dense

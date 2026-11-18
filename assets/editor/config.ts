@@ -88,7 +88,8 @@ export function getConfig(): EditorConfig {
 }
 
 export function can(
-  capability: 'sws_edit_sliders' | 'sws_publish_sliders' | 'sws_manage_fonts',
+  capability:
+    'sws_edit_sliders' | 'sws_publish_sliders' | 'sws_manage_fonts' | 'sws_import_sliders',
 ): boolean {
   return getConfig().capabilities.includes(capability);
 }

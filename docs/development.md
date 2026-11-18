@@ -62,3 +62,4 @@ M2 local-font browser/acceptance checks: [font-testing.md](font-testing.md).
 - SonarQube is skipped for Dependabot PRs (no secrets). Enable Dependabot alerts and security updates in the repository settings.
 - PHPStan level 8 (`composer stan`) covers all shipped PHP with no baseline or ignores; constants live in `tests/php/phpstan-constants.php`, `SWS_MIN_PHP`/`PHP_VERSION` are `dynamicConstantNames`. `bin/*.php` is dev tooling and not analysed.
 - Node 22 is used in CI; dev-tooling `npm audit` findings are tracked separately.
+- Vue Router stays on 4.6.x while 5.x pulls affected versions of picomatch into the production dependency tree. The production audit covers the upgrade path. [GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf)

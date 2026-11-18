@@ -28,6 +28,23 @@ use WP_Error;
 final class Errors {
 
 	public static function from( Throwable $error ): WP_Error {
+		if ( $error instanceof \SW\Slider\ImportExport\PackageError ) {
+			$messages = array(
+				'origin'      => __( 'Imported resources require local upload URLs on the website and editor origin.', 'sw-sliderman' ),
+				'cancelled'   => __( 'The import was cancelled. No slider was created.', 'sw-sliderman' ),
+				'permission'  => __( 'Import permission is no longer available.', 'sw-sliderman' ),
+				'timeout'     => __( 'The import exceeded its time limit. The package can be checked and retried.', 'sw-sliderman' ),
+				'version'     => __( 'This package format or required plugin version is not supported. Update the plugin before importing.', 'sw-sliderman' ),
+				'zip_support' => __( 'ZIP support (PHP ZipArchive) is required for slider packages.', 'sw-sliderman' ),
+				'limit'       => __( 'The package exceeds the file count, size or compression limits.', 'sw-sliderman' ),
+				'staging'     => __( 'A writable temporary directory outside the web root is required.', 'sw-sliderman' ),
+				'mapping'     => __( 'Assign every missing image and font to a suitable local resource before importing.', 'sw-sliderman' ),
+				'session'     => __( 'The package session expired or is not accessible. Upload the archive again.', 'sw-sliderman' ),
+				'outcome'     => __( 'The import outcome is unknown. Check the slider list before starting another import.', 'sw-sliderman' ),
+				'storage'     => __( 'The package or its resources could not be stored.', 'sw-sliderman' ),
+			);
+			return new WP_Error( 'sws_package_' . $error->error_code, $messages[ $error->error_code ] ?? __( 'The package is damaged or contains unsafe paths, files, hashes or resource declarations.', 'sw-sliderman' ), array( 'status' => 422 ) );
+		}
 		if ( $error instanceof VersionConflict ) {
 			return new WP_Error(
 				'sws_revision_conflict',
