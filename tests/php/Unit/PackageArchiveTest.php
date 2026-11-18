@@ -10,6 +10,7 @@ namespace SW\Slider\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use SW\Slider\Domain\DocumentValidator;
 use SW\Slider\ImportExport\PackageManifest;
 use SW\Slider\ImportExport\PackageArchive;
 use SW\Slider\ImportExport\PackageError;
@@ -210,6 +211,16 @@ final class PackageArchiveTest extends TestCase {
 		self::assertNotEmpty( DocumentResources::media_ids( $document ) );
 		DocumentResources::map_media( $document, static fn ( int $id ): int => $id + 1000 );
 		self::assertNull( $layer->content->attachmentId );
+	}
+
+	public function test_effect_without_optional_resources_survives_media_remapping(): void {
+		$document = Fixtures::object( 'documents/valid/effect.json' );
+		$content  = $document->slides[0]->layers[2]->content;
+		unset( $content->fallbackImageId, $content->assets );
+		self::assertSame( array(), ( new DocumentValidator() )->validate( $document ) );
+		self::assertSame( array( 42, 7 ), DocumentResources::media_ids( $document ) );
+		self::assertFalse( property_exists( $content, 'fallbackImageId' ) );
+		self::assertFalse( property_exists( $content, 'assets' ) );
 	}
 
 	public function test_invalid_image_and_oversize_dimensions_rejected(): void {

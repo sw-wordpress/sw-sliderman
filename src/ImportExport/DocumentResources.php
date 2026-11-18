@@ -38,10 +38,10 @@ final class DocumentResources {
 					$layer->content->attachmentId = $map( $layer->content->attachmentId );
 				}
 				if ( 'effect' === $layer->type ) {
-					if ( is_int( $layer->content->fallbackImageId ) ) {
+					if ( is_int( $layer->content->fallbackImageId ?? null ) ) {
 						$layer->content->fallbackImageId = $map( $layer->content->fallbackImageId );
 					}
-					foreach ( $layer->content->assets as $key => $id ) {
+					foreach ( $layer->content->assets ?? array() as $key => $id ) {
 						$layer->content->assets->$key = $map( $id );
 					}
 				}
