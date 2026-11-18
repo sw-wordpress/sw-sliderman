@@ -52,6 +52,10 @@ msgstr ""
 msgid "The slider editor requires JavaScript."
 msgstr ""
 
+#: src/Admin/AdminPage.php:75
+msgid "Open source by Stefan Warnat – free to use, free to change, better together."
+msgstr ""
+
 #: src/Admin/DraftPreview.php:36
 #: src/Admin/DraftPreview.php:49
 msgid "This preview is not available."

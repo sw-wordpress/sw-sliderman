@@ -1,5 +1,7 @@
 # SW Sliderman
 
+*Open source by Stefan Warnat – free to use, free to change, better together.*
+
 [![Release](https://img.shields.io/github/v/release/sw-wordpress/sw-sliderman?sort=semver)](https://github.com/sw-wordpress/sw-sliderman/releases)
 [![CI](https://github.com/sw-wordpress/sw-sliderman/actions/workflows/tests.yml/badge.svg)](https://github.com/sw-wordpress/sw-sliderman/actions/workflows/tests.yml)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=sw-wordpress_sw-sliderman&metric=coverage)](https://sonarcloud.io/summary/overall?id=sw-wordpress_sw-sliderman)
@@ -123,7 +125,7 @@ Every change needs tests; line coverage must stay above 80 % for PHP and JavaScr
 
 ## License
 
-[GPL-2.0-or-later](https://www.gnu.org/licenses/gpl-2.0.html) — see [LICENSE](LICENSE). Provided by Stefan Warnat.
+[GPL-2.0-or-later](https://www.gnu.org/licenses/gpl-2.0.html) — see [LICENSE](LICENSE).
 
 Bundled third-party components (in `build/editor/`; license notices in the bundle headers and upstream repositories):
 

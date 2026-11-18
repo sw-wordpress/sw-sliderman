@@ -71,6 +71,9 @@ final class AdminPage {
 			return;
 		}
 		echo '<div class="wrap sws-wrap"><div id="sw-sliderman-app"></div><noscript>' . esc_html__( 'The slider editor requires JavaScript.', 'sw-sliderman' ) . '</noscript></div>';
+		echo '<p class="sws-admin-footer">';
+		esc_html_e( 'Open source by Stefan Warnat – free to use, free to change, better together.', 'sw-sliderman' );
+		echo '</p>';
 	}
 
 	public function enqueue( string $hook ): void {

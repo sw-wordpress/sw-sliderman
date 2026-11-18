@@ -203,6 +203,12 @@
 }
 
 /* ---------- WordPress integration ---------- */
+.sws-admin-footer {
+  display: none;
+}
+.sws-wrap:has(.sws-list) + .sws-admin-footer {
+  display: block;
+}
 .sws-fullbleed {
   margin: 0 0 0 -20px;
 }

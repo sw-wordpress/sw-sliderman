@@ -48,6 +48,10 @@ msgstr "Der SW-Sliderman-Editor wurde nicht gebaut. Das Release-Paket installier
 msgid "The slider editor requires JavaScript."
 msgstr "Der Slider-Editor benötigt JavaScript."
 
+#: src/Admin/AdminPage.php:75
+msgid "Open source by Stefan Warnat – free to use, free to change, better together."
+msgstr "Open Source von Stefan Warnat – frei nutzbar, frei veränderbar, gemeinsam besser."
+
 #: src/Admin/DraftPreview.php:36
 #: src/Admin/DraftPreview.php:49
 msgid "This preview is not available."

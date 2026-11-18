@@ -63,11 +63,14 @@ await page.route('**/*', async (route) => {
     const body = url.pathname === '/api/sliders/7' ? detail : url.pathname === '/api/sliders/8' ? { ...detail, id: 8, document: effectDocument } : [];
     return route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) });
   }
-  return route.fulfill({ contentType: 'text/html', body: `<!doctype html><link rel="stylesheet" href="/build/editor/editor.css"><link rel="stylesheet" href="/build/runtime/runtime.css"><div id="sw-sliderman-app"></div><script>window.swsEditorConfig=${JSON.stringify(config)}</script><script type="module" src="/build/editor/editor.js?ver=${encodeURIComponent(version)}"></script>` });
+  return route.fulfill({ contentType: 'text/html', body: `<!doctype html><link rel="stylesheet" href="/build/editor/editor.css"><link rel="stylesheet" href="/build/runtime/runtime.css"><div class="wrap sws-wrap"><div id="sw-sliderman-app"></div></div><p class="sws-admin-footer">Author line</p><script>window.swsEditorConfig=${JSON.stringify(config)}</script><script type="module" src="/build/editor/editor.js?ver=${encodeURIComponent(version)}"></script>` });
 });
 try {
   await page.goto('http://sws.test/#/sliders/7');
   await page.locator('.sws-canvas__frame').waitFor();
+  assert.equal(await page.locator('.sws-admin-footer').isVisible(), false, 'no author line in the full-height editor');
+  const editorHeight = await page.locator('.sws-shell--editor').evaluate((el) => el.getBoundingClientRect().height);
+  assert.equal(editorHeight, 968, 'the editor keeps the complete viewport below the admin bar');
   assert.equal(requests.filter((url) => url.includes('/heroEffects-')).length, 0, 'effect module stays lazy');
   await page.getByRole('button', { name: 'Preview', exact: true }).click();
   await page.locator('.sws-light-sweep').waitFor();
@@ -84,6 +87,19 @@ try {
   const previewRequests = requests.filter((url) => /\/preview-[\w-]+\.js/.test(url));
   assert.ok(previewRequests.length >= 1, 'the GPU preview chunk is requested for an effect layer');
   for (const url of previewRequests) assert.equal(new URL(url).searchParams.get('ver'), version, url);
+  for (const width of [1400, 375]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto('http://sws.test/#/');
+    await page.locator('.sws-list').waitFor();
+    assert.equal(await page.locator('.sws-admin-footer').isVisible(), true, 'author line is visible in the overview');
+    await page.goto('http://sws.test/#/fonts');
+    await page.locator('.sws-list').waitFor({ state: 'detached' });
+    assert.equal(await page.locator('.sws-admin-footer').isVisible(), false, 'author line is limited to the overview');
+    await page.goto('http://sws.test/#/sliders/7');
+    await page.locator('.sws-canvas__frame').waitFor();
+    assert.equal(await page.locator('.sws-admin-footer').isVisible(), false, 'author line stays hidden after opening an editor');
+  }
+  console.log('✓ author line: overview only on desktop and mobile; full-height editor unchanged');
   console.log('✓ built editor: effects stay lazy and load once with the encoded central plugin version');
 } finally {
   await browser.close();

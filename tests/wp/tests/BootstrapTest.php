@@ -33,7 +33,9 @@ final class BootstrapTest extends WP_UnitTestCase {
 		$this->assertSame( '<script>local</script>', $page->module_tag( '<script>local</script>', 'other' ) );
 		ob_start();
 		$page->render();
-		$this->assertStringContainsString( 'sw-sliderman-app', ob_get_clean() );
+		$output = ob_get_clean();
+		$this->assertStringContainsString( 'sw-sliderman-app', $output );
+		$this->assertStringContainsString( '<p class="sws-admin-footer">Open source by Stefan Warnat – free to use, free to change, better together.</p>', $output );
 		$page->enqueue( 'unrelated' );
 		wp_delete_file( $bundle_dir . 'build/editor/editor.js' );
 		rmdir( $bundle_dir . 'build/editor' );
@@ -51,6 +53,9 @@ final class BootstrapTest extends WP_UnitTestCase {
 		add_filter( 'determine_locale', $locale );
 		try {
 			$translations->load();
+			ob_start();
+			esc_html_e( 'Open source by Stefan Warnat – free to use, free to change, better together.', 'sw-sliderman' );
+			$this->assertSame( 'Open Source von Stefan Warnat – frei nutzbar, frei veränderbar, gemeinsam besser.', ob_get_clean() );
 			$this->assertSame( SWS_DIR . 'languages/sw-sliderman-de_DE-sws-editor.json', $translations->script_file( false, 'sws-editor', 'sw-sliderman' ) );
 			$this->assertFalse( $translations->script_file( false, 'other', 'other-domain' ) );
 		} finally {
