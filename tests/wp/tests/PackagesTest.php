@@ -231,6 +231,53 @@ final class PackagesTest extends WP_UnitTestCase {
 		self::assertNotNull( $this->sliders->get( $id ) );
 	}
 
+	public static function concurrent_completion_cases(): array {
+		return array(
+			'browser runner' => array( '/packages/run', 'running' ),
+			'cancellation'   => array( '/packages/cancel', 'queued' ),
+		);
+	}
+
+	/** @dataProvider concurrent_completion_cases */
+	public function test_rest_preserves_completion_while_waiting_for_resource_guard( string $route, string $initial_state ): void {
+		global $wpdb;
+		copy( SWS_DIR . 'templates/text-hero.zip', $this->dir . '/package.zip' );
+		$id     = $this->import( SWS_DIR . 'templates/text-hero.zip' );
+		$option = 'sws_package_' . $this->token;
+		$state  = array(
+			'user'    => get_current_user_id(),
+			'mode'    => 'import',
+			'state'   => $initial_state,
+			'expires' => time() + HOUR_IN_SECONDS,
+			'result'  => null,
+		);
+		add_option( $option, $state, '', false );
+		$completed = array_replace( $state, array( 'state' => 'completed', 'result' => $id ) );
+		$finish    = static function ( string $query ) use ( $wpdb, $option, $state, $completed ): string {
+			if ( str_starts_with( $query, 'SELECT GET_LOCK(' ) ) {
+				// Simulate a worker saving its result on another connection without refreshing this request's cache.
+				wp_cache_set( $option, maybe_serialize( $state ), 'options' );
+				self::assertSame( 1, $wpdb->update( $wpdb->options, array( 'option_value' => maybe_serialize( $completed ) ), array( 'option_name' => $option ) ) );
+			}
+			return $query;
+		};
+		add_filter( 'query', $finish );
+		try {
+			$response = $this->json_request( $route, array( 'token' => $this->token ) );
+			self::assertSame( 200, $response->get_status() );
+			self::assertSame( 'completed', $response->get_data()['state'] ?? null );
+			self::assertSame( $id, $response->get_data()['id'] );
+			$request = new WP_REST_Request( 'GET', '/sw-sliderman/v1/packages/status' );
+			$request->set_query_params( array( 'token' => $this->token ) );
+			$status = rest_do_request( $request );
+			self::assertSame( $response->get_data(), $status->get_data() );
+		} finally {
+			remove_filter( 'query', $finish );
+			\SW\Slider\Infrastructure\WpPackageJobs::discard_cancel( $this->token );
+			delete_option( $option );
+		}
+	}
+
 	public function test_failed_draft_creation_removes_only_new_resources(): void {
 		$id = $this->with_font();
 		$this->exporter->write( $id, true, $this->dir . '/package.zip' );

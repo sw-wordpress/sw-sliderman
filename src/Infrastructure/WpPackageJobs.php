@@ -170,8 +170,11 @@ final class WpPackageJobs {
 
 	/** @return array<string,mixed> */
 	private function load( string $token ): array {
+		global $wpdb;
 		( ( $this->workspace_factory )() )->path( $token );
-		$state = get_option( self::PREFIX . $token );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A concurrent worker can update the job after this request has checked ownership.
+		$value = $wpdb->get_var( $wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name=%s', $wpdb->options, self::PREFIX . $token ) );
+		$state = maybe_unserialize( $value );
 		if ( ! is_array( $state ) || 'import' !== ( $state['mode'] ?? '' ) || ( $state['expires'] ?? 0 ) < time() ) {
 			throw new PackageError( 'session' );
 		}
