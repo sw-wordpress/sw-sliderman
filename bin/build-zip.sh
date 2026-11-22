@@ -42,6 +42,7 @@ rsync -a --exclude-from="$UNTRACKED" --exclude-from=- "$ROOT/" "$STAGE/$NAME/" <
 /vendor
 /.github
 /node_modules
+/pages
 /assets
 /tests
 /tools
