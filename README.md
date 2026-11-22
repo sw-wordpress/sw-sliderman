@@ -15,6 +15,12 @@ Responsive layer [slider](https://en.wikipedia.org/wiki/Slider_(computing)) for 
 and locally hosted [Google Fonts](https://en.wikipedia.org/wiki/Google_Fonts).
 Preview in early development, not ready for production sites.
 
+## User documentation
+
+[User guide](https://sw-wordpress.github.io/sw-sliderman/) · [Guide sources](pages/index.md) · [Changelog](pages/Changelog.md)
+
+The guide covers installation, the editor, responsive layouts, playback/effects, local fonts and slider packages. Publication requires the documentation workflow on `master` and **Settings → Pages → Source → GitHub Actions**; the site is not confirmed published yet. Maintainer build/deployment instructions and the evidence-based page plan: [pages/README.md](pages/README.md).
+
 ## Features
 
 - **Visual editor** — Place text, image and button layers on slides directly on the canvas.

@@ -15,6 +15,11 @@
 .phpcs-wp.cache
 /tests/wp/vendor/
 
+# User-documentation dependencies and generated files
+/pages/node_modules/
+/pages/.vitepress/cache/
+/pages/.vitepress/dist/
+
 # Local analysis output
 /coverage/
 /.scannerwork/
